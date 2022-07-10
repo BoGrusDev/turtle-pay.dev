@@ -1,0 +1,6 @@
+order deny,allow
+deny from all
+# my IP
+allow from 213.89.156.77 
+# Local development
+allow from localhost

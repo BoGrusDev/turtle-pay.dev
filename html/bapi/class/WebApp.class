@@ -1,0 +1,48 @@
+<?php
+/*
+    Class WebAppClass
+
+	Date: 2019-07-12
+
+	
+
+*/
+
+class WebAppClass extends ActionBase {
+
+	public function Run($data) {
+		$actionMethod = 'action' . $data->_action;
+		echo $this->$actionMethod($data);
+	}
+
+	private function actionProgressInit($data) {
+
+		$reply = $this->_Insert('wa_log', $data);
+		return json_encode($reply);
+		
+	}
+
+	private function actionProgress($data) {
+
+		$sql = "SELECT * FROM wa_log ";
+		$sql .= "WHERE approved_code = '$data->_id'";
+		$result = $this->_Get($sql);
+		return json_encode($result);
+		
+	}
+
+	private function actionSetConfirmed($data) {
+
+		$paramUpdate = array ();
+		$paramUpdate['invoice_event_item_status'] = 'c';
+		$dt = new DateTime();
+		$paramUpdate['confirmed_datetime'] = $dt->format('Y-m-d H:i:s');
+		$reply = $this->_Update('invoice_event_item', 'invoice_event_item_id', $data->_item_id, $paramUpdate);
+			
+		return json_encode($reply);
+		
+	}
+
+}
+
+

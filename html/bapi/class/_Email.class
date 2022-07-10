@@ -1,0 +1,36 @@
+<?php
+
+class EmailClass extends ActionBase {
+
+	public function Run($data) {
+
+		$actionMethod = 'action' . $data->_action;
+		echo $this->$actionMethod($data);
+
+	}
+
+	private function actionFirstInvoice($data) {
+
+		// $invoiceObj = $this->_Get("SELECT * FROM first_invoice WHERE invoice_filename='" . $data->_invoice_filename . "'");
+
+		// Updated for Noti invocie 20200913 / 20201012
+		$sql = "SELECT f.*, co.noti_invoice_on, co.noti_invoice_email ";
+		$sql .= "FROM first_invoice f, credit c, company co ";
+		$sql .= "WHERE invoice_filename='" . $data->_invoice_filename . " '";
+		$sql .= "AND f.credit_id = c.credit_id AND c.company_id = co.company_id";
+		$invoiceObj = $this->_Get($sql);
+
+		if ($invoiceObj['code'] == "1")	{
+			if ($data->email != $invoiceObj['email']) {
+				$this->_Query("UPDATE people SET email = '$data->email' WHERE people_id = " . $invoiceObj['people_id'] );
+			}
+			$this->_Query("UPDATE first_invoice SET email = '$data->email', email_sent = 'y' WHERE invoice_filename='" . $data->_invoice_filename . "'");
+			$invoiceObj['email'] = $data->email;
+			return json_encode($invoiceObj);
+		} else {
+
+			return '{"code":"noinve"}'; // No Invoice eist
+		}
+
+	}
+}

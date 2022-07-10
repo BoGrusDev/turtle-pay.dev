@@ -1,0 +1,93 @@
+<?php
+/*
+    ClassEmailClass
+
+	Date: 2019-03-24
+
+
+	Call:
+	{
+
+	}
+
+
+*/
+
+//require_once "MailerClass.inc";
+
+class EmailClass  {
+
+	public function Run($data) {
+
+		$actionMethod = 'action' . $data->_action;
+		echo $this->$actionMethod($data);
+
+	}
+
+	public function actionContact($data) {
+
+		/*
+		{
+			 "_group" : "Email",
+			 "_action" : "Contact",
+			 "orgno : "55612-2232",
+			 "company" : "Test bolaget AB",
+			 "email" : "bo.grus@yahoo.com",
+			 "mobile" : "072-6541212"
+		}
+		*/
+		$email = "bo.grus@yahoo.com";
+		$toSubject = 'Registrering ' . $data->orgno ;
+
+		$html = '';
+		$html = '<div style="width:100%; max-width:500px; margin: 10px auto 0; border:1px solid #cccccc; border-radius: 8px; font-family: Helvetica,Arial,sans-serif, Verdana; padding:6px">';
+
+		$html .= '<table style="width:100%; border-collapse:separate; border-spacing: 2px; font-size:14px;" >';
+			$html .= '<tbody>';
+
+				$html .= '<tr><td colspan="2" style="text-align: left;font-size:26px;">' . $data->company . '</td></tr>';
+				$html .= '<tr><td colspan="2"><strong>Organisationsnummer:</strong></td></tr>';
+				$html .= '<tr><td colspan="2">' . $data->orgno . '</td></tr>';
+				$html .= '<tr><td colspan="2"><strong>Kontaktpersson</strong></td></tr>';
+				$html .= '<tr><td colspan="2">' . $data->contact . '</td></tr>';
+				$html .= '<tr><td colspan="2"><strong>E-post</strong></td></tr>';
+				$html .= '<tr><td colspan="2">' . $data->email . '</td></tr>';
+				$html .= '<tr><td colspan="2"><strong>Mobil</strong></td></tr>';
+				$html .= '<tr><td colspan="2">' . $data->mobile  . '</td></tr>';
+				$html .= '<tr><td colspan="2">&nbsp;</td></tr>';
+
+			$html .= '</tbody>';
+		$html .= '</table>';
+
+		//echo $html;
+		//die('');
+
+		require 'PHPMailerAutoload.php';
+		$mail = new PHPMailer;
+		$mail->isSMTP();
+		
+		$mail->Host = 'smtp.gmail.com';
+		$mail->SMTPAuth = true;
+		$mail->Username = 'info.turtlepay@gmail.com';
+		$mail->Password = 'SegTp_2019';
+
+		$mail->CharSet = 'UTF-8';
+		$mail->From = 'info@turtle-pay.com';
+		$mail->FromName = 'TurtlePay';
+
+		$mail->addAddress($email);
+		$mail->addBCC('bo.grusell@turtle-pay.com');
+		$mail->addReplyTo('info@turtle-pay.com');
+		$mail->isHTML(true);
+		$mail->Subject = $toSubject;
+		//$mailInvoice->Body = $this->htmlInvoice . '<div style="width:100%; padding:20px 0 10px 0; text-align:center"><a href="' . DOCVIEW . 'o/' . $this->orderid . '.html"' . '" style="font-size:20px; font-weight:bold; color: green">Skriv ut</a>';
+		$mail->Body = $html;
+
+		if(!$mail->send()) {
+			echo '{"code" : "0"}';
+		} else {
+			echo '{"code" : "1"}';
+			echo $mail->ErrorInfo;
+		}
+	}
+}

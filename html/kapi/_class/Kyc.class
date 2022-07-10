@@ -1,0 +1,271 @@
+<?php
+/*
+    PeopleClass
+
+	Date: 2019-04-29
+
+*/
+
+class PeopleClass extends ActionPortal {
+
+	public function Run($data) {
+
+		$actionMethod = 'action' . $data->_action;
+		echo $this->$actionMethod($data);
+
+	}
+
+	private function actionDetails($data) {
+
+		/*
+		{
+	        "_group" : "People",
+	        "_action" : "Details"
+	        "_people_id" : "1"
+		}
+		*/
+
+		$sql = "SELECT people_id, personal_id_number, first_name, last_name, address, postcode, city, mobile, email, ocrno, created_date ";
+		$sql .= "FROM people WHERE people_id = $data->_people_id";
+		$result = $this->_Get($sql);
+
+		// Senaste avtal
+		$sql = "SELECT pc.people_contract_id, pc.contract_no, ps.signdate ";
+	    $sql .= "FROM people_sign ps, people_contract pc ";
+	    $sql .= "WHERE pc.people_contract_id = ps.people_contract_id AND ps.people_id = $data->_people_id ";
+	    $sql .= "ORDER BY pc.people_contract_id DESC LIMIT 1";
+		$result['sign_contract'] = $this->_Get($sql);
+
+		// Credit gränser
+
+		$sql = "SELECT * FROM setting WHERE setting_type = 's' ORDER BY setting_id DESC LIMIT 1";
+		$baseResult = $this->_Get($sql);
+
+		//print_r($baseResult); die('');
+
+		$sql = "SELECT * FROM setting WHERE setting_type = 'p' AND id = $data->_people_id AND status_setting = 'a' ORDER BY setting_id DESC LIMIT 1";
+		$peopleResult = $this->_Get($sql);
+		if (sizeof($peopleResult) > 0) {
+			foreach ($peopleResult as $key => $value) {
+				if ($value != null) {
+					$baseResult[$key] =  $value;
+				}
+			}
+		}
+		$result['settings']['customer_credit_limit'] = number_format($baseResult['customer_credit_limit'], 2);
+		$result['settings']['monthly_invoice_fee'] = $baseResult['monthly_invoice_fee'];
+
+		return json_encode($result);
+
+	}
+
+	private function actionDetailsUpdate($data) {
+
+		/*
+		{
+	        "_group" : "People",
+	        "_action" : "DetailsUpdate"
+	        "_people_id" : "1"
+		}
+		*/
+		$result = $this->_Update("people", "people_id", $data->_people_id, $data);
+		return json_encode($result);
+
+	}
+
+	private function actionTrans($data) {
+
+		/*
+		{
+		    "_group" : "People",
+		    "_action" : "Trans",
+		    "_people_id" : "4",
+		    "_date_from" : "2019-01-01",
+			"_date_to" : "2019-04-30"
+			}
+		*/
+		$sql = "SELECT t.btrans_id, t.booking_id, b.booking_date, b.booking_text, t.trans_type, b.ocrno, b.credit_id, fi.company_name,  t.account_no, t.amount ";
+		$sql .= "FROM btrans t ";
+		$sql .= "LEFT JOIN booking b ON t.booking_id = b.booking_id ";
+		$sql .= "LEFT JOIN first_invoice fi ON b.credit_id = fi.credit_id ";
+		$sql .= "WHERE b.people_id = $data->_people_id AND ";
+		$sql .= "(t.account_no = '1380' OR t.account_no='1680') AND "; //" OR t.account_no='2498') ";
+		$sql .= " b.booking_date >= '$data->_date_from' ";
+		//$sql .= " AND b.booking_date <= '$data->_date_to' ";
+		$sql .= " AND b.booking_type != 'p-settl' ";
+		$sql .= "ORDER BY b.booking_date";
+		$list = $this->_GetList($sql);
+
+		for ($i = 0; $i < sizeof($list); $i++) {
+			$list[$i]['amount'] =  -$list[$i]['amount'];
+		}
+
+		//$balance1380 = 0;
+		//$balance1680 = 0;
+		$balanceTotal = $this->getAccountBalanceOnPeople($data->_people_id, $data->_date_from);
+		$ib = $balanceTotal * -1;
+		//$iSpec = 0;
+
+		//echo $Param->DateSpec .  " - " . $balanceTotal; die('');
+
+		for ($i = 0; $i < sizeof($list); $i++) {
+			$balanceTotal += $list[$i]['amount'] * -1;
+			$list[$i]['total'] = number_format($balanceTotal * -1, 2);
+			$list[$i]['amount'] = number_format($list[$i]['amount'], 2);
+		}
+
+
+		$spec = array();
+		$spec[] = new StdClass();
+
+		$index = 0;
+		$spec[$index]->date = $data->_date_from; // Fix
+		$spec[$index]->type = "Ing.bal.";
+		$spec[$index]->ref = "";
+		$spec[$index]->amount = "";
+		$spec[$index]->balance = number_format($ib, 2);
+
+		for ($i = 0; $i < sizeof($list); $i++) {
+			if ($list[$i]['trans_type'] == 're-pay' || $list[$i]['trans_type'] == 'amortization' || $list[$i]['trans_type'] == 'overdue') {
+				// skip
+			}
+			else {
+				$spec[] = new StdClass();
+				$index++;
+				$spec[$index]->date = $list[$i]['booking_date'];
+				$spec[$index]->trans_type = $list[$i]['trans_type'];
+				if ($list[$i]['trans_type'] == 'new-credit') {
+					$spec[$index]->ref = $list[$i]['company_name'] . ' (' . $list[$i]['ocrno'] . ')';
+					$spec[$index]->type = 'Köp';
+				}
+				else if ($list[$i]['trans_type'] == 'billing-fee') {
+					$spec[$index]->ref = "";
+					$spec[$index]->type = 'Aviavgift';
+				}
+				else if ($list[$i]['trans_type'] == 'fee') {
+					$spec[$index]->ref = "";
+					$spec[$index]->type = 'Aviavgift';
+				}
+				else if ($list[$i]['trans_type'] == 'start-fee') {
+					$spec[$index]->ref = "";
+					$spec[$index]->type = 'Uppl.avg.';
+				}
+				else if ($list[$i]['trans_type'] == 'cust-pmt') {
+					//$known_as = ""
+					$spec[$index]->ref = $list[$i]['company_name'] . ' (' . $list[$i]['ocrno'] . ')';
+					$spec[$index]->type = 'Inbet.';
+				}
+
+				else if ($list[$i]['trans_type'] == 'interest') {
+					$spec[$index]->ref = "";
+					$spec[$index]->type = 'Ränta';
+				}
+
+				else if ($list[$i]['trans_type'] == 'reminder-fee') {
+					$spec[$index]->ref = "";
+					$spec[$index]->type = 'Förseningsavg.';
+				}
+
+				else if ($list[$i]['trans_type'] == 'o-interest') {
+					$spec[$index]->ref = "";
+					$spec[$index]->type = 'Dröjsmålsränta';
+				}
+
+				else if ($list[$i]['trans_type'] == 'refund') {
+					$spec[$index]->ref = "";
+					$spec[$index]->type = 'Retur';
+				}
+				else if ($list[$i]['trans_type'] == 'cr-billing-fee') {
+					$spec[$index]->ref = "";
+					$spec[$index]->type = 'Kreditering';
+				}
+				else {
+					$spec[$index]->ref = "";
+					$spec[$index]->type = $list[$i]['trans_type'];
+				}
+				$spec[$index]->amount = $list[$i]['amount'];
+				$spec[$index]->balance = $list[$i]['total'];
+			}
+		}
+
+		return json_encode($spec);
+	}
+
+	private function getAccountBalanceOnPeople($peopleId, $untilDate) {
+		$sql = "SELECT SUM(t.amount) AS sum ";
+		$sql .= "FROM booking b, btrans t ";
+		$sql .= "WHERE b.booking_id = t.booking_id AND (t.account_no = '1680' OR t.account_no = '1380') AND b.booking_date <= '$untilDate' AND ";
+		$sql .= "t.people_id = '" . $peopleId . "'";
+		$result = $this->_Get($sql);
+		if ($result['sum'] == null) {
+			$result['sum'] = "0";
+		}
+		return $result['sum'];
+	}
+
+	private function actionInvoices($data) {
+
+		/*
+		{
+		    "_group" : "People",
+		    "_action" : "Invoices",
+		    "_people_id" : "4"
+			}
+		*/
+		$sql = "SELECT invoice_id, date, duedate, company_name, total, invoice_filename ";
+		$sql .= "FROM first_invoice  ";
+		$sql .= "WHERE people_id = $data->_people_id  ";
+
+		$invoiceFirst = $this->_GetList($sql);
+
+		$invoices = array();
+		$number = -1;
+		for ($i = 0; $i < sizeof($invoiceFirst); $i++) {
+			$invoices[] = new stdClass();
+			$number++;
+			$invoices[$number]->date =  $invoiceFirst[$i]['date'];
+			$invoices[$number]->type =  $invoiceFirst[$i]['company_name'];
+			$invoices[$number]->duedate =  $invoiceFirst[$i]['duedate'];
+			$invoices[$number]->total =  $invoiceFirst[$i]['total'];
+			$invoices[$number]->filname =  $invoiceFirst[$i]['invoice_filename'];
+		}
+
+		$sql = "SELECT minvoice_id, date, duedate, monthly_payment_total, invoice_filename ";
+		$sql .= "FROM minvoice ";
+		$sql .= "WHERE people_id = $data->_people_id  ";
+		$invoiceMonth = $this->_GetList($sql);
+
+		for ($i = 0; $i < sizeof($invoiceMonth); $i++) {
+			$invoices[] = new stdClass();
+			$number++;
+			$invoices[$number]->date = $invoiceMonth[$i]['date'];
+			$invoices[$number]->type = "Måndsfaktura";
+			$invoices[$number]->duedate = $invoiceMonth[$i]['duedate'];
+			$invoices[$number]->total = $invoiceMonth[$i]['monthly_payment_total'];
+			$invoices[$number]->filname = $invoiceMonth[$i]['invoice_filename'];
+		}
+
+		return json_encode($invoices);
+
+		//print_r($invoiceFirst);
+		//print_r($invoiceMonth);
+	}
+
+	private function actionBudgetGet($data) {
+
+		/*
+		{
+	        "_group" : "People",
+	        "_action" : "BudgetGet"
+	        "_people_id" : "1"
+		}
+		*/
+
+		$sql = "SELECT * ";
+		$sql .= "FROM budget WHERE budget_id = $data->_people_id";
+
+		$result = $this->_Get($sql);
+		return json_encode($result);
+	}
+
+}

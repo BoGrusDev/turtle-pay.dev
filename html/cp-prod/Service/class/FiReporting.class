@@ -1,0 +1,211 @@
+<?php
+/*
+    FiReportingClass
+
+	Date: 2018-11-26
+
+	actionBookOrderDaysReport
+
+*/
+
+class FiReportingClass extends ActionBase {
+
+	public function Run($data) {
+		$actionMethod = 'action' . $data->_action;
+		echo $this->$actionMethod($data);
+	}
+
+	public function actionSummary($data) {
+		/*
+		 {
+			"_group" : "FiReporting",
+			"_action" : "Summary",
+			"_date_from" : "2019-10-01",
+			"_date_to" : "2019-12-31",
+			"_excluded" : "1,4,5, 39, 34"
+		}
+
+		Totalt antal oreglerade fordringar ska vara alla som har overdue 3 eller högre.
+ 
+		Antal oreglerade fordringar tillkomna under kvartalet ska vara tillkomna overdue 3 eller högre.
+ 
+
+
+		*/
+
+		$data->_excluded = "1,4,5, 39, 34";
+
+		$reply = new stdClass();
+
+		// Tot utestående kreditvolym den 31/3
+		// (1380 + 1680)
+		$sql = "SELECT sum(t.amount) AS amount_of_1380 FROM btrans t, booking b WHERE ";
+		$sql .= "b.booking_date <= '$data->_date_to' AND ";
+		$sql .= "t.account_no = '1380' AND b.booking_id = t.booking_id AND t.prel = 'n'";
+		//$sql .= "t.people_id NOT IN($data->_excluded) AND t.prel = 'n'";
+		$result = $this->_Get($sql);	
+		$reply->amount_of_1380 = $result['amount_of_1380'];
+
+		$sql = "SELECT sum(t.amount) AS amount_of_1680 FROM btrans t, booking b WHERE ";
+		$sql .= "b.booking_date <= '$data->_date_to' AND ";
+		$sql .= "t.account_no = '1680' AND b.booking_id = t.booking_id AND t.prel = 'n'";
+		// $sql .= "t.people_id NOT IN($data->_excluded) ;
+		$result = $this->_Get($sql);
+		$reply->amount_of_1680 = $result['amount_of_1680'];
+
+		// Kreditvolym beviljad under Q1 (863 380 kr)
+		$sql = "SELECT sum(amount) AS amount_of_granted_credits FROM credit WHERE ";
+		$sql .= "start_date >= '$data->_date_from' AND start_date <= '$data->_date_to' AND ";
+		$sql .= "credit_status <> 'r'";
+		// AND people_id NOT IN($data->_excluded)";
+		$result = $this->_Get($sql);
+		$reply->amount_of_granted_credits = $result['amount_of_granted_credits'];
+
+		// Totalt antal utestående krediter den 31/3
+
+		$sql = "SELECT count(*) AS number_of_outstanding_credits FROM credit WHERE ";
+		$sql .= "start_date <= '$data->_date_to' AND ";
+		$sql .= "credit_status IN ('p','a','o')";
+		// AND people_id NOT IN($data->_excluded)";
+		$result = $this->_Get($sql);
+		$reply->number_of_outstanding_credits = $result['number_of_outstanding_credits'];
+		
+		$sql = "SELECT t.credit_id, sum(t.amount) AS amount_of_1380 FROM btrans t, booking b  ";
+		$sql .= "WHERE b.booking_date <= '$data->_date_to' AND t.account_no='1380' AND b.booking_id=t.booking_id AND ";
+		$sql .= "t.prel='n' ";
+		// t.people_id NOT IN(1,4,5, 39, 34) AND
+		$sql .= "GROUP BY t.credit_id ";
+		$sql .= "HAVING amount_of_1380 > 0";
+		$result = $this->_GetList($sql);
+		$reply->number_of_outstanding_credits = sizeof($result);
+
+		/*
+		$sql .= "start_date <= '$data->_date_to' AND ";
+		$sql .= "credit_status IN ('p','a','o') AND people_id NOT IN($data->_excluded)";
+		$result = $this->_Get($sql);
+		$reply->number_of_outstanding_credits = $result['number_of_outstanding_credits'];
+		*/
+		/*
+			SELECT t.credit_id, sum(t.amount) AS amount_of_1380 FROM btrans t, booking b 
+			WHERE b.booking_date <= '2019-12-31' AND t.account_no='1380' AND b.booking_id=t.booking_id AND 
+			t.people_id NOT IN(1,4,5, 39, 34) AND t.prel='n' 
+			GROUP BY t.credit_id 
+			HAVING amount_of_1380 > 0 
+
+			400
+
+		*/
+	
+		// Antal beviljade krediter under Q1 (124 st)
+		$sql = "SELECT count(*) AS number_of_granted_credits FROM credit WHERE ";
+		$sql .= "start_date >= '$data->_date_from' AND start_date <= '$data->_date_to' AND ";
+		$sql .= "credit_status <> 'r'";
+		// AND people_id NOT IN($data->_excluded)";
+		$result = $this->_Get($sql);
+		$reply->number_of_granted_credits = $result['number_of_granted_credits'];
+
+		//echo $sql;
+		//die('');
+
+		// Antal kunder den 31/3 (pesoner om mins en gång fått ut en vvredit, ej fully refunded
+		$sql = "SELECT count(DISTINCT people_id) AS number_of_customer FROM credit WHERE ";
+		$sql .= "start_date <= '$data->_date_to' AND ";
+		$sql .= "credit_status <> 'r'"; 
+		//$sql .= "people_id NOT IN($data->_excluded)";
+		$result = $this->_Get($sql);
+		$reply->number_of_customer = $result['number_of_customer'];
+
+		/*
+		$sql = "SELECT p.people_id, SUM(t.amount) AS Balance FROM people p, trans t, booking b 
+		WHERE overdue >= 3 AND b.booking_date <= '2019-12-31' AND t.prep = 'n' AND b.booking_id=t.booking_id AND t.peope_id = p.people_id;
+
+		SELECT p.people_id, SUM(t.amount) AS Balance FROM people p, btrans t, booking b 
+		WHERE overdue >= 3 AND b.booking_date <= '2019-12-31' AND t.prel = 'n' 
+		AND b.booking_id=t.booking_id AND t.people_id = p.people_id AND t.account_no = '1680'
+        GROUP BY p.people_id
+
+		SELECT p.people_id FROM people p
+		WHERE overdue >= 3 
+		*/
+		
+		//Ränteintäkter under Q1
+		$sql = "SELECT sum(t.amount) AS interest_income FROM btrans t, booking b WHERE ";
+		$sql .= "b.booking_date >= '$data->_date_from' AND b.booking_date <= '$data->_date_to' AND ";
+		$sql .= "(t.account_no = '8300' OR t.account_no = '8301') AND ";
+		$sql .= "b.booking_id = t.booking_id AND t.prel = 'n' ";
+		//$sql .= "AND t.people_id NOT IN($data->_excluded)"; // Tas bort 2020
+		$result = $this->_Get($sql);
+		$reply->interest_income = $result['interest_income'] * -1;
+
+		// Avgiftsintäkter under Q1
+		// 3540 - Frist Invoice fee, 3541 Reminders Fee, 2542 Collection Fee, 3543 Billing Fee, 3544 Reminders Fee (Vendors Fee)
+		$sql = "SELECT sum(t.amount) AS fee_income FROM btrans t, booking b WHERE ";
+		$sql .= "b.booking_date >= '$data->_date_from' AND b.booking_date <= '$data->_date_to' AND ";
+		$sql .= "t.account_no IN ('3540','3541', '3542', '3593', '3543', '3544') AND ";
+		$sql .= "b.booking_id = t.booking_id  AND t.prel = 'n'"; // Tas bort 2020
+		//$sql .= " AND t.people_id NOT IN($data->_excluded)";
+		$result = $this->_Get($sql);
+		$reply->fee_income = $result['fee_income'] * -1;
+
+		// Tot antal oreglerade fordringar 31/3
+			//echo $sql; die('');
+		//print_r($reply);
+		return  json_encode($reply);
+		//die('');
+
+	}
+
+
+	/*
+
+	SELECT count(*) FROM credit WHERE
+		start_date >= '2019-01-01' AND start_date <= '2019-03-31' AND
+		credit_status <> 'r' AND people_id NOT IN(4,5,1)
+
+	*/
+
+
+	/*
+		SELECT
+		b.booking_id,
+		b.booking_text,
+		b.booking_date,
+		b.booking_type,
+		b.prel,
+		b.people_id,
+		b.company_id,
+		b.store_id,
+		b.cr_id,
+		b.sales_person_people_id,
+		b.credit_id,
+		b.refund_id,
+		b.invoice_filename,
+		b.ocrno,
+		b.bank_account,
+		CONCAT(p.last_name, ', ', p.first_name) AS people_name,
+		c.known_as,
+		s.store_name,
+		CONCAT(sp.last_name, ', ', sp.first_name) AS sales_people_name
+		FROM booking b
+		LEFT JOIN people p ON b.people_id = p.people_id
+		LEFT JOIN company c ON b.company_id = c.company_id
+		LEFT JOIN store s ON b.store_id = s.store_id
+		LEFT JOIN people sp ON b.sales_person_people_id = sp.people_id
+		WHERE b.booking_id = 78;
+
+
+	*/
+
+
+	/*
+		Mail socket_create_listen
+
+		SELECT distinct p.email FROM people p ,company_people c
+		WHERE
+			c.priv IN ('pr','sp')
+		AND
+		    c.people_id = p.people_id
+	*/
+
+
+}

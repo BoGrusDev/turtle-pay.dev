@@ -1,0 +1,133 @@
+<?php
+/*
+    Class PeopleTransClass
+
+	Date: 2018-10-03
+
+	capi
+
+	Actions:
+		- List
+		- Get
+
+	* A transaction si a valid credit
+
+	Calls:
+	{
+		"_group" : "PeopleTrans",
+		"_action" : "List",
+		"_bankid" : "no",
+		"_company_id" : "3",
+		"_personal_id_number" : "196204021155"
+	}
+
+	Call:
+	{
+		"_group" : "PeopleTrans",
+		"_action" : "Get",
+		"_bankid" : "no",
+		"_credit_id" : "12344410229"
+	}
+
+	Replys:
+	Se end of file
+
+*/
+
+class PeopleTransClass extends ActionOpen {
+
+	public function Run($data) {
+
+		$actionMethod = 'action' . $data->_action;
+		echo $this->$actionMethod($data);
+
+	}
+
+	private function actionList($data) {
+
+
+
+	}
+
+	private function actionGet($data) {
+
+
+
+	}
+
+}
+
+/*
+	Replys:
+
+	List:
+	[
+	    {
+	        "credit_id": "12344410227",
+	        "start_date": "2018-09-26",
+	        "purchase_date": "2018-09-26",
+	        "receipt_number": "1111",
+	        "amount": "0.00",
+	        "refundable": "y",
+	        "credit_status": "p"
+	    },
+	    {
+	        "credit_id": "12344410229",
+	        "start_date": "2018-09-28",
+	        "purchase_date": "2018-09-28",
+	        "receipt_number": "21014",
+	        "amount": "0.00",
+	        "refundable": "y",
+	        "credit_status": "p"
+	    },
+	    {
+	        "credit_id": "12344410231",
+	        "start_date": "2018-09-28",
+	        "purchase_date": "2018-09-28",
+	        "receipt_number": "31014",
+	        "amount": "0.00",
+	        "refundable": "y",
+	        "credit_status": "p"
+	    },
+	    {
+	        "credit_id": "12344410235",
+	        "start_date": "2018-09-28",
+	        "purchase_date": "2018-09-28",
+	        "receipt_number": "12345",
+	        "amount": "0.00",
+	        "refundable": "y",
+	        "credit_status": "p"
+	    }
+	]
+
+	Get:
+	{
+	    "credit_id": "12344410229",
+	    "start_date": "2018-09-28",
+	    "people_id": "4",
+	    "company_id": "3",
+	    "store_id": "10",
+	    "cr_id": "1",
+	    "sale_person_people_id": "13",
+	    "purchase_date": "2018-09-28",
+	    "receipt_number": "21014",
+	    "amount": "0.00",
+	    "first_invoice_sent": "n",
+	    "first_invoice_email_sent": "n",
+	    "invoice_filename": "12344410229-E49A4F88-3A45-E6B9-07A6-D55FA690A4B3.pdf",
+	    "credit_status": "p",
+	    "refundable": "y",
+	    "from_refundable": "y",
+	    "company_name": "MMB Butiken AB (Hair Bar)",
+	    "store_name": "MOOD Gallerian",
+	    "name": "Stellan Arne Forsberg",
+	    "address": "GYLLENSTIERNSGATAN 15 LGH 1306",
+	    "postcode": "11526",
+	    "city": "STOCKHOLM",
+	    "email": "Stellan.forsberg@mondayrelations.se",
+	    "salesperson": "Lubna Mohamed Jassem Al Houmadi",
+	    "personal_id_number": "196204021155",
+	    "code": "1"
+	}
+
+*/

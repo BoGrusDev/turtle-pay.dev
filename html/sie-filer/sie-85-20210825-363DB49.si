@@ -1,0 +1,85 @@
+#FLAGGA 0
+#FORMAT PC8
+#SIETYP 4
+#PROGRAM "Turtle Pay Kundportal" 2021.1
+#GEN 20210927
+#FNAMN "T„by Tennisklubb"
+#ORGNR 816000-1809
+#KPTYP BAS95
+#KONTO 3010 "Medlemsavgift senior"
+#KONTO 1511 "Turtle Pay avr„kning"
+#KONTO 6542 "Transaktionsavgift"
+#KONTO 1930 "Bank"
+#KONTO 3037 "Serielagstr„ning"
+#VER B 549 20210803 "Medlemsavgift 2021"
+{
+#TRANS 3010 {} -300.00
+#TRANS 1511 {} 300.00
+#TRANS 1511 {} -3.00
+#TRANS 6542 {} 3.00
+}
+#VER B 550 20210804 "Turtle Pay avr„kning"
+{
+#TRANS 1930 {} 297.00
+#TRANS 1511 {} -297.00
+}
+#VER B 551 20210804 "Medlemsavgift 2021"
+{
+#TRANS 3010 {} -300.00
+#TRANS 1511 {} 300.00
+#TRANS 1511 {} -3.00
+#TRANS 6542 {} 3.00
+}
+#VER B 552 20210804 "Medlemsavgift 2021"
+{
+#TRANS 3010 {} -300.00
+#TRANS 1511 {} 300.00
+#TRANS 1511 {} -3.00
+#TRANS 6542 {} 3.00
+}
+#VER B 553 20210805 "Turtle Pay avr„kning"
+{
+#TRANS 1930 {} 594.00
+#TRANS 1511 {} -594.00
+}
+#VER B 554 20210808 "Medlemsavgift 2021"
+{
+#TRANS 3010 {} -300.00
+#TRANS 1511 {} 300.00
+#TRANS 1511 {} -3.00
+#TRANS 6542 {} 3.00
+}
+#VER B 555 20210809 "Turtle Pay avr„kning"
+{
+#TRANS 1930 {} 297.00
+#TRANS 1511 {} -297.00
+}
+#VER B 556 20210809 "Medlemsavgift 2021"
+{
+#TRANS 3010 {} 400.00
+#TRANS 1511 {} -400.00
+}
+#VER B 557 20210813 "Medlemsavgift 2021"
+{
+#TRANS 3010 {} -1000.00
+#TRANS 1511 {} 1000.00
+#TRANS 1511 {} -10.00
+#TRANS 6542 {} 10.00
+}
+#VER B 558 20210816 "Turtle Pay avr„kning"
+{
+#TRANS 1930 {} 590.00
+#TRANS 1511 {} -590.00
+}
+#VER B 559 20210824 "Serielagstr„ning 2021"
+{
+#TRANS 3037 {} -750.00
+#TRANS 1511 {} 750.00
+#TRANS 1511 {} -7.50
+#TRANS 6542 {} 7.50
+}
+#VER B 560 20210825 "Turtle Pay avr„kning"
+{
+#TRANS 1930 {} 742.50
+#TRANS 1511 {} -742.50
+}

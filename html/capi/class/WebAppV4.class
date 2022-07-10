@@ -1,0 +1,250 @@
+<?php
+/*
+    Class WebAppClass
+
+	Date: 2019-07-12
+
+*/
+
+Class WebAppV4Class extends ActionOpen {
+
+	public function Run($data) {
+
+		$actionMethod = 'action' . $data->_action;
+		echo $this->$actionMethod($data);
+	}
+    
+    private function actionCompanyInfo($data) {
+		$json =  json_encode($data);
+		$result = $this->_RestApiCall($json);
+		return $result;
+	}
+
+    private function actionCompanyStoreInfo($data) {
+		$json =  json_encode($data);
+		$result = $this->_RestApiCall($json);
+		return $result;
+	}
+
+    private function actionEventItemAdd($data) {
+		$json =  json_encode($data);
+		$result = $this->_RestApiCall($json);
+		return $result;
+	}
+
+    private function actionGetSettings($data) {
+		$json =  json_encode($data);
+		$result = $this->_RestApiCall($json);
+		return $result;
+	}
+
+	private function actionGetWaLog($data) {
+		$json =  json_encode($data);
+		$result = $this->_RestApiCall($json);
+		return $result;
+	}
+
+	/*
+    private function actionLoadWebform($data) {
+		$json =  json_encode($data);
+		$result = $this->_RestApiCall($json);
+		return $result;
+	}
+	*/
+
+	private function actionLoadEvent($data) {
+		$json =  json_encode($data);
+		$result = $this->_RestApiCall($json);
+		return $result;
+	}
+
+	private function actionLoadInheritParticipant($data) {
+		$json =  json_encode($data);
+		$result = $this->_RestApiCall($json);
+		return $result;
+	}
+
+    private function actionMonthlyPayment2($data) {
+		$json =  json_encode($data);
+		$result = $this->_RestApiCall($json);
+		return $result;
+    }
+
+    private function actionOverdueCheck($data) {
+		$json =  json_encode($data);
+		$result = $this->_RestApiCall($json);
+		return $result;
+	}
+
+	private function actionMaxCheck($data) {
+		/*
+		{
+			"_group" : "WebAppV4",
+			"_action" : "MaxCheck",
+			"_event_id" : "386"
+		}
+		*/
+		$json =  json_encode($data);
+		$result = $this->_RestApiCall($json);
+		return $result;
+	}
+
+    private function actionProgress($data) {
+		$json =  json_encode($data);
+		$result = $this->_RestApiCall($json);
+		return $result;
+	}
+
+    private function actionWriteToLog($data) {
+		$json =  json_encode($data);
+		$result = $this->_RestApiCall($json);
+		return $result;
+	}
+
+	private function actionEventItemSet() {
+		$json =  json_encode($data);
+		$result = $this->_RestApiCall($json);
+		return $result;
+    }
+
+    private function actionInvoiceEventItemSet($data) {
+		$json =  json_encode($data);
+		$result = $this->_RestApiCall($json);
+		return $result;
+    }
+
+    private function actionSetConfirmed($data) {
+		$json =  json_encode($data);
+		$result = $this->_RestApiCall($json);
+		return $result;
+	}
+
+	private function actionInvoiceRequest($data) {
+
+		if (!$this->_CheckAge($data->personal_id_number)) {
+			return '{"code":"4", "denied_code":"age_under_18"}';
+			die('');
+		}
+
+		// -- 
+		// After invoice request
+		// Need to go back to web-app for
+		//   
+		$data->_group = "InvoiceRequest";
+		$data->_action = 'Start';
+		$json = json_encode($data);
+
+		$result = $this->_RestApiCall($json);
+
+		// Posible replyes:
+		// 1: OK
+		// 8: ask for a UC
+		// 2: to_low_borrowspace, Medges ej
+		// 3: person_is_blocked, Medges ej
+		// 3: no_credit_limit, Medges ej
+
+		// 5: validation, nott all paramter (could not happend if call from the system)
+
+		echo $result;
+		
+	}
+	
+	private function actionUcInvoiceRequest($data) {
+		/*
+			Load request
+		*/
+		$resRequest = "SELECT personal_id_number, company_id, store_id, sales_person_people_id, amount ";
+		$resRequest .= "FROM wa_log_v4 WHERE wa_log_id = $data->wa_log_i";
+		$resRequest = $this->_get($sql);
+
+		$param = new stdClass();
+		$param->_group = 'Uc';
+		$param->_action =  'GetFromUc';
+		$param->_personal_id_number = $resRequest->personal_id_number; 
+		$param->_company_id = $resRequest->company_id;
+		$param->_sp_id = $resRequest->sales_person_people_id;
+		$resUcJson = $this->_RestApiCall(json_encode($param));
+		$resUc = json_decode($resUcJson);
+
+		if (!$resUc->code == '1') {
+			$reply = new stdClass();
+			$reply->code = '3';
+			$reply->denied_code = "denied";
+			return json_encode($reply);
+		}
+
+		if ((int) $resUc->credit_limit > 0) {
+
+			$paramRequest = new stdClass();
+			$paramRequest->_group = 'InvoiceRequest';
+			$paramRequest->_action = 'Start';
+			$paramRequest->company_id = $resRequest->company_id;
+            $paramRequest->store_id = $resRequest->store_id;
+            $paramRequest->sales_person_people_id = $resRequest->sales_person_people_id;
+
+            $paramRequest->personal_id_number = $resRequest->personal_id_number;
+            $paramRequest->amount = $resRequest->amount;
+            $paramRequest->_receipt_number = $data->receipt_number; // 
+            $paramRequest->source = "wa";
+            $paramRequest->device = "web";
+
+			
+			$result = $this->_RestApiCall(json_encode($data));
+			$requestData = json_decode($result);
+			if ($requestData->code = '1') {
+				// --
+				// -- Check if OK
+				// --
+				
+				require_once 'class/InvoiceRequestConfirm.class';
+				$irsObj = new InvoiceRequestConfirmClass($this->Url);					
+				$param = new stdClass();
+				$param->_group = 'InvoiceRequestConfirm';
+				$param->_action = 'Complete';
+				$param->_approved_code = $data->approved_code;
+				//$param->_order_ref = $data->order_ref;
+				$param->signature = $data->_signature;
+				$param->ocspResponse = $data->_ocspResponse;
+				$param->receipt_number = $data->_receipt_number;
+				$param->cr_id = '1';
+				return $irsObj->actionComplete($param);
+				die('');
+			}
+			else {
+				// --
+				// Web app denied
+				// 
+				return $result;
+				die('');
+			}
+		}
+		else {
+			$reply = new stdClass();
+			$reply->code = '3';
+			$reply->denied_code = "denied";
+			return json_encode($reply);
+			die('');
+		}
+		
+	} 
+
+	private function actionSetEventItemStatus($data) {
+		$json =  json_encode($data);
+		$result = $this->_RestApiCall($json);
+		return $result;
+	}
+
+	private function actionSetDeniedInvoice($data) {
+		$json =  json_encode($data);
+		$result = $this->_RestApiCall($json);
+		return $result;
+	}
+
+	// Nre 2021-08-17
+	private function actionWriteToVisitorLog($data) {
+		$json =  json_encode($data);
+		$result = $this->_RestApiCall($json);
+		return $result;
+	}
+
+}

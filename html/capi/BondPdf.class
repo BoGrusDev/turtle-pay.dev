@@ -1,0 +1,363 @@
+<?php
+/*
+
+    BondPdf
+
+    20200-01-09
+
+	sudo chmod -R 777 /var/www/html/f-invoice
+*/
+
+/*
+$bondPdf = new BondPdfClass();
+$bond = new stdClass();
+$bond->name = "Karl Gustav Karrsson";
+$bond->address = "Storgatan 23 Lgh 1822";
+$bond->postaddress = "110 23 STOCKHOLM";
+$bond->personal_id_number = "195212110521";
+$bond->date = '2020-03-20';
+// $bond->duedate = '2021-03-20';
+$bond->term = '12';
+$bond->duedate = $bond->term . ' månader efter inbetalning';
+$bond->clearingno = "5222";
+$bond->bank_accountno = '0178945412';
+//$bond->repay_text = 'kapitaliseras till skulden.' ; 
+$bond->repay_text ="utbetalas till konto ovan.";
+$bond->bondno = '33055555001';
+$bond->bondno = '1234441032';
+$bond->ocrno =  ocrnoCreate($bond->bondno);
+$bond->ocrno = '123444103295';
+$bond->amount = '30000';
+
+//$bond->checkno = ocrnoCheckno($bond->amount);
+
+//echo $bond->ocrno; die('');
+
+$bond->interest_rate = '3';
+$bond->filename = "bond-payout";
+$bond->text = [];
+
+$bond->text[] = 'Turtle Pay AB, 559101-6786 (Låntagaren) återbetalar det belopp';
+$bond->text[] = $bond->name . ' ' . $bond->personal_id_number . ' (Långivaren) inbetalat på denna avi '; 
+$bond->text[] = 'senast ' . $bond->term . ' månader efter inbetalningen. Återbetalningen sker till av Långivaren ';
+$bond->text[] = 'uppgivet konto ' . $bond->clearingno . "-" . $bond->bank_accountno . '.';  
+$bond->text[] = '';
+
+//$bond->text[] = 'Återbetalningen sker till av Långivaren uppgivet konto ' . $bond->clearingno . "-" . $bond->bank_accountno . '.';
+//$bond->text[] = '';
+$bond->text[] = 'Lånet löper med en årlig ränta om ' . $bond->interest_rate . '%. Räntan erhålls månadsvis i efterskott genom att ';
+$bond->text[] = $bond->repay_text;
+
+$bond->text[] = '';
+$bond->text[] = 'Se lånevillkor under följande länk www.turtle-pay.com/lanevillkor';
+$bond->text[] = '';
+$bond->text[] = 'Ange inbetalningsavins OCR-nummer vid inbetalningen.';
+$bond->text[] = '';
+$bond->text[] = 'Bankgiro: 5258-0016';
+$bond->text[] = '';
+$bond->text[] = 'OCR-nummer: ' . $bond->ocrno;
+
+echo '<pre>';
+	print_r($bond);
+echo '</pre>';
+
+$bondPdf->Create($bond);
+//
+
+*/
+
+use setasign\Fpdi;
+
+class BondPdfClass {
+
+
+	public function __construct($folder = "bonds") {
+		$this->folder = $folder;
+	}
+
+	public function Create($bond) {
+
+		$font = 'Helvetica';
+		$extra = 0;
+		
+		//$mall = "fakt1bg.pdf";
+		$mall = "bondmall.pdf";
+		//call the FPDF library
+		require('fpdf181/fpdf.php');
+		require_once('ftpi/autoload.php');
+		$pdf = new Fpdi\Fpdi();
+
+		$pdf->AddFont('OCR-B','','ocrb.php');
+		$pdf->setSourceFile($mall);
+		$templateId = $pdf->importPage(1);
+		// get the size of the imported page
+		$size = $pdf->getTemplateSize($templateId);
+		$pdf->AddPage('P', array($size['width'], 310));
+		//$pdf->AddPage('P', array($size['width'], $size['height']));
+		$pdf->useTemplate($templateId);
+
+		$pdf->SetFont($font);
+
+		$pdf->SetXY(12, 9); // 18
+		//$pdf->Image('faktura-logo.jpg', null,null,42,23); // 60 / 31
+		$pdf->Image('faktura-logo.jpg', null,null,33,16); // 38 / 20
+		$pdf->SetFont($font,'I');
+		$pdf->SetFontSize(9);
+		$pdf->SetXY(12, 22);
+		$pdf->Write(14, utf8_decode('P.O. Box 24078'));
+		$pdf->SetXY(12, 27);
+		$pdf->Write(14, utf8_decode('SE-104 50 Stockholm'));
+		
+		$pdf->SetFontSize(14);
+		$pdf->SetXY(116, 0);
+		$pdf->Write(16, 'SKULDEBREV');
+		
+		$pdf->SetFont($font,'B');
+		$pdf->SetFontSize(9);
+		$pdf->SetXY(116, 8);
+		$pdf->Write(11, 'Utskriftsdatum');
+		$pdf->SetFont('');
+		$pdf->SetFont($font);
+		$pdf->SetFontSize(10);
+		$pdf->SetXY(116, 13);
+		$pdf->Write(10, $bond->purchase_date);
+
+		$pdf->SetFont($font,'B');
+		$pdf->SetFontSize(9);
+		$pdf->SetXY(116, 17);
+		$pdf->Write(11, utf8_decode('Förfallodatum'));
+		$pdf->SetFont('');
+		$pdf->SetFont($font);
+		$pdf->SetFontSize(10);
+		$pdf->SetXY(116, 22);
+		$pdf->Write(10, utf8_decode($bond->term . ' månader efter inbetalning'));
+		
+		$pdf->SetFontSize(10);
+		$pdf->SetXY(116, 33);
+		$pdf->Write(10, utf8_decode($bond->people_name));
+		$pdf->SetXY(116, 38);
+		$pdf->Write(10, utf8_decode($bond->address));
+		$pdf->SetXY(116, 43);
+		$pdf->Write(10, utf8_decode($bond->postcode . ' ' . $bond->city));
+		
+		$nextRow = 67;
+		
+		$pdf->SetFontSize(10);
+		for ($i=0; $i < sizeof($bond->text); $i++) {
+			$pdf->SetXY( 18, $nextRow);
+			$pdf->Write(10, utf8_decode($bond->text[$i]));
+			$nextRow = $nextRow + 4;
+		} 
+		
+		$nextRow = $nextRow + 4;
+		$pdf->SetXY( 18, $nextRow);
+		$pdf->Write(10, utf8_decode('Turtle Pay AB'));
+
+		$nextRow = $nextRow + 8;
+		$pdf->SetXY(18, $nextRow); // 18
+		$pdf->Image('stellan-sign5.png', null,null,0,0); // 38 / 20
+
+		$nextRow = $nextRow + 18;
+		$pdf->SetXY( 18, $nextRow);
+		$pdf->Write(10, utf8_decode('Stellan Forsberg, verkställande direktör'));
+
+		$pdf->Line(18,186,201,186);
+		//$pdf->Line(18,190,201,190);
+		$pdf->SetFontSize(8);
+		$pdf->SetXY(18, 184);
+		$pdf->Write(10, utf8_decode('Turtle Pay AB'));
+		$pdf->SetXY(42, 184);
+		$pdf->Write(10, utf8_decode('Org nr: 559101-6786'));
+		$pdf->SetXY(74, 184);
+		$pdf->Write(10, utf8_decode('P.O. Box 24078'));
+		$pdf->SetXY(100, 184);
+		$pdf->Write(10, utf8_decode('SE-104 50 Stockholm'));
+		$pdf->SetXY(140, 184);
+		$pdf->Write(10, utf8_decode('Telefon 08-80 62 20'));
+		//$pdf->SetXY(140, 188);
+		//$pdf->Write(10, utf8_decode('Öppet vardagar 9-16'));
+		$pdf->SetXY(172, 184);
+		$pdf->Write(10, utf8_decode('info@turtle-pay.com'));
+		
+		$pdf->SetFontSize(8);
+		$pdf->SetXY(20, 230);
+		$pdf->Write(10, utf8_decode($bond->people_name));
+		$pdf->SetXY(20, 234);
+		$pdf->Write(10, utf8_decode($bond->address));
+		$pdf->SetXY(20, 238);
+		$pdf->Write(10, utf8_decode($bond->postcode . ' ' . $bond->city));
+
+		/*
+		$pdf->SetFontSize(12);
+		//$pdf->SetXY(134, 218);
+		$pdf->SetXY(90, 238);
+		$pdf->Write(12, utf8_decode('Fyll i valfritt belopp'));
+		*/
+		// Write the OCR
+		//$pdf->SetFont('OCRB10PitchBT-Regular');
+		$pdf->SetFont('OCR-B','',12);
+		//$pdf->SetFontSize(10);
+
+		$pdf->SetXY(12, 272);
+		$pdf->Write(10, utf8_decode('#'));
+
+		$pdf->SetXY(43, 272);
+
+		$pdf->Write(10, utf8_decode($bond->ocrno . ' #'));
+
+		if (strlen($bond->amount) == 5) {
+			$position = 86;
+		}
+		else if (strlen($bond->amount) == 6) {
+			$position = 84;
+		}
+		else {
+			$position = 82;
+		}
+		$pdf->SetXY($position, 272);
+		$bond->checkno = $this->ocrnoCheckno(round($bond->amount));
+		$pdf->Write(10, utf8_decode(round($bond->amount) . ' 00  ' .  $bond->checkno . ' >'));
+
+		$pdf->SetXY(167, 272);
+		$pdf->Write(10, utf8_decode('52580016#41#'));
+		
+		$filename = $this->folder . '/' . $bond->filename;
+	
+		try {
+			$pdf->Output($filename,'F');
+			return true;
+		}
+		catch(Exception $e) {
+			return false;
+			//echo 'Message: ' .$e->getMessage();
+		}
+	}
+
+
+	private function ocrnoCheckno($amountNumber) {
+		$amount = strval($amountNumber);
+		$sum = 0;
+		$trace = array();
+		$j = -1;
+		/*
+		$length = strlen($amount);
+		if ($length % 2 == 0) {
+			$onOff = true;
+		}
+		else {
+			$onOff = false;
+		}
+		*/
+
+		$Multiple = 2;
+
+		//for ($i=0; $i < strlen($amount); $i++) {
+		for ($i=strlen($amount) - 1; $i >= 0; $i--) {
+		// Even
+			$trace[] = new stdClass();
+			$j++;
+			$trace[$j]->index = $i;
+			$trace[$j]->amount = $amount[$i];
+			//echo '[ ' . $i . ' (' . $amount[$i] . ') ';
+			/*
+			if ($onOff) {
+				$trace[$j]->type =  "odd";
+				$res = $amount[$i];
+				$onOff = false;
+			} else {
+				$trace[$j]->type =  "even";
+				$res = $amount[$i] * 2;
+				$onOff = true;
+			}
+			*/
+		
+
+			$res = $amount[$i] * $Multiple;
+			$trace[$j]->res1 = $res;
+			if ($res > 9) {
+				$res = $res - 9;
+			}
+			$trace[$j]->multiple = $Multiple;
+			$trace[$j]->res = $res;
+			$trace[$j]->sum = $sum;
+			$sum = $sum + $res;
+			// echo ' sum=' . $sum . ' ] ';
+			if ($Multiple == 2) {
+				$Multiple = 1;
+			}
+			else {
+				$Multiple = 2;
+			}
+		}
+		//die('');
+		$nerast10 = ceil($sum / 10) * 10;
+
+		$checksum =  $nerast10 - $sum;
+		//echo $sum . ' : ' . $checksum;
+		//echo '<pre>';
+		//print_r($trace); 
+		//echo '</pre>';
+		//die('');
+		//echo ' ' . $nerast10 . ' ';
+
+		return $checksum;
+	}
+
+	/*
+	private function ocrnoCheckno($amountNumber) {
+		$amount = strval($amountNumber);
+		$sum = 0;
+		$trace = array();
+		$j = -1;
+		$length = strlen($amount);
+		if ($length % 2 == 0) {
+			$onOff = true;
+		}
+		else {
+			$onOff = false;
+		}
+		//for ($i=0; $i < strlen($amount); $i++) {
+		for ($i=strlen($amount) - 1; $i >= 0; $i--) {
+		// Even
+			$trace[] = new stdClass();
+			$j++;
+			$trace[$j]->index = $i;
+			$trace[$j]->amount = $amount[$i];
+			//echo '[ ' . $i . ' (' . $amount[$i] . ') ';
+			if ($onOff) {
+				$trace[$j]->type =  "even";
+				$res = $amount[$i];
+				$onOff = false;
+			} else {
+				$trace[$j]->type =  "odd";
+				$res = $amount[$i] * 2;
+				$onOff = true;
+			}
+			$trace[$j]->res1 = $res;
+			if ($res > 9) {
+				$res = $res - 9;
+			}
+			$trace[$j]->res = $res;
+			$trace[$j]->sum = $sum;
+			$sum = $sum + $res;
+			// echo ' sum=' . $sum . ' ] ';
+		}
+		//die('');
+		$nerast10 = ceil($sum / 10) * 10;
+
+		$checksum =  $nerast10 - $sum;
+		//echo $sum . ' : ' . $checksum;
+		//print_r($trace); 
+		//die('');
+		// echo ' ' . $nerast10 . ' ';
+
+		return $checksum;
+	}
+	*/
+
+}
+
+
+
+
+ ?>

@@ -1,0 +1,20 @@
+# For security reasons, Option followsymlinks cannot be overridden.
+Options +SymLinksIfOwnerMatch
+
+# Prevent Directoy listing 
+Options -Indexes
+
+# Prevent Direct Access to files
+<FilesMatch "\.(inc|ini|pem|key|log)">
+Order deny,allow
+Deny from all
+</FilesMatch>
+
+RewriteEngine On
+RewriteBase /
+
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_URI} !.*\.(ico|gif|jpg|jpeg|png|js|css)
+RewriteRule ^([^?]*) index.php?param=$1 [L,QSA]
+    

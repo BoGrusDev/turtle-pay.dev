@@ -1,0 +1,412 @@
+<?php
+
+class UcClass extends ActionBase {
+
+	public function Run($data) {
+
+		$actionMethod = 'action' . $data->_action;
+		echo $this->$actionMethod($data);
+
+	}
+    
+    private function actionGetPeopleId($data) {
+        $sql = "SELECT people_id FROM people WHERE personal_id_number = '$data->_personal_id_number'";
+        return json_encode($this->_Get($sql));
+    }
+
+    private function actionGetFromUc($data) {
+        /*
+
+        // --Do the Real UC check and save it to uc and uc_item
+
+            {
+                "_group" : "Uc",
+                "_action" : "GetFromUc",
+                "_personal_id_number" : "194701254023", 
+                "_people_id" : "1",
+                "_company_id" : "69",
+                "_sp_id" : "34"
+            }
+            Real Test - 194701254023
+            Fake - 196608053044
+
+            <ns2:status ns2:result="error">
+            <ns2:message ns2:id="101">Objekt-nr saknas i UC:s register. Kontrollera att numret är korrekt angivet
+            
+            <ns2:status ns2:result="ok" />
+        */
+
+        $paramLog = new stdClass();
+
+        // -- 
+        // Validation
+        // --
+
+        $validationError = false;
+         
+         // -- Check if _people_id is set
+        //if (isset($data->_people_id) == false) {
+        if (!isset($data->_people_id) || !is_numeric($data->_people_id)) {
+            $validationError = true;
+        } else {
+            $peopleId = $data->_people_id;
+            $paramLog->people_id = $peopleId;
+        }
+        
+        // -- Check if _personal_id_number is set
+        if (!isset($data->_personal_id_number)) {
+            $validationError = true;
+        } else {
+            $personalIdNumber = $data->_personal_id_number;
+            $paramLog->personal_id_number = $personalIdNumber;
+             // -- Check if _personal_id is set tp length 12 
+            if (strlen($personalIdNumber) != 12) {
+                $validationError = true;
+            }
+        }
+        /*
+        // -- Check if _company_id is set
+        if (!isset($data->_company_id) || !is_numeric($data->_company_id)) {
+            $validationError = true;
+        } else {
+            $paramLog->company_id = $data->_company_id;;
+        }
+
+        // -- Check if _sp_id
+        if (!isset($data->_sp_id)  || !is_numeric($data->_sp_id)) {
+            $validationError = true;
+        } else {
+            $paramLog->sp_id = $data->_sp_id;;
+        }
+       */
+        $dt = new DateTime();
+        $paramLog->date_time = $dt->format('Y-m-d H:i');
+    
+        if ($validationError == true) {
+            
+            $paramLog->error_code = '1'; // Validation test
+            $paramLog->error_message = "Fel i validering av indata";
+            $paramLog->status = "error";
+            $this->_Insert('uc_log', $paramLog);
+            $paramLog->code = '0';
+            return json_encode($paramLog);
+        }
+       
+        // Cut the centurty prefix (UC work with 10 digits)
+        $ucPersonalIdNumber = substr($personalIdNumber, 2, 10);
+
+        $ucUser = 'KQLH8';
+
+        $ucPassword = 'X0'; // prod
+        //$ucPassword = 'T0';
+        $soapUrl = "https://www.uc.se/UCSoapWeb/services/ucOrders2"; // prod
+        //$soapUrl = "https://www1.uc.se/UCSoapWeb/services/ucOrders2";
+
+        $xml_post_string  = '<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ucor="http://www.uc.se/schemas/ucOrderRequest/">';
+        $xml_post_string .= '<soapenv:Header/>';
+        $xml_post_string .= '<soapenv:Body>';
+        $xml_post_string .= '<ucor:individualReport ucor:product="r31" ucor:version="?">';
+        $xml_post_string .= '<ucor:customer>';
+        $xml_post_string .= '<ucor:userId>' . $ucUser . '</ucor:userId>';
+        $xml_post_string .= '<ucor:password>' . $ucPassword . '</ucor:password> ';
+        $xml_post_string .= '</ucor:customer>';
+        $xml_post_string .= '<ucor:individualReportQuery ucor:xmlReply="1" ucor:htmlReply="0" ucor:reviewReply="0" ucor:pdfReply="0" ucor:extendedDetails="0" ucor:lang="swe">';
+        $xml_post_string .= '<ucor:object>' . $ucPersonalIdNumber . '</ucor:object>';
+        $xml_post_string .= '</ucor:individualReportQuery>';
+        $xml_post_string .= '</ucor:individualReport>';
+        $xml_post_string .= '</soapenv:Body>';
+        $xml_post_string .= '</soapenv:Envelope>';
+
+        $headers = array(
+            "Content-type: text/xml;charset=\"utf-8\"",
+            "Accept: text/xml",
+            "Cache-Control: no-cache",
+            "Pragma: no-cache",
+            "Content-length: ".strlen($xml_post_string),
+        );
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 1);
+        curl_setopt($ch, CURLOPT_URL, $soapUrl);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $xml_post_string); // the SOAP request
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        $response = curl_exec($ch);
+        if(curl_errno($ch)){
+            $reply = new stdClass();
+            $reply->code = '0';
+            $reply->denied_code = "error_take_uc";
+            return json_encode($reply);
+        }
+        curl_close($ch);
+        $doc = new DOMDocument;
+        $doc->loadXML($response);
+        
+        $statusRows = $doc->getElementsByTagNameNS('http://www.uc.se/schemas/ucOrderReply/', 'status');
+    
+       
+        foreach ($statusRows as $row) {
+            $paramLog->status = $row->getAttribute('ns2:result');
+            
+            if ($paramLog->status == "error") {
+                $messageRows = $doc->getElementsByTagNameNS('http://www.uc.se/schemas/ucOrderReply/', 'message');
+                foreach ($messageRows as $item) {
+                    $paramLog->error_code = $item->getAttribute('ns2:id');
+                    $paramLog->error_message = $item->nodeValue;
+                }        
+                $this->_Insert('uc_log', $paramLog);
+
+                // --
+                // -- Eroor whne get UC, set customer limit to 0
+                // --
+                $newSetting = new stdClass();
+                $newSetting->setting_type = 'p';
+                $newSetting->id = $peopleId;
+                $newSetting->customer_credit_limit = '0';
+                $this->_Insert('setting', $newSetting);
+                // --
+                // -- Set US value in People yes, uc date and denied
+                // -- 
+                $param = new stdClass();
+                $param->has_uc_check = 'y';
+                //$param->uc_id = $ucId;
+                $param->credit_limit = '0';
+                $param->income = '0';
+                // ALTER TABLE `people` ADD `credit_status` VARCHAR(8) NOT NULL DEFAULT 'not set' AFTER `income`;
+                $param ->credit_status =  'error';
+                $dt = new DateTime();
+                $param->uc_date = $dt->format('Y-m-d');
+                $this->_Update('people', 'people_id', $peopleId, $param);
+                
+                $paramLog->code = '3';
+                return json_encode($paramLog);
+            }
+        }
+       
+        $this->item = array();
+        $index = -0;
+        $groups = $doc->getElementsByTagNameNS('http://www.uc.se/schemas/ucOrderReply/', 'group');
+        
+        $dt = new DateTime();
+        $ucData = new stdClass();
+        $ucData->people_id = $peopleId;
+        $ucData->uc_date = $dt->format('Y-m-d');
+        $reply = $this->_Insert('uc',$ucData);
+        $ucId = $reply['id'];
+        
+        foreach ($groups as $group) {
+            $rows = $group->getElementsByTagNameNS('http://www.uc.se/schemas/ucOrderReply/', 'term');
+            foreach ($rows as $row) {
+                $ucItem = new stdClass();
+                $ucItem->uc_id = $ucId;
+                $ucItem->uc_item = $row->getAttribute('ns2:id');
+                $ucItem->value = $row->nodeValue;
+                $this->_Insert('uc_item',$ucItem);
+            }
+        }   
+        
+        // --
+        // -- Calculate credit limit
+        // --
+        $resCredit = $this->calculateCreditLimit($peopleId);
+        
+        // --
+        // -- Set credit limit in settings on people
+        // --
+        $newSetting = new stdClass();
+        $newSetting->setting_type = 'p';
+        $newSetting->id = $peopleId;
+        $newSetting->customer_credit_limit = $resCredit->credit_limit;
+        $this->_Insert('setting', $newSetting);
+
+
+        // Update person
+        $param = new stdClass();
+        $param->has_uc_check = 'y';
+        $param->uc_id = $ucId;
+        $param->credit_limit = $resCredit->credit_limit;
+        $param->income = $resCredit->income;
+        // ALTER TABLE `people` ADD `credit_status` VARCHAR(8) NOT NULL DEFAULT 'not set' AFTER `income`;
+        $param ->credit_status =  $resCredit->credit_status;
+        $param->uc_date = $dt->format('Y-m-d');
+        $this->_Update('people', 'people_id', $peopleId, $param);
+        
+        // -- Write to the log
+        $paramLog->uc_id = $ucId;
+        $paramLog->credit_limit = $resCredit->credit_limit;
+        $paramLog->income =  $resCredit->income;
+        $paramLog->credit_status =  $resCredit->credit_status;
+        $this->_Insert('uc_log', $paramLog);
+        $paramLog->code = '1';
+        return json_encode($paramLog);
+        
+    }
+
+    private function loadUc($peopleId) {
+		/*
+		{
+			"_group" : "Test",
+			"_action" : "LoadUc",
+			"_people_id" : "1"
+		}
+		*/
+		 
+        // --
+        // -- Get the last UCid on the person
+        $sql = "SELECT uc_id FROM uc ";
+		$sql .= "WHERE people_id = $peopleId ";
+		$sql .= "ORDER BY uc_id DESC";
+        $res = $this->_Get($sql);
+
+        if ($res['code'] == '1') {
+            $ucId = $res['uc_id'];
+		}
+		else {
+			$reply = new stdClass();
+			$reply->code = '0';
+			$reply->denied_code  = 'no-uc-exist-for-people';
+			return json_encode($reply);
+			die('');
+		}
+		
+		// --
+		// -- Load UC all data 
+		// --
+        $sql = "SELECT uc_item_id, uc_item, value FROM uc_item ";
+		$sql .= "WHERE uc_id = $ucId ";
+		$sql .= "ORDER BY uc_item_id";
+		$result = $this->_GetList($sql);
+        
+		return json_encode($result);
+	}
+
+	private function calculateCreditLimit($peopleId) {
+		/*
+			This function calculate the credit limit for a person.
+			It use the function actionLoadUc, that load last saved UC for the person
+			The function return the value of the new credit limit, if 0, means denied.
+			code = 0, means no UC find, code = 1 process OK
+		
+			{
+				"_group" : "Test",
+				"_action" : "CalculateCreditLimit",
+				"_people_id" : "1"
+            }
+            
+            ## How to add a uc level.
+            If there are 0-7 level at the moment, a new level vill be 8
+            - Add field uc_level_8 and uc_level_8_credit to setting table
+            - Add this to  $creditMatrix: 
+                - $this->Setting->uc_level_8=>$this->Setting->uc_level_8_credit
+            - change the; 
+                - $creditMaxLimit = $this->Setting->uc_level_7;
+                - $creditMaxCredid = $this->Setting->uc_level_7_credit;
+            - To 
+                - $creditMaxLimit = $this->Setting->uc_level_8;
+                - $creditMaxCredid = $this->Setting->uc_level_8_credit;
+
+            - Add in Pages/setting/setting.inc 
+                - echo FormItemCreate('UC level-8 (kr)','uc_level_8', null, 'w-74','label-settings');
+                - echo FormItemCreate('UC level-8 credit (kr)','uc_level_8_credit', null, 'w-74','label-settings');
+            - Before
+               echo FormItemCreate('UC max credit (kr)','uc_max_credit', null, 'w-74','label-settings');
+            - Update the Settings value in CP-prod and Settings
+
+		*/
+
+		$param = new stdClass();
+		//$param->_people_id = $data->_people_id;
+		$reply = $this->loadUc($peopleId);	
+		$ucTag = json_decode($reply);
+		
+		$denied = false;
+		$deniedText = '';
+		for ($i=0; $i < sizeof($ucTag); $i++) {
+			// Has trustee
+			if ($ucTag[$i]->uc_item == 'W61109') {
+				$markCount = (int)$ucTag[$i]->value;
+				if ($markCount > 0) { 
+					$deniedText = 'has-marks';
+					$denied = true;
+					break;
+				}
+			} 
+			if ($ucTag[$i]->uc_item == 'W08018') {
+				if ($ucTag[$i]->value == "Y") {
+					$deniedText = 'has-trustee';
+					$denied = true;
+					break;
+				}
+			} 
+		}
+
+		// Get the latest income
+		$income = 0;
+		for ($i=0; $i < sizeof($ucTag); $i++) {
+			if ($ucTag[$i]->uc_item == 'W49592') {
+				$income = (int)$ucTag[$i]->value;
+				break;
+			} 
+		}
+
+        if ($denied) {
+            $reply = new stdClass();
+            $reply->income = $income;
+			$reply->credit_limit  = '0';
+			$reply->credit_status = 'denied';
+            return $reply;
+			die('');
+		}
+
+        $this->_Settings();
+        $creditMatrix = array(
+			$this->Setting->uc_level_0=>$this->Setting->uc_level_0_credit, 
+			$this->Setting->uc_level_1=>$this->Setting->uc_level_1_credit, 
+			$this->Setting->uc_level_2=>$this->Setting->uc_level_2_credit, 
+			$this->Setting->uc_level_3=>$this->Setting->uc_level_3_credit, 
+			$this->Setting->uc_level_4=>$this->Setting->uc_level_4_credit, 
+			$this->Setting->uc_level_5=>$this->Setting->uc_level_5_credit, 
+			$this->Setting->uc_level_6=>$this->Setting->uc_level_6_credit, 
+            $this->Setting->uc_level_7=>$this->Setting->uc_level_7_credit
+        );
+        
+        $creditMaxLimit = $this->Setting->uc_level_7;
+        $creditMaxCredid = $this->Setting->uc_level_7_credit;
+
+        /*
+		$creditMatrix = array(
+			'25000'=>0, 
+			'70000'=>1000,
+			'100000'=>3000,
+			'150000'=>5000,
+			'250000'=>10000,
+			'400000'=>20000,
+			'600000'=>50000,
+            '800000'=>100000    
+        );
+        $creditMaxLimit = 800000;
+        $creditMaxCredid = 150000;
+        */
+		$newCredit = 0;
+		foreach ($creditMatrix as $limit => $credit) {  
+			if ($income <= (int)$limit) {
+				$newCredit = $credit;
+				break;
+			} 
+		}  
+        
+        if ($income > $creditMaxLimit) {
+            $newCredit = $creditMaxCredid;
+        } 
+
+        $reply = new stdClass();
+        $reply->income = $income;
+        $reply->credit_limit  = $newCredit;
+        $reply->credit_status = 'granted';
+        return $reply;
+
+	}
+
+}

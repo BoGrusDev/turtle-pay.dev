@@ -1,0 +1,924 @@
+<?php
+/*
+    Class SettlementBillingClass
+
+	// Due date vill be set dynamic  	
+
+	Need add AND t.prel='n' to all access to the btrans tbel, 
+	most in sep function and for the specification, a part updated
+	exist in cp-dev local
+
+*/
+
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+use setasign\Fpdi;
+
+define('BILLING_FOLDER',  '../finvoice/');
+//define('INVOICE_FOLDER',  '../../minvoice-test/');
+
+class SettlementBillingClass extends ActionBase {
+
+	/*
+	public function __construct() {
+		$this->_Settings();
+	}
+	*/
+
+	public function Run($data) {
+		$actionMethod = 'action' . $data->_action;
+		return $this->$actionMethod($data);
+	}
+
+	private function actionCreateBulk($data) {
+		/*
+
+		2019-07-06
+
+		FIX som dates is hard coded
+
+		{
+			"_group" : "SettlementBilling",
+			"_action" : "CreateBulk",
+			"_period" : "201910",
+			"_pre" : "yes"
+		}
+
+		*/
+		// --
+		// Create the date
+		// 
+
+		if ($data->_period == '202113') {
+			$data->_period = '202201';
+		}
+		
+
+		$data->_duedate  = substr($data->_period, 0, 4) . '-' . substr($data->_period, 4, 2) . '-28';
+		$prevPeriod = $data->_period - 1;
+		$lastSettlementDate = substr($data->_period, 0, 4) . '-' . substr($prevPeriod, 4, 2) . '-28';
+		$data->_print_date = date("Y-m-d", strtotime("+" . $lastSettlementDate . " + 5 days"));
+		$this->setOcrno();
+
+		$sql = "SELECT DISTINCT people_id FROM credit WHERE credit_status IN('o') ORDER BY credit.people_id ASC";
+		$peopleList = $this->_GetList($sql);
+
+		$sql = "SELECT people_id, SUM(amount) AS balance FROM btrans WHERE account_no = '1680' AND prel IN ('n','y')  GROUP BY people_id ";
+		$peopleList2 = $this->_GetList($sql);
+		
+		for ($i=0; $i < sizeof($peopleList2); $i++) {
+			if ($peopleList2[$i]['balance'] > 0) {
+				$exist = false;
+				for ($j = 0; $j < sizeof($peopleList); $j++) {
+					if ($peopleList2[$i]['people_id'] == $peopleList[$j]['people_id']) {
+						$exist = true;
+					break;
+					}
+				}
+				if ($exist == false) {
+					$peopleList[] = ['people_id'=>$peopleList2[$i]['people_id']];
+				}
+			}
+		}
+
+		$log = array();
+		for ($i = 0; $i < sizeof($peopleList); $i++) {
+			$param = new StdClass();
+			$param->_people_id = $peopleList[$i]['people_id'];
+			$param->_period = $data->_period;
+		
+			$param->_print_date = $data->_print_date;
+			$param->_duedate = $data->_duedate;
+
+			$log[$i] = new stdClass();
+			$log[$i]->people_id = $peopleList[$i]['people_id'];
+
+			if ($data->_pre == 'no') {
+				//if ($param->_people_id == '3271') {
+					$log[$i]->invoice = $this->actionCreateInvoices($param);
+				//}
+			}
+		}
+		$reply = new stdClass();
+		$reply->code = '1';
+		$reply->counts = sizeof($log);
+		return json_encode($reply);
+		//return json_encode($log);
+	}
+
+	private function actionCreateInvoices($data) {
+
+		/*
+		{
+			"_group" : "SettlementBilling",
+			"_action" : "CreateInvoices",
+			"_people_id" : "2716",
+			"_period" : "202111"
+			}
+		*/
+
+
+		$this->_Settings();
+		$Base = new stdClass();
+		$Base->PeopleId = $data->_people_id;
+		$Base->Period = $data->_period;
+	
+		$Base->DateTo = substr_replace( $Base->Period -1, '-', 4, 0 ) . '-' . '28';
+		$Base->DateTo = date("Y-m-d", strtotime("+" . $Base->DateTo . " + 5 days"));
+		
+		$sql = "SELECT t.btrans_id, t.booking_id, b.booking_date, b.booking_text, b.receipt_number, t.trans_type, b.ocrno, b.credit_id,";
+		$sql .= "fi.company_name,t.account_no, t.amount ";
+		$sql .= "FROM btrans t ";
+		$sql .= "LEFT JOIN booking b ON t.booking_id = b.booking_id ";
+		$sql .= "LEFT JOIN first_invoice fi ON b.credit_id = fi.credit_id "; 
+		$sql .= "WHERE b.people_id = $Base->PeopleId AND t.prel= 'n' AND ";
+		$sql .= "t.account_no IN ('1380','1680') AND b.booking_date <= '$Base->DateTo' AND ";
+		$sql .= "t.trans_type NOT IN ('re-pay', 'amortization', 'overdue', 'redistribute', 'intern') ";
+		$sql .= "ORDER BY b.booking_date, t.btrans_id ";
+
+
+		//echo $sql; die('');
+
+		$list = $this->_GetList($sql);
+
+		//print_r($list);  die('');
+
+		//echo sizeof($list); die('');
+
+		for ($i = 0; $i < sizeof($list); $i++) {
+			$list[$i]['amount'] =  -$list[$i]['amount'];
+		}
+
+		$balance1380 = 0;
+		$balance1680 = 0;
+		// $balanceTotal = $this->getAccountBalanceOnPeople($Base->PeopleId, $Base->PeriodSpec);
+		//$balanceTotal = $this->getAccountBalanceOnTrans($Base->PeopleId, $list[sizeof($list) - 1]['btrans_id']);
+		
+		$balanceTotal = 0;
+	
+
+		// $ib = $balanceTotal * -1;
+		$ib = 0;
+
+		$iSpec = 0;
+		for ($i = 0; $i < sizeof($list); $i++) {
+			$balanceTotal += $list[$i]['amount'] * -1;
+			$list[$i]['total'] = number_format($balanceTotal * -1, 2);
+		}
+
+		$spec = array();
+		$spec[] = new StdClass();
+
+		$index = 0;
+		$spec[$index]->date = ''; // $Base->PeriodSpec; // Fix
+		$spec[$index]->type = "Ing.bal.";
+		$spec[$index]->ref = "";
+		$spec[$index]->amount = "";
+		$spec[$index]->balance = number_format($ib, 2);
+
+		//echo $ib; die('');
+
+		$balance = $ib;
+
+		$processDate = null;
+	
+		for ($i = $iSpec; $i < sizeof($list); $i++) {
+		//for ($i = sizeof($list)-1; $i >= 0; $i--) {
+				//print_r($list[$i]); die('');
+				// First time
+				if ($processDate == null ) {
+					$processDate = $list[$i]['booking_date'];
+					$processInterest = 0;
+					$processReminderFee = 0;
+				}
+				else if ($processDate != $list[$i]['booking_date']) {
+
+					if ($processInterest < 0) {
+
+						$spec[] = new StdClass();
+						$index++;
+						$spec[$index]->date = $processDate;
+						$spec[$index]->trans_type = 'interest';
+						$spec[$index]->ref = "";
+						$spec[$index]->type = 'Ränta';
+						$spec[$index]->amount = $processInterest;
+						$balance += $processInterest;
+						$spec[$index]->balance = number_format($balance, 2);
+						$processInterest = 0;
+					}
+					if ($processReminderFee < 0) {
+						$spec[] = new StdClass();
+						$index++;
+						$spec[$index]->date = $processDate;
+						$spec[$index]->trans_type = 'reminder-fee';
+						$spec[$index]->ref = "";
+						$spec[$index]->type = 'Förseningsavg.';
+						$spec[$index]->amount = $processReminderFee;
+						$balance += $processReminderFee;
+						$spec[$index]->balance = number_format($balance, 2);
+						$processReminderFee = 0;
+					}
+					$processDate = $list[$i]['booking_date'];
+				}
+
+				if ($list[$i]['trans_type'] == 'interest') {
+					$processInterest += $list[$i]['amount'];
+					//echo $processInterest;
+				}
+				else if ($list[$i]['trans_type'] == 'reminder-fee') {
+					$processReminderFee += $list[$i]['amount'];
+				}
+				else {
+					$spec[] = new StdClass();
+					$index++;
+					$spec[$index]->date = $list[$i]['booking_date'];
+					$spec[$index]->trans_type = $list[$i]['trans_type'];
+					if ($list[$i]['trans_type'] == 'new-credit') {
+						// $spec[$index]->ref = $list[$i]['company_name'] . ' (' . $list[$i]['ocrno'] . ')';
+						$spec[$index]->ref = $list[$i]['receipt_number'];
+						$spec[$index]->type = 'Köp';
+					}
+					else if ($list[$i]['trans_type'] == 'billing-fee') {
+						$spec[$index]->ref = "";
+						$spec[$index]->type = 'Aviavgift';
+					}
+					else if ($list[$i]['trans_type'] == 'cust-pmt') {
+						if ($list[$i]['ocrno'][0] == '2') {
+							$spec[$index]->ref = 'Månadsfaktura';
+						}
+						else {
+							$spec[$index]->ref = $this->getCreditRef($list[$i]['credit_id']);
+							//$spec[$index]->ref = $list[$i]['company_name'] . ' (' . $list[$i]['ocrno'] . ')';
+						}
+						$spec[$index]->type = 'Inbetalning';
+					}
+					else if ($list[$i]['trans_type'] == 'reminder-fee') {
+						$spec[$index]->ref = "";
+						$spec[$index]->type = 'Förseningsavg.';
+					}
+
+					else if ($list[$i]['trans_type'] == 'o-interest') {
+						$spec[$index]->ref = "";
+						$spec[$index]->type = 'Dröjsmålsränta';
+					}
+
+					else if ($list[$i]['trans_type'] == 'credit-fee') {   // Need to fix
+						$spec[$index]->ref = "";
+						$spec[$index]->type = 'Kreditering';
+					}
+
+					else if ($list[$i]['trans_type'] == 'collectionr-fee') {   // Need to fix
+						$spec[$index]->ref = "";
+						$spec[$index]->type = 'Inkassokravavg.';
+					}
+
+					else if ($list[$i]['trans_type'] == 'collection-fee') {   // Need to fix
+						$spec[$index]->ref = "";
+						$spec[$index]->type = 'Inkassokravavg.';
+					}
+
+					else if ($list[$i]['trans_type'] == 'refund') {
+						$spec[$index]->ref = "";
+						$spec[$index]->type = 'Retur';
+					}
+					else if ($list[$i]['trans_type'] == 'cr-billing-fee') {
+						$spec[$index]->ref = "";
+						$spec[$index]->type = 'Kreditering';
+					}
+					//else if ($list[$i]['trans_type'] == 'crediting') {
+						//$spec[$index]->ref = "";
+						//$spec[$index]->type = 'Kreditering';
+					// }
+					// Fix 20201205
+					else if ($list[$i]['trans_type'] == 'crediting') {
+						if ($$list[$i]['receipt_number'] == null) {
+							$spec[$index]->ref = $this->getCreditRef($list[$i]['credit_id']);
+						}
+						else {
+							$spec[$index]->ref = $list[$i]['receipt_number'];
+						}
+						$spec[$index]->type = 'Kreditering';
+					}
+					// Fix 20201205
+					else if ($list[$i]['trans_type'] == 'pcredit') {
+						$spec[$index]->ref = $this->getCreditRef($list[$i]['credit_id']);
+						$spec[$index]->type = 'Kreditering';
+					}
+					else if ($list[$i]['trans_type'] == 'payoff') {
+						// $spec[$index]->ref = "";
+						$spec[$index]->ref = "";
+						$spec[$index]->type = 'Utbetalning';
+					}
+					else {
+						$spec[$index]->ref = "";
+						$spec[$index]->type = $list[$i]['trans_type'];
+					}
+
+					//$balanceTotal += $list[$i]['amount'] * -1;
+					//$list[$i]['total'] = number_format($balanceTotal * -1, 2);
+
+					$spec[$index]->amount = $list[$i]['amount'];
+					$balance += $list[$i]['amount'];
+					//$spec[$index]->balance = number_format($balance * -1, 2);
+					$spec[$index]->balance = number_format($balance, 2);
+				}
+			
+		}
+
+		if ($processInterest < 0) {
+			$spec[] = new StdClass();
+			$index++;
+			$spec[$index]->date = $processDate;
+			$spec[$index]->trans_type = 'interest';
+			$spec[$index]->ref = "";
+			$spec[$index]->type = 'Ränta';
+			$spec[$index]->amount = $processInterest;
+			$balance += $processInterest;
+			$spec[$index]->balance = number_format($balance, 2);
+
+		}
+		if ($processReminderFee < 0) {
+			$spec[] = new StdClass();
+			$index++;
+			$spec[$index]->date = $processDate;
+			$spec[$index]->trans_type = 'reminder-fee';
+			$spec[$index]->ref = "";
+			$spec[$index]->type = 'Förseningsavg.';
+			$spec[$index]->amount = $processReminderFee;
+			$balance += $processReminderFee;
+			$spec[$index]->balance = number_format($balance, 2);
+
+		}
+
+		//print_r($spec); die('');
+
+		$sql = "SELECT booking_id FROM booking WHERE people_id = $Base->PeopleId AND period = '$Base->Period'";
+		$result = $this->_Get($sql);
+		if ($result['code'] == '1') {
+			$Base->BookingId = $result['booking_id']; // BookingId for pre setllment
+		} else {
+			// Can't happend.
+			//echo $sql;
+			return 'No invoice';
+		}
+
+		//$Base->BookingId = 728; // Fixed
+		$Base->PayMinimum = $this->payMinimum($Base->PeopleId, $Base->BookingId);
+		if($Base->PayMinimum < 0 ) {
+			$Base->PayMinimum = 0;
+		}
+		$Base->PayAll = $this->payAll2($Base->PeopleId, $Base->BookingId);
+
+		$Base->OverDueBalance = $this->payMinimum($Base->PeopleId, $Base->BookingId - 1);
+
+		$sql = "SELECT CONCAT(first_name, ' ', last_name) AS people_name, address, postcode, city, ocrno, overdue ";
+		$sql .= "FROM people ";
+		$sql .= "WHERE people_id = " .  $Base->PeopleId ;
+		$Person = $this->_Get($sql);
+
+		// Create Invoice Object
+		$invoiceObj = new StdClass();
+		$invoiceObj->people_id = $Base->PeopleId;
+
+		$invoiceObj->date = $data->_print_date;
+		$invoiceObj->duedate = $data->_duedate;
+
+		$invoiceObj->name = $Person['people_name'];
+		$invoiceObj->address = $Person['address'];
+		$invoiceObj->postaddress = $Person['postcode'] . ' ' . $Person['city'];
+		$invoiceObj->ocrno = $Person['ocrno'];
+		$invoiceObj->invoice_filename = $invoiceObj->ocrno . '-' . $Base->Period  . '.pdf';
+
+		$invoiceObj->pay_all = $Base->PayAll; /// Fixed
+		$invoiceObj->monthly_payment_total = $Base->PayMinimum;
+		$invoiceObj->overdue = $Base->OverDueBalance;
+		//echo $Person['overdue']; die('');
+		if ( $Person['overdue']  == '2') {
+			$invoiceObj->invoice_type = "c";  // Claim
+			//$invoiceObj->coll_due_total = $this->getAccountBalanceOnPeople($Base->PeopleId, '2020-03-03'); // 2020-02-03 / 2019-12-04 - FIX 2019-10-04
+			//$invoiceObj->coll_due_amount = $this->settlementBalance($Base->PeopleId, '2020-03-04'); // 2020-02-02 / 2019-12-28 FIX 2019-10-03
+			
+			$invoiceObj->coll_due_total = 0; // Not used at the moment, but meed in the DB
+			$invoiceObj->coll_due_amount = $this->settlementBalance($Base->PeopleId, $invoiceObj->duedate); 
+			
+			$invoiceObj->coll_amoritze = $this->getSumOnBooking('amortization', '1380', $Base->BookingId) * -1;
+			$invoiceObj->coll_interest = $this->getSumOnBooking('interest', '8300', $Base->BookingId) * -1;
+			$invoiceObj->coll_o_interest = $this->getSumOnBooking('o-interest', '8301', $Base->BookingId) * -1;
+			$invoiceObj->coll_fee = $this->getSumOnBooking('billing-fee', '3543', $Base->BookingId) * -1;
+		}
+		else {
+			$invoiceObj->invoice_type = "d"; // default
+		}
+
+		// print_r($invoiceObj);
+		// print_r($Base);
+		// die('');
+
+		//if ($invoiceObj->pay_all < 10 && $invoiceObj->monthly_payment_total <= 0 ) {
+			//return 'No invoice';
+		//}
+		//else {
+
+			$invoice = clone $invoiceObj;
+			$invoice->spec = $spec;
+			if ($this->acttionCreatePdfInvoice($invoice) == true) {
+				$minvoiceId = $this->_Insert('minvoice', $invoiceObj);
+			}
+			//print_r($invoiceObj);
+			//die('');
+			//print_r($Base);
+		//}
+		return $minvoiceId;
+	}
+
+	private function acttionCreatePdfInvoice($invoice) {
+
+		$folder = BILLING_FOLDER;
+
+		$font = 'Helvetica';
+		$extra = 0;
+
+		// Init PDF
+		$mall = "fakturamall.pdf";
+		require_once('fpdf181/fpdf.php');
+		require_once('ftpi/autoload.php');
+		$pdf = new Fpdi\Fpdi();
+		$pdf->AddFont('OCR-B','','ocrb.php');
+		$pdf->setSourceFile($mall);
+		$templateId = $pdf->importPage(1);
+		$size = $pdf->getTemplateSize($templateId);
+		$pdf->AddPage('P', array($size['width'], 310));
+		$pdf->useTemplate($templateId);
+
+		/*
+		$pdf->SetFont($font);
+		$pdf->SetFontSize(16);
+		$pdf->SetXY(18, 2-12-21
+		$pdf->Write(16, utf8_decode($invoice->company_name));
+
+		$pdf->SetFont($font,'I');
+		$pdf->SetFontSize(9);
+		$pdf->SetXY(18, 9);
+		$pdf->Write(14, 'i samarbete med Turtle Pay');
+		*/
+		$pdf->SetXY(12, 9); // 18
+		//$pdf->Image('faktura-logo.jpg', null,null,42,23); // 60 / 31
+		$pdf->Image('faktura-logo.jpg', null,null,33,16); // 38 / 20
+		$pdf->SetFont($font,'I');
+		$pdf->SetFontSize(9);
+		$pdf->SetXY(12, 22);
+		$pdf->Write(14, utf8_decode('P.O. Box 24078'));
+		$pdf->SetXY(12, 27);
+		$pdf->Write(14, utf8_decode('SE-104 50 Stockholm'));
+
+
+		//$pdf->Image('faktura-logo.jpg', null,null,60,31);
+		$pdf->SetFont($font);
+
+		$pdf->SetFont($font);
+		$pdf->SetFontSize(14);
+		$pdf->SetXY(111, 1); // 2
+		$pdf->Write(16, utf8_decode('MÅNADSFAKTURA'));
+
+		$pdf->SetFont($font,'B');
+		$pdf->SetFontSize(9);
+		$pdf->SetXY(111, 9); // 11
+		$pdf->Write(11, 'Utskriftsdatum');
+		$pdf->SetFont('');
+		$pdf->SetFont($font);
+		$pdf->SetFontSize(10);
+		$pdf->SetXY(111, 14); // 16
+		$pdf->Write(10, $invoice->date);
+
+		$pdf->SetFont($font,'B');
+		$pdf->SetFontSize(9);
+		$pdf->SetXY(111, 18); // 20
+		$pdf->Write(11, utf8_decode('Förfallodatum'));
+		$pdf->SetFont('');
+		$pdf->SetFont($font);
+		$pdf->SetFontSize(10);
+		$pdf->SetXY(111, 23); // 25
+		$pdf->Write(10, $invoice->duedate);
+
+		$pdf->SetFontSize(10);
+		$pdf->SetXY(111, 33); // 37
+		$pdf->Write(10, utf8_decode($invoice->name));
+		$pdf->SetXY(111, 38); // 42
+		$pdf->Write(10, utf8_decode($invoice->address));
+		$pdf->SetXY(111, 43); // 37
+		$pdf->Write(10, utf8_decode($invoice->postaddress));
+
+		$pdf->SetFont($font,'B');
+		$pdf->SetFontSize(11);
+		$pdf->SetXY(18, 68);
+		$pdf->SetFillColor(220,220,220);
+		//$pdf->Cell(184,9,'   Specifikation','BTLR',0,'L',true);
+		$pdf->Cell(184,9,'   Datum         Typ                Referens                                                                    Belopp             Saldo','BTLR',0,'L',true);
+		//$pdf->Write(10, utf8_decode('Specifikation'));
+
+		$pdf->SetFont('');
+		$pdf->SetFont($font);
+		$pdf->SetFontSize(10);
+		$line = 76;
+		
+		// --
+		// -- Calculate how many rows to print
+		// --
+		if (sizeof($invoice->spec) <= 12) {
+			$startIndex = 1;
+		}
+		else {
+			$startIndex = sizeof($invoice->spec) - 12;
+		}
+
+		//for ($i = 0; $i < sizeof($invoice->spec); $i++) {
+		for ($i = $startIndex; $i < sizeof($invoice->spec); $i++) {
+			if ($invoice->spec[$i]->type == 'overdue') {
+				// Skip
+			}
+			else {
+				$pdf->SetXY(20, $line);
+				$pdf->Write(10, utf8_decode($invoice->spec[$i]->date));
+				$pdf->SetXY(44, $line);
+				$pdf->Write(11, utf8_decode($invoice->spec[$i]->type));
+				$pdf->SetXY(67, $line);
+				$pdf->Write(10, utf8_decode($invoice->spec[$i]->ref));
+				$pdf->SetXY(156, $line);  // 140
+				//$pdf->Cell(16, 10, utf8_decode($invoice->spec[$i]->amount), 0, 0, "R");
+				$amount = number_format((double) $invoice->spec[$i]->amount, 2);
+
+				$pdf->Cell(16, 10, utf8_decode($amount), 0, 0, "R");
+				$pdf->SetXY(183, $line); // 167
+				$pdf->Cell(16, 10, utf8_decode($invoice->spec[$i]->balance), 0, 0, "R");
+				//$pdf->Write(10, utf8_decode($invoice->spec[$i]->balance));
+				$line += 5;
+			}
+		}
+
+		// -- START 2021-12-28
+		$pdf->SetFont('');
+		$pdf->SetFont($font);
+		$pdf->SetFontSize(8);
+	
+		$pdf->SetXY(20, 56);
+		$pdf->Write(9, utf8_decode('Dina senaste transaktioner visas nedan.'));
+		
+		$pdf->SetXY(20, 60);
+		$pdf->Write(9, utf8_decode('För alla transaktioner, se www.turtle-pay.com/logga-in.'));
+
+		// -- END 2021-12-28
+
+		$pdf->SetFont('');
+		$pdf->SetFont($font);
+		$pdf->SetFontSize(10);
+		$pdf->SetXY(160, 60);
+		$pdf->Write(10, utf8_decode('Er skuld (-) / fordran (+)'));
+
+		if ($invoice->invoice_type == 'd') {
+			if ($invoice->overdue > 0) {
+				$startLineText = 148;
+				$overdueLineText = 153;
+			}
+			else {
+				$startLineText = 153;
+			}
+
+			//if ($invoice->monthly_payment_total > 0 || $invoice->pay_all > 0) {
+
+			$pdf->SetXY(70, $startLineText);
+			$pdf->SetFont($font,'B');
+			$pdf->Write(10, utf8_decode( number_format($invoice->monthly_payment_total, 0) . ' kronor,'));
+			$pdf->SetFont('');
+			$pdf->SetFont($font);
+			$pdf->SetFontSize(10);
+
+			$pdf->SetXY(20, $startLineText);
+			$pdf->Write(10, utf8_decode('Betala valfritt belopp dock lägst '));
+
+			if ($invoice->monthly_payment_total == 0) {
+
+				$posPlus = 0;
+			}
+			else if ($invoice->monthly_payment_total <= 99) {
+				// under 100
+				$posPlus = 2;
+			}
+			else if ($invoice->monthly_payment_total < 1000) {
+				// over 99 and under 1000
+				$posPlus = 4;
+			}
+			else if ($invoice->monthly_payment_total >= 1000) {
+				// over 1000
+				$posPlus = 7;
+			}
+
+			$pdf->SetXY(86 + $posPlus, $startLineText);
+			$pdf->Write(10, utf8_decode('inkl. ränta och avgift senast ' . $invoice->duedate . '.'));
+
+			if ($invoice->overdue > 0) {
+				$pdf->SetXY(20, $overdueLineText);
+				$pdf->Write(10, utf8_decode('I lägsta månadsbelopp ovan ingår förfallet belopp om ' . number_format($invoice->overdue, 0) . ' kr från föregående period.'));  //Ange fakturans ocr-nummer vid inbetalningen. '));
+			}
+			$pdf->SetXY(20, 158);
+			$pdf->Write(10, utf8_decode('Förseningsavgift och dröjsmålsränta kan tillkomma vid sen betalning.'));
+			$pdf->SetXY(20, 163);
+			$pdf->Write(10, utf8_decode('Logga in på  https://www.turtle-pay.com/logga-in med ditt BankID för att se villkor och alla transaktioner.'));
+			$pdf->SetXY(20, 168);
+			$pdf->Write(10, utf8_decode('Ange fakturans ocr-nummer vid inbetalningen. Bankgiro: 5258-0016. OCR-nummer: ' . $invoice->ocrno));
+			$pdf->SetXY(20, 176);
+			$pdf->SetFont($font,'B');
+			$pdf->Write(10, utf8_decode('Betala allt: ' . number_format($invoice->pay_all, 0) . ' kronor senast ' . $invoice->duedate . '.'));
+			$pdf->SetFont('');
+			$pdf->SetFont($font);
+			//$pdf->Write(10, utf8_decode('Betala allt: ' . number_format($invoice->pay_all, 0) . ' kronor senast ' . $invoice->duedate . '.'));
+		}
+		else if ($invoice->invoice_type == 'c') {
+			$pdf->SetFontSize(11);
+			$pdf->SetFont($font,'B');
+			$pdf->SetXY(20, 136);
+			$pdf->Write(10, utf8_decode('Inkassokrav'));
+			$pdf->SetFont('');
+			$pdf->SetFont($font);
+			$pdf->SetFontSize(8.5);
+			$pdf->SetXY(20, 140);
+			//$pdf->Write(10, utf8_decode('Vi saknar din betalning för förfallet belopp om ' . number_format($invoice->coll_due_amount, 0) . ' kronor och hela skulden om ' . number_format($invoice->coll_due_total, 0) . ' kronor är därför överförd till inkasso.'));
+			$pdf->Write(10, utf8_decode('Vi saknar din betalning för förfallet belopp om ' . number_format($invoice->coll_due_amount, 0) . ' kronor och hela skulden om ' .  number_format($invoice->pay_all, 0) . ' kronor är därför överförd till inkasso.'));
+
+			$pdf->SetXY(20, 144);
+			$pdf->Write(10, utf8_decode('Du behöver betala lägst'));
+
+			//$invoice->monthly_payment_total = 898998; // 988999;
+
+			$pdf->SetFont($font,'B');
+			$pdf->SetXY(53, 144);
+			$pdf->Write(10, utf8_decode(number_format($invoice->monthly_payment_total, 0) . ' kronor senast ' . $invoice->duedate));
+			$pdf->SetFont('');
+			$pdf->SetFont($font);
+
+			if ($invoice->monthly_payment_total < 100) {
+				$pos = 93;
+			}
+			else if($invoice->monthly_payment_total < 1000) {
+				$pos = 95;
+			}
+			else if($invoice->monthly_payment_total < 10000) {
+				$pos = 97;
+			}
+			else if($invoice->monthly_payment_total < 100000) {
+				$pos = 99;
+			}
+			else if($invoice->monthly_payment_total < 1000000) {
+				$pos = 101;
+			}
+			else {
+				$pos = 104;
+			}
+
+			$pdf->SetXY($pos, 144);
+		   	$pdf->Write(10, utf8_decode(', varav ' . number_format($invoice->coll_amoritze, 0) . ' kronor utgör ränta och amortering på ej förfallen'));
+
+			$pdf->SetXY(20, 148);
+			$pdf->Write(10, utf8_decode('del av skulden, ' . number_format($invoice->coll_o_interest, 0) . ' kronor utgör dröjsmålsränta på förfallen del av skulden och ' . number_format($invoice->coll_fee, 0) . ' kronor utgör aviavgift. För det fall '));
+			$pdf->SetXY(20, 152);
+			$pdf->Write(10, utf8_decode('lägstabeloppet ovan inte är oss tillhanda senast ' . $invoice->duedate . ' förfaller hela skulden till omedelbar betalning och en'));
+
+			//$pdf->SetFont($font,'B');
+			//$pdf->SetXY(84, 152);
+			//$pdf->Write(10, utf8_decode($invoice->duedate));
+			//$pdf->SetFont('');
+			//$pdf->SetFont($font);
+			//$pdf->SetXY(100, 152);
+			//$pdf->Write(10, utf8_decode('förfaller hela skulden till omedelbar betalning och en'));
+
+			$pdf->SetXY(20, 156);
+			$pdf->Write(10, utf8_decode('ansökan om betalningsföreläggande kan därefter komma att göras hos Kronofogdemyndigheten, vilket i sin tur kan ge'));
+			$pdf->SetXY(20, 160);
+			$pdf->Write(10, utf8_decode('upphov till betalningsanmärkning.'));
+
+			$pdf->SetXY(20, 164);
+			$pdf->Write(10, utf8_decode('Logga in på  https://www.turtle-pay.com/logga-in med ditt BankID för att se villkor och alla transaktioner.'));
+
+			$pdf->SetXY(20, 168);
+			$pdf->Write(10, utf8_decode('Ange fakturans ocr-nummer vid inbetalningen. Bankgiro: 5258-0016. OCR-nummer: ' . $invoice->ocrno));
+			$pdf->SetXY(20, 176);
+			$pdf->SetFont($font,'B');
+			$pdf->Write(10, utf8_decode('Betala allt: ' . number_format($invoice->pay_all, 0) . ' kronor senast ' . $invoice->duedate . '.'));
+			$pdf->SetFont('');
+			$pdf->SetFont($font);
+			//$pdf->Write(10, utf8_decode('Betala allt: ' . number_format($invoice->pay_all, 0) . ' kronor senast ' . $invoice->duedate . '.'));
+		}
+
+		$pdf->Line(18,184,201,184); // 174
+		$pdf->SetXY(20, 182); //18 /  174
+		$pdf->Write(10, utf8_decode('Org nr: '));
+		$pdf->SetXY(32, 182); // 30))
+		$pdf->Write(10, utf8_decode('559101-6786'));
+
+		$pdf->SetXY(166, 182);
+		$pdf->Write(10, utf8_decode('www.turtle-pay.com'));
+
+		$pdf->SetFontSize(8);
+		$pdf->SetXY(18, 188);
+		$pdf->Write(10, utf8_decode('Turtle Pay AB,   P.O. Box 24078,    SE-104 50 Stockholm,   Telefon 08-80 62 20,   Öppet vardagar 9-18,  helger 11-16,    info@turtle-pay.com'));
+
+		$pdf->SetFontSize(8);
+		$pdf->SetXY(20, 230);
+		$pdf->Write(10, utf8_decode($invoice->name));
+		$pdf->SetXY(20, 234);
+		$pdf->Write(10, utf8_decode($invoice->address));
+		$pdf->SetXY(20, 238);
+		$pdf->Write(10, utf8_decode($invoice->postaddress));
+
+		$pdf->SetFontSize(12);
+		//$pdf->SetXY(134, 218);
+		$pdf->SetXY(90, 238);
+		$pdf->Write(12, utf8_decode('Fyll i valfritt belopp'));
+
+		// Write the OCR
+		//$pdf->SetFont('OCRB10PitchBT-Regular');
+		$pdf->SetFont('OCR-B','',12);
+		//$pdf->SetFontSize(10);
+
+		$pdf->SetXY(12, 272);
+		$pdf->Write(10, utf8_decode('#'));
+
+		$pdf->SetXY(49, 272);
+
+		$pdf->Write(10, utf8_decode($invoice->ocrno . ' #'));
+
+		$pdf->SetXY(167, 272);
+		$pdf->Write(10, utf8_decode('52580016#42#'));
+
+		//$filename = $this->folder . '/' . $invoice->invoice_filename;
+		$filename = $folder . $invoice->invoice_filename;
+		try {
+			$pdf->Output($filename,'F');
+			//echo $filename;
+		}
+		catch(Exception $e) {
+			//echo 'Message: ' .$e->getMessage();
+			//die('1378');
+			return false;
+		}
+		return true;
+	}
+
+	private function getAccountBalanceOnPeople($peopleId, $untilDate) {
+		$sql = "SELECT SUM(t.amount) AS sum ";
+		$sql .= "FROM booking b, btrans t ";
+		$sql .= "WHERE b.booking_id = t.booking_id AND (t.account_no = '1680' OR t.account_no = '1380') AND b.booking_date < '$untilDate' AND t.prel NOT IN ('x') AND ";
+		$sql .= "t.people_id = '" . $peopleId . "'";
+		$result = $this->_Get($sql);
+		if ($result['sum'] == null) {
+			$result['sum'] = "0";
+		}
+		return $result['sum'];
+	}
+
+	private function getAccountBalanceOnTrans($peopleId, $btransId) {
+		$sql = "SELECT SUM(t.amount) AS sum ";
+		$sql .= "FROM booking b, btrans t ";
+		$sql .= "WHERE b.booking_id = t.booking_id AND t.account_no IN ('1680','1380') AND t.btrans_id < $btransId AND t.prel IN ('n') AND ";
+		$sql .= "t.people_id = '" . $peopleId . "'";
+		// echo $sql; die('');
+		$result = $this->_Get($sql);
+		if ($result['sum'] == null) {
+			$result['sum'] = "0";
+		}
+		return $result['sum'];
+	}
+
+
+	private function settlementBalance($peopleId, $untilDate) {
+		$sql = "SELECT SUM(t.amount) AS sum ";
+		$sql .= "FROM booking b, btrans t ";
+		$sql .= "WHERE b.booking_id = t.booking_id AND t.account_no = '1680' AND b.booking_date <= '$untilDate' AND t.prel NOT IN ('x') AND ";
+		$sql .= "t.people_id = '" . $peopleId . "'";
+
+		$result = $this->_Get($sql);
+		if ($result['sum'] == null) {
+			$result['sum'] = "0";
+		}
+		return $result['sum'];
+	}
+
+	private function payMinimum($peopleId, $bookingId) {
+		$sql = "SELECT SUM(t.amount) AS sum ";
+		$sql .= "FROM btrans t ";
+		$sql .= "WHERE t.account_no = '1680' AND t.booking_id <= $bookingId AND t.prel NOT IN ('x') AND ";
+		$sql .= "t.people_id = '" . $peopleId . "'";
+
+		$result = $this->_Get($sql);
+		if ($result['sum'] == null) {
+			$result['sum'] = "0";
+		}
+		return $result['sum'];
+	}
+
+	private function payAll2($peopleId, $bookingId) {
+
+		$sql = "SELECT SUM(t.amount) AS sum ";
+		$sql .= "FROM btrans t, credit c ";
+		$sql .= "WHERE t.account_no = '1380' AND t.prel NOT IN ('x') AND ";
+		$sql .= "t.people_id = '" . $peopleId . "' AND t.credit_id = c.credit_id and c.credit_status = 'o' AND t.booking_id <= $bookingId ";
+
+
+		$result = $this->_Get($sql);
+		if ($result['sum'] == null) {
+			$payAll = "0";
+		}
+		else {
+			$payAll = $result['sum'];
+		}
+
+		$sql = "SELECT SUM(t.amount) AS sum ";
+		$sql .= "FROM btrans t ";
+		$sql .= "WHERE t.account_no = '1680' AND t.people_id = '" . $peopleId . "' AND t.booking_id <= $bookingId AND t.prel NOT IN ('x') ";
+
+		$result = $this->_Get($sql);
+		if ($result['sum'] == null) {
+		}
+		else {
+			$payAll = $payAll + $result['sum'];
+		}
+
+
+		return $payAll;
+	}
+
+	private function getSumOnBooking($transType, $accountNo, $bookingId) {
+		$sql = "SELECT SUM(t.amount) AS sum ";
+		$sql .= "FROM btrans t ";
+		$sql .= "WHERE t.booking_id = $bookingId AND t.account_no = '$accountNo' AND trans_type = '$transType' AND t.prel NOT IN ('x') " ;
+		//echo $sql; die('');
+		$result = $this->_Get($sql);
+		if ($result['sum'] == null) {
+			$result['sum'] = "0";
+		}
+		return $result['sum'];
+	}
+
+	
+	private function setOcrno() {
+		/*
+		
+		295711079505
+		295711079505
+		*/
+
+		$sql = "SELECT people_id, personal_id_number ";
+		$sql .= "FROM people ";
+		$sql .= "WHERE  ocrno IS NULL";
+		$oPeople = $this->_GetList($sql);
+
+		for ($i=0; $i < sizeof($oPeople); $i++){
+			//print_r($oPeople[$i]);
+			$controlNumber = '2' . substr($oPeople[$i]['personal_id_number'], 2, 6) . mt_rand(1000, 9999);
+			$ocrno = $this->ocrnoCreate($controlNumber);
+			//echo $ocrno . " - ";
+			$param = array ();
+			$param['ocrno'] = $ocrno;
+			$this->_Update('people', 'people_id', $oPeople[$i]['people_id'], $param);
+		}
+	
+	}
+
+	private function ocrnoCreate($ocrno) {
+		$sum = 0;
+		for ($i=0; $i < strlen($ocrno); $i++) {
+		// Even
+			if ($i % 2 == 0) {
+				$res = $ocrno[$i] * 2;
+				//echo 'even: ' . $ocrno[$i] . ' ';
+			} else {
+				$res = $ocrno[$i];
+			}
+
+			if ($res > 9) {
+				$res = $res -9;
+			}
+			//echo $sum . '<br>';
+			$sum = $sum + $res;
+		}
+		//echo $sum . '<br>';
+		$nerast10 = ceil($sum / 10) * 10;
+		//echo $nerast10 . '<br>';
+		$checksum =  $nerast10 - $sum;
+		$ocr_number = $ocrno . $checksum; // 11
+		return $ocr_number;
+	}
+
+	private function getCreditRef($creditId) {
+		$sql = "SELECT receipt_number FROM credit WHERE credit_id = $creditId";
+		$res = $this->_Get($sql);
+		if ($res['code'] == '1') {
+			return $res['receipt_number'];
+		}
+		else {
+			return '';
+		}
+	}
+
+	}

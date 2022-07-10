@@ -1,0 +1,290 @@
+<?php
+/*
+    RequestClass
+
+	Date: 2019-01-11
+
+*/
+
+class RequestClass extends ActionBase {
+
+	public function Run($data) {
+		$actionMethod = 'action' . $data->_action;
+		echo $this->$actionMethod($data);
+	}
+
+	private function actionRequestList($data) {
+        /*
+         {
+			 "_group" : "Request",
+	         "_action" : "RequestList",
+	         "_from_date" : "2018-11-25",
+			 "_to_date" : "2018-11-26"
+        }
+        */
+
+		$sql = "SELECT i.invoice_request_id, i.personal_id_number, i.request_time, i.amount, i.company_id, i.store_id, i.sales_person_people_id,";
+		$sql .= "i.credit_id, i.denied_code, i.invoice_request_status, CONCAT(p.first_name, ' ' ,p.last_name) AS name,";
+		$sql .= "c.company_name, s.store_name, CONCAT(x.first_name, ' ' ,x.last_name) AS salesperson, source, device ";
+		$sql .= "FROM invoice_request i ";
+		$sql .= "LEFT JOIN people p ON i.personal_id_number = p.personal_id_number ";
+		$sql .= "LEFT JOIN company c ON i.company_id = c.company_id ";
+		$sql .= "LEFT JOIN store s ON i.store_id = s.store_id ";
+		$sql .= "LEFT JOIN people x ON i.sales_person_people_id = x.people_id ";
+		$sql .= "ORDER BY i.invoice_request_id DESC ";
+		return json_encode($this->_GetList($sql));
+
+        return json_encode($this->_GetList($sql));
+
+    }
+
+	private function actionCompanyReportEmail($data) {
+		/*
+		 {
+			 "_group" : "Reporting",
+			 "_action" : "CompanyReportEmail",
+			 "_company_id" "8",
+			 "_from_date" : "2018-11-25",
+			 "_to_date" : "2018-11-26"
+		}
+		*/
+
+
+		$sql = "SELECT t.btrans_id, t.booking_id, b.booking_date, t.trans_type, b.receipt_number, ";
+		$sql .= "t.account_no, t.amount ";
+		$sql .= "FROM btrans t ";
+		$sql .= "LEFT JOIN booking b ON t.booking_id = b.booking_id ";
+		$sql .= "WHERE b.company_id =  $data->_company_id AND ";
+		$sql .= "t.account_no = '2981' AND ";
+		$sql .= "b.booking_date <= '$data->_to_date' AND b.booking_date >= '$data->_from_date' ";
+		$sql .= "ORDER BY t.btrans_id";
+		// OR t.account_no='3593' OR t.account_no='2498'
+		$list = $this->_GetList($sql);
+
+		$sql = "SELECT sum(t.amount) AS balance ";
+		$sql .= "FROM booking b, btrans t ";
+		$sql .= "WHERE t.account_no = '2981' AND b.booking_id = t.booking_id AND ";
+		$sql .= "b.company_id = $data->_company_id AND ";
+		$sql .= " b.booking_date < '$data->_from_date' ";
+		$balanceObj = $this->_Get($sql);
+		if (empty($balanceObj['balance'])) {
+			$balance = '0';
+		}
+		else {
+			$balance = $balanceObj['balance'];
+		}
+
+		$sql = "SELECT company_name, bank_account, email_report ";
+		$sql .= "FROM company ";
+		$sql .= "WHERE company_id = $data->_company_id ";
+		$companyObj = $this->_Get($sql);
+
+		//print_r($companyObj);
+
+		$companyName = $companyObj['company_name'];
+		$email = $companyObj['email_report'];
+		$emailName = $companyObj['company_name'];
+		$bank_account = $companyObj['bank_account'];
+
+
+		$toSubject = 'Bokföringsorder';
+
+		$html = '';
+		$html .= '<div style="width:100%; max-width:500px; margin: 10px auto 0; border:1px solid #cccccc; border-radius: 8px; font-family: Helvetica,Arial,sans-serif, Verdana; padding:6px">';
+		$html .= '<h3>' . $companyName . '</h3>';
+		$html .= '<p>Bankgiro: ' . $bank_account . '</p>';
+		$html .= '<p>Fordran(+)/Skuld(-)</h3>';
+
+		$html .= '<table style="width:500px; padding-right: 8px; border-collapse:separate; border-spacing: 2px; font-size:14px;" >';
+			$html .= '<tbody>';
+			$html .= '<tr>';
+
+				$html .= '<tr>';
+					$html .= '<th style="text-align: left; width:100px"><b>Datum</b></th>';
+					$html .= '<th style="text-align: left; width:100px"><b>Typ</b></th>';
+					$html .= '<th style="text-align: left; width:80px""><b>Kvittonr.</b></th>';
+					$html .= '<th style="text-align: right; width:80px"><b>Belopp</b></th>';
+					$html .= '<th style="text-align: right; width:80px"><b>Balans</b></th>';
+				$html .= '</tr>';
+
+				$html .= '<tr>';
+					$html .= '<td>' . $data->_from_date . '</td>';
+					$html .= '<td>' . 'Ing.balans' . '</td>';
+					$html .= '<td>' . "" . '</td>';
+					$html .= '<td></td>';
+					$html .= '<td style="text-align: right">' . $balance * -1 . '</td>';
+				$html .= '</tr>';
+
+				//$transAvg = 0
+
+				for ($i=0; $i < sizeof($list); $i++) {
+
+					if ($list[$i]['trans_type'] == 'sales-reb') {
+						$transAvg = $list[$i]['amount'];
+					}
+					else {
+						switch ($list[$i]['trans_type']) {
+							case 'new-credit':
+								$text = "Fakturaköp";
+								break;
+							case 'vendor-fee':
+								$text = "Trans.avg.";
+								$list[$i]['amount'] = $transAvg + $list[$i]['amount'];
+								break;
+
+							case 'vendor-pmt':
+								$text = "Betalning";
+								break;
+							case 'refund':
+								$text = "Retur";
+								break;
+							case 'vendor-pmt':
+								$text = "Betalning";
+								break;
+							default:
+								// code...
+								break;
+						}
+						$html .= '<tr>';
+							$html .= '<td>' . $list[$i]['booking_date'] . '</td>';
+							$html .= '<td>' . $text . '</td>';
+							$html .= '<td>' . $list[$i]['receipt_number'] . '</td>';
+
+							$amountText =  number_format($list[$i]['amount'] * -1, 2);
+							$html .= '<td style="text-align: right">' . $amountText . '</td>';
+
+							//$html .= '<td style="text-align: right">' . + $list[$i]['amount'] * -1 . '</td>';
+
+							$balance = $balance + (float)$list[$i]['amount'];
+							$balanceText = number_format($balance * -1, 2);
+							$html .= '<td style="text-align: right">' . $balanceText . '</td>';
+
+						$html .= '</tr>';
+					}
+				}
+			$html .= '</tbody>';
+		$html .= '</table>';
+
+		//echo $html; die('');
+
+		require 'PHPMailerAutoload.php';
+
+
+		$mail = new PHPMailer;
+		$mail->isSMTP();
+		//$mail->Host = 'postman.vmi.se';
+		//$mail->Host = 'exchange.s.thehostingplatform.com';
+		$mail->Host = 'smtp.gmail.com';
+		$mail->SMTPAuth = true;
+		$mail->Username = 'info.turtlepay@gmail.com';
+		$mail->Password = 'SegTp_2019';
+
+		$mail->CharSet = 'UTF-8';
+		$mail->From = 'info@turtle-pay.com';
+		$mail->FromName = 'TurtlePay';
+		//$mail->addAddress("bo.grus@yahoo.com", "Bosse");
+		//$mail->addAddress($invoiceObemail, $invoiceObj->name);
+		//$mail->addAddress($email, $emailName);
+		//$email ="stellan.forsberg@mondayrelations.se";
+		$mail->addAddress($email, $emailName );
+		$mail->addBCC('bo.grusell@turtle-pay.com');
+		$mail->addReplyTo('info@turtle-pay.com');
+		$mail->isHTML(true);
+		//$mail->AddAttachment(FIRST_INVOICE_FOLDER . $invoiceObj->invoice_filename);
+		$mail->Subject = $toSubject;
+		//$mail->Body = $this->htmlInvoice . '<div style="width:100%; padding:20px 0 10px 0; text-align:center"><a href="' . DOCVIEW . 'o/' . $this->orderid . '.html"' . '" style="font-size:20px; font-weight:bold; color: green">Skriv ut</a>';
+		$mail->Body = $html;
+		//$mail->Body = "Test";
+		if(!$mail->send()) {
+			//echo 'Problem sända Faktura.' . $mail->ErrorInfo;
+			echo '{"code" : "0"}';
+			echo $mail->ErrorInfo;
+		} else {
+			$reply = new StdClass();
+			$reply->code = '1';
+			$reply->email = $email;
+			$reply->email_name = $emailName;
+			echo json_encode($reply);
+
+
+		}
+
+		//return json_encode($list);
+
+	}
+
+
+	public function actionBookOrderDaysReport($data) {
+		/*
+		 {
+		  "_group" : "Reporting",
+		 "_action" : "BookOrderDaysReport",
+		 "_from_date" : "2018-09-30",
+		 "_to_date" : "2018-09-30"
+		}
+		*/
+		$sql = "SELECT t.account_no, a.account_name, SUM(t.amount) AS sum_account FROM btrans t, account a, booking b ";
+		$sql .= "WHERE t.account_no = a.account_no AND b.booking_id = t.booking_id AND ";
+		$sql .= "b.booking_date >= '" . $data->_from_date . "' AND b.booking_date <= '" . $data->_to_date .  "'";
+		$sql .= "GROUP BY t.account_no, a.account_name";
+
+		return json_encode($this->_GetList($sql));
+	}
+
+
+	/*
+	SELECT t.account_no, a.account_name, SUM(t.amount) AS sum_account FROM btrans t, account a, booking b ";
+	WHERE t.account_no = a.account_no AND  b.booking_id = t.booking_id";
+	b.booking_date >= '" . $data->_from_date . "' AND b.booking_date <= '" . $data->_to_date .  "'";
+	GROUP BY t.account_no, a.account_name";
+
+
+	*/
+
+		/*
+	    private function actionBookOrderDaysReport($data) {
+	        /*
+	         {
+	         "_action" : "BookOrderDaysReport",
+	         "_from_date" : "2018-09-19",
+	         "_to_date" : "2018-09-19"
+	        }
+
+
+			$sql = "SELECT t.btrans_id, t.booking_id, b.booking_date, b.booking_text, ";
+			$sql .= "t.account_no, t.amount ";
+			$sql .= "FROM btrans t ";
+			$sql .= "LEFT JOIN booking b ON t.booking_id = b.booking_id ";
+			$sql .= "WHERE b.company_id =  $data->_company_id AND ";
+			$sql .= "(t.account_no = '2981' ) ";
+			$sql .= "ORDER BY t.btrans_id";
+			// OR t.account_no='3593' OR t.account_no='2498'
+			$list = $this->_GetList($sql);
+
+			$balance = 0;
+			for ($i=0; $i < sizeof($list); $i++) {
+				$balance = $balance + (float)$list[$i]['amount'];
+				$list[$i]['balance'] = number_format($balance, 2);
+
+			}
+
+	        $sql = "SELECT t.account_no, a.account_name, SUM(t.amount) AS sum_account FROM trans t, account a ";
+	        $sql .= "WHERE t.account_no = a.account_no AND  ";
+	        $sql .= "t.trans_date > '" . $data->_from_date . "' AND t.trans_date <= '" . $data->_to_date .  "'";
+	        $sql .= "GROUP BY t.account_no, a.account_name";
+			$this->_GetList($sql);
+
+			$sql = "SELECT t.account_no, a.account_name, SUM(t.amount) AS sum_account FROM trans t, account a ";
+	        $sql .= "WHERE t.account_no = a.account_no AND  ";
+	        $sql .= "t.trans_date > '" . $data->_from_date . "' AND t.trans_date <= '" . $data->_to_date .  "'";
+	        $sql .= "GROUP BY t.account_no, a.account_name";
+			$this->_GetList($sql);
+
+
+	        return json_encode($this->_GetList($sql));
+	    }
+		*/
+
+
+
+}

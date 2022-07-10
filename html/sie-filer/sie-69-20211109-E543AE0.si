@@ -1,0 +1,2275 @@
+#FLAGGA 0
+#FORMAT PC8
+#SIETYP 4
+#PROGRAM "Turtle Pay Kundportal" 2021.1
+#GEN 20220207
+#FNAMN "Test Bolaget AB"
+#ORGNR 556000-0000
+#KPTYP BAS95
+#KONTO 1610 "Turtle Pay avr„kning"
+#KONTO 8000 "R„nta"
+#KONTO 3031 "Anm„lningsavgift"
+#KONTO 4000 "Transaktionsavgift"
+#KONTO 2621 "Utg†ende moms 12 %"
+#KONTO  ""
+#KONTO 3008 "Turtle Pay App"
+#VER T 312 20210602 "R„nta"
+{
+#TRANS 1610 {} -1.00
+#TRANS 8000 {} 1.00
+}
+#VER T 313 20210618 "Jullovsl„ger 2021"
+{
+#TRANS 3031 {} -223.21
+#TRANS 1610 {} 250.00
+#TRANS 2621 {} -26.79
+}
+#VER T 314 20210630 "Test kreditering"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 315 20210630 "Test kreditering"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 316 20210630 "Test kreditering"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 317 20210630 "Test kreditering"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 318 20210630 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 319 20210630 "Test kreditering 2"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 320 20210630 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 321 20210630 "Test kreditering 2"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 322 20210630 "Test kreditering 2"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 323 20210630 "Test kreditering 2-Slutbetalning 2"
+{
+#TRANS 3031 {} -1696.43
+#TRANS 1610 {} 1900.00
+#TRANS 2621 {} -203.57
+}
+#VER T 324 20210701 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 325 20210701 "Test kreditering 2-Slutbetalning 2"
+{
+#TRANS 3031 {} -1696.43
+#TRANS 1610 {} 1900.00
+#TRANS 2621 {} -203.57
+}
+#VER T 326 20210701 "Jullovsl„ger 2021"
+{
+#TRANS 3031 {} 223.21
+#TRANS 1610 {} -250.00
+#TRANS 2621 {} 26.79
+}
+#VER T 327 20210701 "Idrottskl„der"
+{
+#TRANS 3031 {} 11718.75
+#TRANS 1610 {} -13125.00
+#TRANS 2621 {} 1406.25
+}
+#VER T 328 20210701 "Turtle Pay App "
+{
+#TRANS 3008 {} 500.00
+#TRANS 1610 {} -500.00
+}
+#VER T 329 20210708 "Test kreditering"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 330 20210708 "Test kreditering"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 331 20210710 "Test kreditering 2"
+{
+#TRANS 3031 {} -803.57
+#TRANS 1610 {} 900.00
+#TRANS 2621 {} -96.43
+}
+#VER T 332 20210710 "Test kreditering 2-Slutbetalning 2"
+{
+#TRANS 3031 {} -2500.00
+#TRANS 1610 {} 2800.00
+#TRANS 2621 {} -300.00
+}
+#VER T 333 20210710 "Test dubbell„ger"
+{
+#TRANS 3031 {} -803.57
+#TRANS 1610 {} 900.00
+#TRANS 2621 {} -96.43
+}
+#VER T 334 20210710 "Test dubbell„ger-Slutbetalning dubbell„ger"
+{
+#TRANS 3031 {} -357.14
+#TRANS 1610 {} 400.00
+#TRANS 2621 {} -42.86
+}
+#VER T 335 20210710 "Test kreditering 2"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 336 20210710 "Test kreditering 2"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 337 20210710 "Test kreditering 2-Slutbetalning 2"
+{
+#TRANS 3031 {} 803.57
+#TRANS 1610 {} -900.00
+#TRANS 2621 {} 96.43
+}
+#VER T 338 20210710 "Test kreditering 2-Slutbetalning 2"
+{
+#TRANS 3031 {} 892.86
+#TRANS 1610 {} -1000.00
+#TRANS 2621 {} 107.14
+}
+#VER T 339 20210710 "Test kreditering 2"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 340 20210710 "Test kreditering 2-Slutbetalning 2"
+{
+#TRANS 3031 {} 803.57
+#TRANS 1610 {} -900.00
+#TRANS 2621 {} 96.43
+}
+#VER T 341 20210710 "Test kreditering 2-Slutbetalning 2"
+{
+#TRANS 3031 {} 892.86
+#TRANS 1610 {} -1000.00
+#TRANS 2621 {} 107.14
+}
+#VER T 342 20210710 "Test dubbell„ger"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 343 20210710 "Test dubbell„ger"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 344 20210710 "Test dubbell„ger"
+{
+#TRANS 3031 {} -357.14
+#TRANS 1610 {} 400.00
+#TRANS 2621 {} -42.86
+}
+#VER T 345 20210710 "Test dubbell„ger-Slutbetalning dubbell„ger"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 346 20210710 "Test dubbell„ger"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 347 20210710 "Test dubbell„ger-Slutbetalning dubbell„ger"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 348 20210710 "Test dubbell„ger"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 349 20210710 "Test dubbell„ger"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 350 20210710 "Test dubbell„ger-Slutbetalning dubbell„ger"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 351 20210710 "Test dubbell„ger"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 352 20210710 "Test dubbell„ger-Slutbetalning dubbell„ger"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 353 20210710 "Test dubbell„ger-Slutbetalning dubbell„ger"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 354 20210710 "Test dubbell„ger"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 355 20210710 "Test dubbell„ger-Slutbetalning dubbell„ger"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 356 20210710 "Test dubbell„ger"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 357 20210711 "Test kreditering 2-Slutbetalning 2"
+{
+#TRANS 3031 {} 2500.00
+#TRANS 1610 {} -2800.00
+#TRANS 2621 {} 300.00
+}
+#VER T 358 20210711 "Test kreditering 2"
+{
+#TRANS 3031 {} 803.57
+#TRANS 1610 {} -900.00
+#TRANS 2621 {} 96.43
+}
+#VER T 359 20210713 "Test dubbell„ger"
+{
+#TRANS 3031 {} -535.71
+#TRANS 1610 {} 600.00
+#TRANS 2621 {} -64.29
+}
+#VER T 360 20210713 "Test dubbell„ger"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 361 20210713 "Test dubbell„ger"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 362 20210713 "Test dubbell„ger"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 363 20210713 "Test dubbell„ger"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 364 20210713 "Test dubbell„ger"
+{
+#TRANS 3031 {} -535.71
+#TRANS 1610 {} 600.00
+#TRANS 2621 {} -64.29
+}
+#VER T 365 20210713 "Test dubbell„ger"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 366 20210713 "Test dubbell„ger"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 367 20210713 "Test dubbell„ger"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 368 20210713 "Test dubbell„ger"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 369 20210713 "Test dubbell„ger"
+{
+#TRANS 3031 {} -535.71
+#TRANS 1610 {} 600.00
+#TRANS 2621 {} -64.29
+}
+#VER T 370 20210713 "Test dubbell„ger"
+{
+#TRANS 3031 {} 535.71
+#TRANS 1610 {} -600.00
+#TRANS 2621 {} 64.29
+}
+#VER T 371 20210713 "Turtle Pay App Moms test"
+{
+#TRANS 3008 {} -500.00
+#TRANS 1610 {} 500.00
+}
+#VER T 372 20210713 "Turtle Pay App moms 2"
+{
+#TRANS 3008 {} -650.00
+#TRANS 1610 {} 650.00
+}
+#VER T 373 20210713 "Test kreditering"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 374 20210713 "Turtle Pay App 750a"
+{
+#TRANS 3008 {} -750.00
+#TRANS 1610 {} 750.00
+}
+#VER T 375 20210713 "Turtle Pay App 750a"
+{
+#TRANS 3008 {} 750.00
+#TRANS 1610 {} -750.00
+}
+#VER T 376 20210713 "Turtle Pay App 444"
+{
+#TRANS 3008 {} -444.00
+#TRANS 1610 {} 444.00
+}
+#VER T 377 20210713 "Test dubbell„ger"
+{
+#TRANS 3031 {} -178.57
+#TRANS 1610 {} 200.00
+#TRANS 2621 {} -21.43
+}
+#VER T 378 20210713 "Turtle Pay App 541"
+{
+#TRANS 3008 {} -543.00
+#TRANS 1610 {} 543.00
+}
+#VER T 379 20210713 "Turtle Pay App kv449"
+{
+#TRANS 3008 {} -449.00
+#TRANS 1610 {} 449.00
+}
+#VER T 380 20210713 "Turtle Pay App kv449"
+{
+#TRANS 3008 {} 449.00
+#TRANS 1610 {} -449.00
+}
+#VER T 381 20210723 "Test dubbell„ger"
+{
+#TRANS 3031 {} -89.29
+#TRANS 1610 {} 100.00
+#TRANS 2621 {} -10.71
+}
+#VER T 382 20210723 "Test dubbell„ger"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 383 20210723 "Test dubbell„ger"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 384 20210723 "Test dubbell„ger"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 385 20210723 "Test dubbell„ger"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 386 20210724 "Turtle Pay App 541"
+{
+#TRANS 3008 {} 543.00
+#TRANS 1610 {} -543.00
+}
+#VER T 387 20210724 "Turtle Pay App Moms test"
+{
+#TRANS 3008 {} 500.00
+#TRANS 1610 {} -500.00
+}
+#VER T 388 20210724 "Turtle Pay App 444"
+{
+#TRANS 3008 {} 444.00
+#TRANS 1610 {} -444.00
+}
+#VER T 389 20210724 "Turtle Pay App moms 2"
+{
+#TRANS 3008 {} 650.00
+#TRANS 1610 {} -650.00
+}
+#VER T 390 20210728 "Test dubbell„ger"
+{
+#TRANS 3031 {} -6071.43
+#TRANS 1610 {} 6800.00
+#TRANS 1610 {} -102.00
+#TRANS 4000 {} 102.00
+#TRANS 2621 {} -728.57
+}
+#VER T 391 20210728 "Test dubbell„ger"
+{
+#TRANS 3031 {} 6071.43
+#TRANS 1610 {} -6800.00
+#TRANS 2621 {} 728.57
+}
+#VER T 392 20210802 "Test dubbell„ger"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 393 20210802 "Test dubbell„ger"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 394 20210803 "Test dubbell„ger"
+{
+#TRANS 3031 {} -535.71
+#TRANS 1610 {} 600.00
+#TRANS 2621 {} -64.29
+}
+#VER T 395 20210803 "Turtle Pay App App Tdb"
+{
+#TRANS 3008 {} -654.00
+#TRANS 1610 {} 654.00
+}
+#VER T 396 20210803 "WE - 21 augusti 2021 - Test-TDB - Betalning"
+{
+#TRANS 3031 {} -357.14
+#TRANS 1610 {} 400.00
+#TRANS 2621 {} -42.86
+}
+#VER T 397 20210803 "WE - 21 augusti 2021 - Test-TDB - Betalning"
+{
+#TRANS 3031 {} -312.50
+#TRANS 1610 {} 350.00
+#TRANS 2621 {} -37.50
+}
+#VER T 398 20210804 "WE - 21 augusti 2021 - Test-TDB - Betalning"
+{
+#TRANS 3031 {} -848.21
+#TRANS 1610 {} 950.00
+#TRANS 2621 {} -101.79
+}
+#VER T 399 20210808 "Maxantal test"
+{
+#TRANS 3031 {} -357.14
+#TRANS 1610 {} 400.00
+#TRANS 2621 {} -42.86
+}
+#VER T 400 20210808 "Maxantal test-L„geragift maxantal"
+{
+#TRANS 3031 {} -803.57
+#TRANS 1610 {} 900.00
+#TRANS 2621 {} -96.43
+}
+#VER T 401 20210808 "Maxantal test-L„geragift maxantal"
+{
+#TRANS 3031 {} -312.50
+#TRANS 1610 {} 350.00
+#TRANS 2621 {} -37.50
+}
+#VER T 402 20210808 "Maxantal test"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 403 20210808 "Maxantal test-L„geragift maxantal"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 404 20210811 "Maxantal test"
+{
+#TRANS 3031 {} -89.29
+#TRANS 1610 {} 100.00
+#TRANS 2621 {} -10.71
+}
+#VER T 405 20210812 "Turtle Pay App App Tdb"
+{
+#TRANS 3008 {} 654.00
+#TRANS 1610 {} -654.00
+}
+#VER T 406 20210817 "Test kreditering"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 407 20210817 "Maxantal test"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 408 20210817 "Maxantal test-L„geragift maxantal"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 409 20210817 "Maxantal test-L„geragift maxantal"
+{
+#TRANS 3031 {} 44.64
+#TRANS 1610 {} -50.00
+#TRANS 2621 {} 5.36
+}
+#VER T 410 20210817 "Maxantal test"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 411 20210817 "Maxantal test-L„geragift maxantal"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 412 20210817 "Maxantal test-L„geragift maxantal"
+{
+#TRANS 3031 {} 44.64
+#TRANS 1610 {} -50.00
+#TRANS 2621 {} 5.36
+}
+#VER T 413 20210817 "Maxantal test"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 414 20210817 "Maxantal test-L„geragift maxantal"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 415 20210817 "Maxantal test-L„geragift maxantal"
+{
+#TRANS 3031 {} 267.86
+#TRANS 1610 {} -300.00
+#TRANS 2621 {} 32.14
+}
+#VER T 416 20210817 "Maxantal test-L„geragift maxantal"
+{
+#TRANS 3031 {} 44.64
+#TRANS 1610 {} -50.00
+#TRANS 2621 {} 5.36
+}
+#VER T 417 20210817 "Test kreditering"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 418 20210818 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 419 20210818 "Test kreditering"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 420 20210818 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 421 20210818 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 422 20210818 "Test kreditering"
+{
+#TRANS 3031 {} -89.29
+#TRANS 1610 {} 100.00
+#TRANS 2621 {} -10.71
+}
+#VER T 423 20210818 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 424 20210818 "Test kreditering"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 425 20210818 "Test kreditering"
+{
+#TRANS 3031 {} -178.57
+#TRANS 1610 {} 200.00
+#TRANS 2621 {} -21.43
+}
+#VER T 426 20210818 "Test kreditering"
+{
+#TRANS 3031 {} -89.29
+#TRANS 1610 {} 100.00
+#TRANS 2621 {} -10.71
+}
+#VER T 427 20210818 "Test kreditering"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 428 20210818 "Test kreditering"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 429 20210818 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 430 20210818 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 431 20210818 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 432 20210818 "Test kreditering"
+{
+#TRANS 3031 {} -89.29
+#TRANS 1610 {} 100.00
+#TRANS 2621 {} -10.71
+}
+#VER T 433 20210818 "Test kreditering"
+{
+#TRANS 3031 {} -89.29
+#TRANS 1610 {} 100.00
+#TRANS 2621 {} -10.71
+}
+#VER T 434 20210818 "Test kreditering"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 435 20210818 "Test kreditering"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 436 20210818 "Test kreditering"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 437 20210818 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 438 20210818 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 439 20210818 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 440 20210818 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 441 20210818 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 442 20210818 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 443 20210819 "Test kreditering"
+{
+#TRANS 3031 {} -89.29
+#TRANS 1610 {} 100.00
+#TRANS 2621 {} -10.71
+}
+#VER T 444 20210819 "Test kreditering"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 445 20210820 "Test kreditering 2"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 446 20210820 "Test kreditering 2"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 447 20210820 "Test kreditering 2"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 448 20210820 "Test kreditering 2"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 449 20210820 "Test kreditering 2"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 450 20210820 "Test kreditering 2"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 451 20210820 "Test kreditering 2"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 452 20210820 "Test kreditering 2"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 453 20210820 "Test kreditering 2"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 454 20210820 "Test kreditering 2"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 455 20210820 "Test kreditering 2"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 456 20210820 "Test kreditering 2"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 457 20210820 "Test kreditering 2"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 458 20210820 "Test kreditering 2"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 459 20210820 "Test kreditering 2"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 460 20210820 "Test kreditering 2"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 461 20210820 "Test kreditering 2"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 462 20210820 "Test kreditering 2"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 463 20210820 "Test kreditering 2"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 464 20210820 "Test kreditering 2"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 465 20210820 "Test kreditering 2"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 466 20210820 "Test kreditering 2"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 467 20210820 "Test kreditering 2"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 468 20210820 "Test kreditering 2"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 469 20210820 "Test kreditering 2"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 470 20210820 "Test kreditering 2"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 471 20210820 "Test kreditering"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 472 20210820 "Test kreditering"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 473 20210820 "Test kreditering"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 474 20210820 "Test kreditering"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 475 20210820 "Test kreditering"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 476 20210820 "Test kreditering"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 477 20210820 "Test kreditering"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 478 20210820 "Test kreditering"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 479 20210820 "Test kreditering"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 480 20210820 "Test kreditering"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 481 20210820 "Test dubbell„ger"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 482 20210820 "Test dubbell„ger"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 483 20210820 "Test dubbell„ger"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 484 20210820 "Test dubbell„ger"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 485 20210820 "Maxantal test"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 486 20210821 "Test kreditering"
+{
+#TRANS 3031 {} -89.29
+#TRANS 1610 {} 100.00
+#TRANS 2621 {} -10.71
+}
+#VER T 487 20210821 "Test kreditering"
+{
+#TRANS 3031 {} -89.29
+#TRANS 1610 {} 100.00
+#TRANS 2621 {} -10.71
+}
+#VER T 488 20210821 "Test kreditering"
+{
+#TRANS 3031 {} -89.29
+#TRANS 1610 {} 100.00
+#TRANS 2621 {} -10.71
+}
+#VER T 489 20210821 "Test kreditering"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 490 20210821 "Test kreditering"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 491 20210821 "Test kreditering"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 492 20210821 "Test kreditering"
+{
+#TRANS 3031 {} -89.29
+#TRANS 1610 {} 100.00
+#TRANS 2621 {} -10.71
+}
+#VER T 493 20210821 "Test kreditering"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 494 20210821 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 495 20210821 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 496 20210821 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 497 20210821 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 498 20210822 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 499 20210822 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 500 20210822 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 501 20210822 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 502 20210822 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 503 20210822 "Test kreditering"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 504 20210822 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 505 20210822 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 506 20210822 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 507 20210822 "Test dubbell„ger"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 508 20210822 "Test dubbell„ger"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 509 20210822 "Test dubbell„ger"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 510 20210822 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 511 20210822 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 512 20210822 "Test kreditering"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 513 20210822 "Test kreditering"
+{
+#TRANS 3031 {} -89.29
+#TRANS 1610 {} 100.00
+#TRANS 2621 {} -10.71
+}
+#VER T 514 20210823 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 515 20210823 "Test kreditering 2-Slutbetalning 2"
+{
+#TRANS 3031 {} -1696.43
+#TRANS 1610 {} 1900.00
+#TRANS 2621 {} -203.57
+}
+#VER T 516 20210823 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 517 20210823 "Test kreditering 2-Slutbetalning 2"
+{
+#TRANS 3031 {} -1696.43
+#TRANS 1610 {} 1900.00
+#TRANS 2621 {} -203.57
+}
+#VER T 518 20210823 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 519 20210823 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 520 20210823 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 521 20210823 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 522 20210823 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 523 20210823 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 524 20210823 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 525 20210823 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 526 20210823 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 527 20210823 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 528 20210823 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 529 20210823 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 530 20210823 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 531 20210823 "Test kreditering"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 532 20210825 "Septemberdressyr 11 sep 2021-TDB - Betalning"
+{
+#TRANS 3031 {} -500.00
+#TRANS 1610 {} 560.00
+#TRANS 2621 {} -60.00
+}
+#VER T 533 20210825 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 534 20210825 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 535 20210825 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 536 20210825 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 537 20210825 "Test kreditering 2"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 538 20210825 "Test kreditering 2"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 539 20210825 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 540 20210825 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 541 20210825 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 542 20210825 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 543 20210825 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 544 20210825 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 545 20210825 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 546 20210825 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 547 20210825 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 548 20210826 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 549 20210826 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 550 20210826 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 551 20210826 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 552 20210826 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 553 20210826 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 554 20210826 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 555 20210826 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 556 20210826 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 557 20210826 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 558 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 559 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 560 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 561 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 562 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 563 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 564 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 565 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 566 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 567 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 568 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 569 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 570 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 571 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 572 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 573 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 574 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 575 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 576 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 577 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 578 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 579 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 580 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 581 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 582 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 583 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 584 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 585 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 586 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 587 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 588 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 589 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 590 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 591 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 592 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 593 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 594 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 595 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 596 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 597 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 598 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 599 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 600 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 601 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 602 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 603 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 604 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 605 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 606 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 607 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 608 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 609 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 610 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 611 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 612 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 613 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 614 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 615 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 616 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 617 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 618 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 619 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 620 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 621 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 622 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 623 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 624 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 625 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 626 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 627 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 628 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 629 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 630 20210827 "Test kreditering 2-Slutbetalning 2"
+{
+#TRANS 3031 {} 803.57
+#TRANS 1610 {} -900.00
+#TRANS 2621 {} 96.43
+}
+#VER T 631 20210827 "Test kreditering 2-Slutbetalning 2"
+{
+#TRANS 3031 {} 892.86
+#TRANS 1610 {} -1000.00
+#TRANS 2621 {} 107.14
+}
+#VER T 632 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 633 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 634 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 635 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 636 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 637 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 638 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 639 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 640 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 641 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 642 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 643 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 644 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 645 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 646 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 647 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 648 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 649 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 650 20210827 "Test kreditering 2-Slutbetalning 2"
+{
+#TRANS 3031 {} 803.57
+#TRANS 1610 {} -900.00
+#TRANS 2621 {} 96.43
+}
+#VER T 651 20210827 "Test kreditering 2-Slutbetalning 2"
+{
+#TRANS 3031 {} 892.86
+#TRANS 1610 {} -1000.00
+#TRANS 2621 {} 107.14
+}
+#VER T 652 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 653 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 654 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 655 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 656 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 657 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 658 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 659 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 660 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 661 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 662 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 663 20210827 "Test kreditering 2"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 664 20210827 "Test kreditering"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 665 20210827 "Test kreditering"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 666 20210827 "Test dubbell„ger"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 667 20210827 "Test dubbell„ger"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 668 20210827 "Test dubbell„ger"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 669 20210827 "Test dubbell„ger"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 670 20210827 "Test dubbell„ger"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 671 20210827 "Test dubbell„ger"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 672 20210830 "Septemberdressyr 11 sep 2021-TDB - Betalning"
+{
+#TRANS 3031 {} -500.00
+#TRANS 1610 {} 560.00
+#TRANS 2621 {} -60.00
+}
+#VER T 673 20210830 "Septemberdressyr 11 sep 2021-TDB - Betalning"
+{
+#TRANS 3031 {} -241.07
+#TRANS 1610 {} 270.00
+#TRANS 2621 {} -28.93
+}
+#VER T 674 20210830 "Septemberdressyr 11 sep 2021-TDB - Betalning"
+{
+#TRANS 3031 {} 241.07
+#TRANS 1610 {} -270.00
+#TRANS 2621 {} 28.93
+}
+#VER T 675 20210912 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 676 20210912 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 677 20210921 "Oktoberhoppet med Final Div II & KM-TDB - Betalning"
+{
+#TRANS 3031 {} -625.00
+#TRANS 1610 {} 700.00
+#TRANS 2621 {} -75.00
+}
+#VER T 678 20210922 "Oktoberhoppet med Final Div II & KM-TDB - Betalning"
+{
+#TRANS 3031 {} -714.29
+#TRANS 1610 {} 800.00
+#TRANS 2621 {} -85.71
+}
+#VER T 679 20210922 "Oktoberhoppet med Final Div II & KM-TDB - Betalning"
+{
+#TRANS 3031 {} 223.21
+#TRANS 1610 {} -250.00
+#TRANS 2621 {} 26.79
+}
+#VER T 680 20210922 "Oktoberhoppet med Final Div II & KM-TDB - Betalning"
+{
+#TRANS 3031 {} 267.86
+#TRANS 1610 {} -300.00
+#TRANS 2621 {} 32.14
+}
+#VER T 681 20210922 "Oktoberhoppet med Final Div II & KM-TDB - Betalning"
+{
+#TRANS 3031 {} 223.21
+#TRANS 1610 {} -250.00
+#TRANS 2621 {} 26.79
+}
+#VER T 682 20210926 "Test kreditering 2"
+{
+#TRANS 3031 {} -267.86
+#TRANS 1610 {} 300.00
+#TRANS 2621 {} -32.14
+}
+#VER T 683 20211008 "Test kreditering"
+{
+#TRANS 3031 {} -89.29
+#TRANS 1610 {} 100.00
+#TRANS 2621 {} -10.71
+}
+#VER T 684 20211008 "Test kreditering"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 685 20211015 "Oktoberhoppet Ponny med  Folksam Ponnyallsvenska 2021-TDB - Betalning"
+{
+#TRANS 3031 {} -176.79
+#TRANS 1610 {} 198.00
+#TRANS 2621 {} -21.21
+}
+#VER T 686 20211024 "Test kreditering 2"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 687 20211102 "Test kreditering"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 688 20211102 "Test kreditering"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 689 20211102 "Test kreditering"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 690 20211109 "Oktoberhoppet Ponny med  Folksam Ponnyallsvenska 2021-TDB - Betalning"
+{
+#TRANS 3031 {} 87.50
+#TRANS 1610 {} -98.00
+#TRANS 2621 {} 10.50
+}

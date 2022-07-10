@@ -1,0 +1,48 @@
+#FLAGGA 0
+#FORMAT PC8
+#SIETYP 4
+#PROGRAM "Turtle Pay Kundportal" 2021.1
+#GEN 20220207
+#FNAMN "Test Bolaget AB"
+#ORGNR 556000-0000
+#KPTYP BAS95
+#KONTO 3031 "Anm„lningsavgift"
+#KONTO 1610 "Turtle Pay avr„kning"
+#KONTO 4000 "Transaktionsavgift"
+#KONTO 2621 "Utg†ende moms 12 %"
+#VER T 685 20211015 "Oktoberhoppet Ponny med  Folksam Ponnyallsvenska 2021-TDB - Betalning"
+{
+#TRANS 3031 {} -176.79
+#TRANS 1610 {} 198.00
+#TRANS 2621 {} -21.21
+}
+#VER T 686 20211024 "Test kreditering 2"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 687 20211102 "Test kreditering"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 688 20211102 "Test kreditering"
+{
+#TRANS 3031 {} 178.57
+#TRANS 1610 {} -200.00
+#TRANS 2621 {} 21.43
+}
+#VER T 689 20211102 "Test kreditering"
+{
+#TRANS 3031 {} 89.29
+#TRANS 1610 {} -100.00
+#TRANS 2621 {} 10.71
+}
+#VER T 690 20211109 "Oktoberhoppet Ponny med  Folksam Ponnyallsvenska 2021-TDB - Betalning"
+{
+#TRANS 3031 {} 87.50
+#TRANS 1610 {} -98.00
+#TRANS 2621 {} 10.50
+}

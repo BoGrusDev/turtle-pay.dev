@@ -1,0 +1,2920 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<Skatteverket xmlns="http://xmls.skatteverket.se/se/skatteverket/ai/instans/infoForBeskattning/6.0"
+xmlns:gm="http://xmls.skatteverket.se/se/skatteverket/ai/gemensamt/infoForBeskattning/6.0" 
+xmlns:ku="http://xmls.skatteverket.se/se/skatteverket/ai/komponent/infoForBeskattning/6.0" 
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" omrade="Kontrolluppgifter" 
+xsi:schemaLocation="http://xmls.skatteverket.se/se/skatteverket/ai/instans/infoForBeskattning/6.0 
+http://xmls.skatteverket.se/se/skatteverket/ai/kontrolluppgift/instans/Kontrolluppgifter_6.0.xsd "> 
+<ku:Avsandare>
+<ku:Programnamn>KUfilsprogrammet</ku:Programnamn>
+<ku:Organisationsnummer>165591016786</ku:Organisationsnummer>
+<ku:TekniskKontaktperson>
+<ku:Namn>Stellan Forsberg</ku:Namn>
+<ku:Telefon>+46806220</ku:Telefon>
+<ku:Epostadress>stellan.forsberg@turtle-pay.com</ku:Epostadress>
+<ku:Utdelningsadress1>Box 24078</ku:Utdelningsadress1>
+<ku:Postnummer>10450</ku:Postnummer>
+<ku:Postort>Stockholm</ku:Postort>
+</ku:TekniskKontaktperson>
+<ku:Skapad>2021-01-15T08:21:56</ku:Skapad>
+</ku:Avsandare>
+<ku:Blankettgemensamt>
+<ku:Uppgiftslamnare>
+<ku:UppgiftslamnarePersOrgnr>165591016786</ku:UppgiftslamnarePersOrgnr>
+<ku:Kontaktperson>
+<ku:Namn>Stellan Forsberg</ku:Namn>
+<ku:Telefon>+46806220</ku:Telefon>
+<ku:Epostadress>stellan.forsberg@turtle-pay.com</ku:Epostadress>
+<ku:Sakomrade>Skatteverket</ku:Sakomrade>
+</ku:Kontaktperson>
+</ku:Uppgiftslamnare>
+</ku:Blankettgemensamt>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">957</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">196406191160</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">1524</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">198608317403</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">192</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197304050011</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">307</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197408103369</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">402</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">199407096420</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">133</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197108212064</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">151</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">196609024440</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">291</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197407140388</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">257</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">198610224829</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">194</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">195310151153</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">136</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">199004020286</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">340</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">196907091430</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">1108</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197505047220</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">177</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">196801190338</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">267</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197403243988</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">1254</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197402090281</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">362</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">199112263547</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">230</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">199001095463</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">205</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">196601201426</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">4938</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">196707281298</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">133</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197502103919</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">285</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197801130027</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">958</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197101040249</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">2155</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">199005185591</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">840</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197501159086</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">287</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">195003024337</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">1514</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">196307101474</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">1144</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">196704186706</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">512</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">199104191532</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">596</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">196502014621</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">104</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">196206261080</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">175</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">198301052901</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">138</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">196705150073</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">161</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197003165052</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">191</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197210122920</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">709</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197212150572</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">205</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">196507211065</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">812</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">196802290525</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">241</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">195906231922</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">128</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197407013221</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">257</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">199105014063</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">234</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197512110292</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">120</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197010151418</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">274</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197110120461</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">232</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">198607032102</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">256</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">198203270106</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">826</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197203104919</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">181</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197510240232</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">273</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">196606132949</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">664</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197004220625</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">159</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197302030452</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">115</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">196901150117</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">331</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197412064896</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">108</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197702268280</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">157</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197512130373</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">244</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197202260456</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">663</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">198004270164</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">116</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">196905240096</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">129</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197809201440</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">383</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197503194875</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">128</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197709168210</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">159</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">196905182025</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">126</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197208270558</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">251</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197611110235</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">153</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197610160215</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">231</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197408084916</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">200</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197910277602</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">214</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197104010751</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">333</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">196110160451</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">1814</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197303161496</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">140</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197309180102</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">117</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197205294197</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">208</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197405020236</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">244</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">196811199311</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">235</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197812120470</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">258</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197201156283</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">111</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197108103537</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">1294</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197306151411</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">300</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197101274236</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">280</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197307140173</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">152</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197311140391</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">383</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">196506021119</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">341</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197410137512</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">572</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197309052913</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">135</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197207170254</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">369</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197904220196</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">109</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197603090247</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">371</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">198004112150</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">144</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197702230629</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">787</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">196606147251</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">117</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">196712181244</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">534</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197408200579</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">198</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197602070117</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">165</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197502060549</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">159</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197805180150</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">1761</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">196607032494</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">145</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">198504131973</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">460</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">196409091052</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">141</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197201110314</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">123</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">199111191780</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">175</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197603230587</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">160</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197202191925</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">418</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197004285644</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">124</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">196911210380</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">575</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197408057581</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">239</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">195210060140</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">190</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197005100057</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">149</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">196907215633</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">215</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197804255573</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">216</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">196805020408</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">138</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197408086242</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">532</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197203058990</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">1220</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197603267548</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">342</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197411254753</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">100</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197310312777</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">443</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">196906011900</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">206</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197408295520</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">274</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197604102454</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">372</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197708139006</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">138</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197205044691</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">145</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">200110241668</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">102</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197108170635</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">113</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">196908040253</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">141</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">196811059291</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">122</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">196005300436</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">194</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">196802280674</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">121</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">196208311198</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">184</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197405222923</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">289</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">199405267767</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">425</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197905250242</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">237</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">198810300262</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">153</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">196905010424</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">246</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">199105271929</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">130</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">198604100423</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">124</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">198401100329</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">104</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197408027238</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">142</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">199510073068</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">153</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">198010090341</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">355</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">198402010402</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">160</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">196807308967</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">216</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197112230326</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">205</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197909170297</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">571</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197005100370</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">128</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197002274814</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">105</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">196403201392</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">143</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197912300576</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">187</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">197608308602</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">205</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">196103229438</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2323">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU20>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:Ranteinkomst faltkod="500">1252</ku:Ranteinkomst>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU20>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU20>
+<ku:InkomsttagareKU20>
+<ku:Inkomsttagare faltkod="215">196102011092</ku:Inkomsttagare>
+</ku:InkomsttagareKU20>
+</ku:KU20>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2323">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU20>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:Ranteinkomst faltkod="500">5205</ku:Ranteinkomst>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU20>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU20>
+<ku:InkomsttagareKU20>
+<ku:Inkomsttagare faltkod="215">192907021204</ku:Inkomsttagare>
+</ku:InkomsttagareKU20>
+</ku:KU20>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2323">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU20>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:Ranteinkomst faltkod="500">623</ku:Ranteinkomst>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU20>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU20>
+<ku:InkomsttagareKU20>
+<ku:Inkomsttagare faltkod="215">197009110177</ku:Inkomsttagare>
+</ku:InkomsttagareKU20>
+</ku:KU20>
+</ku:Blankettinnehall>
+</ku:Blankett>
+<ku:Blankett nummer="2323">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2020</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU20>
+<ku:Inkomstar faltkod="203">2020</ku:Inkomstar>
+<ku:Ranteinkomst faltkod="500">7784</ku:Ranteinkomst>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU20>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU20>
+<ku:InkomsttagareKU20>
+<ku:Inkomsttagare faltkod="215">196207029379</ku:Inkomsttagare>
+</ku:InkomsttagareKU20>
+</ku:KU20>
+</ku:Blankettinnehall>
+</ku:Blankett>
+</Skatteverket>

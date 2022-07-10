@@ -1,0 +1,59 @@
+<?php
+/*
+    Class BankIDClass
+
+	Date: 2018-10-10
+
+	capi
+
+	Actions:
+		-
+
+	Call:
+
+	{
+		"_group" : "BankID",
+		"_action" : "AuthInit",
+    	"_bankid" : "yes",
+    	"_bankid_personal_id_number" : "195711040054"
+	}
+	{
+	    "code": "1",
+	    "order_ref": "397566a5-f6e1-4e84-ab3e-01b471afa0c5",
+	    "denied_code": ""
+	}
+
+	{
+		"_group" : "BankID",
+		"_action" : "AuthCollect",
+		"_bankid" : "yes",
+		"_order_ref": "51f7d65e-0064-4c29-b306-e91db6eac8c4"
+	}
+	{
+	    "status": "1",
+	    "name": "BO GRUSELL",
+	    "givenName": "BO",
+	    "surname": "GRUSELL",
+	    "ipAddress": "5.35.189.28"
+	}
+
+	{
+		"_group" : "BankID",
+		"_action" : "Cancel",
+		"_bankid" : "yes",
+		"_order_ref": "51f7d65e-0064-4c29-b306-e91db6eac8c4"
+	}
+
+	{
+	    "code": "1"
+	}
+
+*/
+
+class DefaultClass {
+
+	public function Run($data) {
+
+		$actionMethod = 'action' . $data->_action;
+		echo $this->$actionMethod($data);
+	}

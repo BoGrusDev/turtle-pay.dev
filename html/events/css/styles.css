@@ -1,0 +1,89 @@
+/* Turtl Pay Lsit service */
+
+.w120 {width: 120px; max-width: 120px;}
+.right {text-align: right;}
+.bold {font-weight: bold!important}
+.image-center {
+    margin-left: auto;
+    margin-right:auto
+}
+
+.personal-id-number {
+    width: 138px;
+}
+
+table { 
+    width: 100%; 
+} 
+table th {
+    font-size: 14px;
+}
+/*
+h1 { 
+    padding-left: 12px; 
+}
+*/
+.title.is-4 {
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+
+}
+.p-list { 
+    padding-left: 12px; 
+}
+
+/* 
+    Login page
+*/
+.section {
+    padding: 0;
+}
+.container {
+    max-width: 1140px;
+    padding-left: 6px;
+    padding-right: 6px;
+}
+.hero.is-primary {
+    background-color:#8dbf3b;
+    color:#fff;
+}
+.hero-body {
+    padding-bottom: 12px;
+    padding-top: 16px;
+    margin-bottom: 8px;
+    margin-top: 8px;
+}
+.hero-body h1 {
+    font-size: 2rem;
+    padding-left: 0px;
+}
+.hero-body h1 {
+    padding-bottom: 8px;
+    margin-bottom: 8px;
+    font-size: 1.8rem;
+    line-height: normal;
+}
+.hero-body p {
+    font-size: 18px;
+    margin-bottom: 8px;
+    line-height: 22px;
+}
+.navbar-item  img {
+    max-height: 60px;
+}
+
+.pointer {
+    cursor: pointer;
+}
+  
+.no-margin { margin: 0;}
+.no-margin-top {margin-top: 0;}
+.no-padding { padding: 0;}
+.no-padding-top {padding-top: 0;}
+.no-padding-bottom {padding-bottom: 0;}
+
+
+th {
+    padding-left:0;
+    padding-right:4px;
+}

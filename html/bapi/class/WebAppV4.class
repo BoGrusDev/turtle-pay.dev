@@ -1,0 +1,680 @@
+<?php
+/*
+    Class WebAppClass
+
+	Date: 2021-07-01
+
+*/
+
+class WebAppV4Class extends ActionBase {
+
+	public function Run($data) {
+		$actionMethod = 'action' . $data->_action;
+		echo $this->$actionMethod($data);
+    }
+		
+	private function actionCompanyInfo($data) {
+		$sql = "SELECT c.wa_store_id, c.wa_store_id, c.wa_sp_id,s.store_name, c.known_as AS company_name FROM company c, store s ";
+        $sql .= "WHERE c.company_id = $data->_company_id AND c.wa_store_id = s.store_id";
+		//$sql = "SELECT wa_store_id, wa_sp_id FROM company WHERE company_id = $data->_company_id";
+		$result = $this->_Get($sql);
+		return json_encode($result);
+	}
+
+	// Obsolite
+    private function actionCompanyStoreInfo($data) {	
+        $sql = "SELECT c.wa_store_id, c.wa_store_id, c.wa_sp_id,s.store_name, c.known_as AS company_name FROM company c, store s ";
+        $sql .= "WHERE c.company_id = $data->_company_id AND c.wa_store_id = s.store_id";
+        
+		$result = $this->_Get($sql);
+		return json_encode($result);
+	}
+
+	public function actionEventItemAdd($data) {
+		$reply = $this->_Insert('event_item_v4', $data);
+		
+		if ($reply['code'] == '1') {
+			if ($data->_participant_on == 'y' ) {
+				for ($i=0; $i < sizeof($data->_participant); $i++) {
+					if ($data->_participant[$i]->status == 'a') {
+						$participant = new stdClass();
+						$participant->event_item_id = $reply['id'];
+						$participant->first_name = $data->_participant[$i]->first_name;
+						$participant->last_name = $data->_participant[$i]->last_name;
+						if (isset($data->_participant[$i]->address)) {
+							$participant->address = $data->_participant[$i]->address;
+							$participant->postcode = $data->_participant[$i]->postcode;
+							$participant->city = $data->_participant[$i]->city;
+							
+							if (isset($data->_participant[$i]->mobile)) {
+								$participant->mobile = $data->_participant[$i]->mobile;
+							}
+							if (isset($data->_participant[$i]->email)) {
+								$participant->email = $data->_participant[$i]->email;
+							}	
+						}
+						// Added for notes
+						if (isset($data->_participant[$i]->note)) {
+							$participant->note = $data->_participant[$i]->note;
+						}
+						if (isset($data->_participant[$i]->date_of_birth)) {
+							$participant->date_of_birth = $data->_participant[$i]->date_of_birth;
+						}
+						if (isset($data->_participant[$i]->personal_id_number)) {
+							$participant->personal_id_number = $data->_participant[$i]->personal_id_number;
+						}
+
+						$participant->base_participant_id = $data->_participant[$i]->base_participant_id;
+
+						$replyPart = $this->_Insert('event_participant', $participant);
+						
+						if ($data->_participant[$i]->base_participant_id == '0') {
+							$param = new stdClass();
+							$param->base_participant_id = $replyPart['id'];
+							$this->_Update('event_participant', 'event_participant_id', $replyPart['id'], $param);
+						}
+
+						for ($j=0; $j < sizeof($data->_participant[$i]->option); $j++) {
+							$option = new stdClass();
+							$option->event_participant_id = $replyPart['id'];
+							$option->event_option_setting_id = $data->_participant[$i]->option[$j]->event_option_setting_id;
+							if ($data->_participant[$i]->option[$j]->event_option_setting_id == '0' ) {
+								$option->value = 0;
+							}
+							else {
+								$option->value = $data->_participant[$i]->option[$j]->value;
+							}
+							$replyOption = $this->_Insert('event_option', $option);
+						}
+					}
+				}
+			}
+        }		
+
+		return json_encode($reply);
+	}
+
+    private function actionGetSettings($data) {         
+        // --
+        // -- Load the settings, used in the when UV wil be confirmed 
+       // 
+       $this->_Settings($data->_company_id);
+       return json_encode($this->Setting);
+    }
+
+	private function actionGetWaLog($data) {
+		/*
+			{
+				"_group" : "WebAppV4",
+				"_action" : "GetWaLog",
+				"_log_id" : "24"
+			}
+		*/
+		$sql = "SELECT * FROM wa_log_v4 ";
+		$sql .= "WHERE wa_log_id = $data->_log_id";
+		$result = $this->_Get($sql);
+		return json_encode($result);
+	}
+
+	public function actionLoadEvent($data) {
+		$sql = "SELECT * FROM event_v4 WHERE event_id = " . $data->_event_id;
+		$webform = $this->_Get($sql);
+	
+		if ($webform['participant_on'] == 'y') {
+			$sql = "SELECT * FROM event_selection_setting WHERE event_id = $data->_event_id ORDER BY sortorder";
+			//echo $sql; die('');
+			$webform['selection'] = $this->_GetList($sql);
+			for ($i = 0; $i < sizeof($webform['selection']); $i++) {
+				$sql = "SELECT * FROM event_option_setting WHERE event_selection_setting_id = " . $webform['selection'][$i]['event_selection_setting_id']  .   " ORDER BY sortorder";
+				$webform['selection'][$i]['option'] = $this->_GetList($sql);
+			}
+		}
+        return json_encode($webform);
+	}
+
+	// ADD 2020-08-06
+	private function actionLoadInheritParticipant($data) {
+		/*
+			{
+				"_group" : "WebAppV4",
+				"_action":"LoadInheritParticipant",
+				"_parent_event_item_id":"427",
+				"_event_id" : "220"
+			}
+		*/
+		$sql = "SELECT * FROM event_participant WHERE event_item_id = " . $data->_parent_event_item_id . " AND event_participant_status = 'c'";
+		$participant = $this->_GetList($sql);
+		
+		//print_r($participant); 
+
+		$sql = "SELECT event_selection_setting_id, parent_event_selection_setting_id FROM event_selection_setting WHERE event_id = $data->_event_id";
+		$selections = $this->_GetList($sql);
+
+		//print_r($selections); 
+
+		for ($i=0; $i<sizeof($participant); $i++) {
+			$participant[$i]['parents'] = $selections;
+			//print_r(sizeof($participant[$i]['parents'])); die('');
+
+			//$sql = "SELECT event_option_setting_id FROM event_option WHERE event_participant_id = " . $participant[$i]['event_participant_id'];
+			$sql = "SELECT o.event_option_setting_id o, es.external_id, o.value_text FROM event_option o, event_selection_setting es, event_option_setting os ";
+			$sql .= "WHERE o.event_participant_id = " . $participant[$i]['event_participant_id'];
+			$sql .= " AND o.event_option_setting_id = os.event_option_setting_id AND os.event_selection_setting_id = es.event_selection_setting_id ";
+			
+			$parentOptions = $this->_GetList($sql);
+			
+			//echo '<pre>';
+			//print_r($parentOptions);
+			//echo '</pre>';
+			//die('');
+			for ($j=0; $j<sizeof($participant[$i]['parents']); $j++) {
+
+				if ($participant[$i]['parents'][$j]['parent_event_selection_setting_id'] == '0') {
+					$participant[$i]['parents'][$j]['value'] = '8E1C7E8F67D0';
+					$participant[$i]['parents'][$j]['text'] = '--- Välj ---';
+					$participant[$i]['parents'][$j]['event_option_setting_id'] = '0';
+				}
+				else {
+					// Get parent option setting id
+
+					$sql = "SELECT eo.event_option_setting_id, event_option_status, eo.value_text ";
+					$sql .= "FROM event_option eo, event_option_setting eos ";
+					$sql .= "WHERE eo.event_participant_id = " . $participant[$i]['event_participant_id']; 
+					$sql .= " AND eos.event_selection_setting_id = " . $selections[$j]['parent_event_selection_setting_id'];
+					$sql .= " AND eo.event_option_setting_id =  eos.event_option_setting_id";
+					$optionId = $this->_Get($sql);
+				
+					
+					// Changed 
+					if (isset($optionId['event_option_setting_id']) == false) {
+						$participant[$i]['parents'][$j]['value'] = '8E1C7E8F67DD';
+						$participant[$i]['parents'][$j]['text'] = 'Ej vald';
+						$participant[$i]['parents'][$j]['event_option_setting_id'] = '0';
+					}
+					else if ($optionId['event_option_status'] == 'r') {
+						$participant[$i]['parents'][$j]['value'] = '8E1C7E8F67DD';
+						$participant[$i]['parents'][$j]['text'] = 'Ej vald';
+						$participant[$i]['parents'][$j]['event_option_setting_id'] = '0';
+					}
+					else {
+						$sql = "SELECT * FROM event_option_setting ";
+						$sql .= "WHERE event_selection_setting_id = " . $participant[$i]['parents'][$j]['event_selection_setting_id'] . " AND ";
+						$sql .= "parent_event_option_setting_id = " . $optionId['event_option_setting_id']; // 235 / 865 ";
+						$option = $this->_Get($sql);
+						
+						if ($option['text'] == 'Rabatt') {
+							$participant[$i]['parents'][$j]['value'] = $optionId['value_text'];
+						}
+						else {
+							$participant[$i]['parents'][$j]['value'] = $option['value'];
+						}
+						$participant[$i]['parents'][$j]['text'] = $option['text'];
+						$participant[$i]['parents'][$j]['event_option_setting_id'] = $option['event_option_setting_id'];
+						
+					}	
+				}
+			}
+		}
+		return json_encode($participant);
+	}
+
+    private function actionMonthlyPayment2($data) {
+        // --
+        // -- Calculate the Montly Payment, used when UC will be confirmd
+        // --
+        $reply = new stdClass();
+        $reply->code = "1";
+        $monthlyPaymentTotal = $this->_MonthlyPayment2($data->amount,
+            $data->first_invoice_fee,
+            $data->first_invoice_start_fee,
+            $data->customerInterest,
+            $data->repayment_term,
+            $data->monthly_invoice_fee,
+            $data->administration_fee,
+            $data->credit_interest_grace_days
+        );
+        $reply->monthly_payment_total = $monthlyPaymentTotal; 
+        return json_encode($reply);
+    }
+
+    private function actionOverdueCheck($data) {
+		/*
+		{
+			"_group" : "WebAppV4",
+			"_action" : "WaCheck",
+			"_personal_id_number" : "195711040054"
+		
+		}
+		*/
+		$sql = "SELECT people_status, overdue FROM people ";
+		$sql .= "WHERE personal_id_number = '$data->_personal_id_number'";
+		return json_encode($this->_Get($sql));
+	}
+
+	private function actionMaxCheck($data) {
+		/*
+		{
+			"_group" : "WebAppV4",
+			"_action" : "MaxCheck",
+			"_event_id" : "386"
+			"_max_on" : "n",
+			"_option" : 
+		}
+		*/
+		
+		$reply = new stdClass();
+		// print_r($data); die('');
+		//$data->_max_on = 'n';
+		if ($data->_max_on == 'y') {
+			
+			$sql = "SELECT base_event_id FROM event_v4 where event_id = $data->_event_id";
+			$res = $this->_Get($sql);
+			$baseEventId = $res['base_event_id'];
+
+			$sql = "SELECT participant_max FROM event_v4 where event_id = $baseEventId";
+			$res = $this->_Get($sql);
+			$maxNumber = $res['participant_max'];
+
+			$sql = "SELECT COUNT(*) AS current_number ";
+			$sql .= "FROM event_participant p, event_item_v4 i, invoice_request r, event_v4 e ";
+			$sql .= "WHERE ";
+			// $sql .= "i.event_id IN ($eventId) AND ";
+			$sql .= "e.base_event_id = $baseEventId AND ";
+			$sql .= "e.inherit_event_id = '0' AND ";
+			$sql .= "i.event_item_id = p.event_item_id AND "; 
+			$sql .= "i.event_item_status = 'c' AND ";
+			$sql .= "p.event_participant_status = 'c' AND ";
+			$sql .= "i.event_id = e.event_id AND ";
+			$sql .= "i.approved_code = r.approved_code  "; // AND
+			// echo $sql; die('');
+			$res = $this->_Get($sql);
+			// print_r($res); die('');
+			$currentNumber = $res['current_number'];
+
+			if ($currentNumber < $maxNumber) {
+				$reply->code = '1';
+				$reply->eventFull = 'n';
+				$reply->place_left = $maxNumber - $currentNumber;
+			}
+			else {
+				$reply->eventFull = 'y';
+				$reply->code = '0';
+			}	
+		}
+		else {
+			$reply->code = '1';
+		}
+		if ($data->_option_on == 'y') {
+			$reply->option = $data->_option;
+			for ($i=0; $i<sizeof($data->_option); $i++) {	
+				$sql = "SELECT event_option_setting_id FROM event_option_setting WHERE event_option_setting_id = " . $data->_option[$i]->event_option_setting_id;
+				$resOptions = $this->_GetList($sql);
+				
+				/*
+				$optionIds = '';
+				for ($k=0; $k<sizeof($resOptions); $k++) {
+					$optionIds .= $resOptions[$k]['event_option_setting_id'] . ',';
+				}
+				$optionIds = substr($optionIds, 0, -1);
+				*/
+				//
+				// Calculate used option
+				//
+				$sql = "SELECT COUNT(*) AS counter FROM event_option o, event_participant p, event_item_v4 e ";
+				$sql .= "WHERE o.event_option_setting_id = " . $data->_option[$i]->event_option_setting_id . " AND ";
+				// $sql .= "WHERE o.event_option_setting_id IN ($optionIds) AND ";
+				$sql .= "o.event_participant_id = p.event_participant_id AND ";
+				$sql .= "p.event_item_id = e.event_item_id AND e.event_item_status = 'c' ";
+				$sql .= "AND o.event_option_status = 'c' ";
+				$res = $this->_Get($sql);
+				$reply->option[$i]->counter = $res['counter'];
+				// 
+				// Get max or each option
+				// 
+				$sql = "SELECT max_number FROM event_option_setting WHERE event_option_setting_id = " . $data->_option[$i]->event_option_setting_id;
+				$resBase = $this->_Get($sql);
+				$reply->option[$i]->max_numer = $resBase['max_number'];
+				$reply->option[$i]->place_left = (int) $reply->option[$i]->max_numer -  (int) $reply->option[$i]->counter;
+				if ((int) $reply->option[$i]->place_left >= (int) $reply->option[$i]->current_number ) {
+					$reply->option[$i]->code = '1';
+				}
+				else {
+					$reply->option[$i]->code = '0';
+					if ($reply->option[$i]->place_left < 0 ) {
+						$reply->option[$i]->place_left = '0';
+					}
+				}
+			}
+		}
+		
+		/*
+		if ($reply->code == '1' ) {
+			if ($data->_option_on == 'y') {
+				$reply->option = [];
+				for ($i=0; $i<sizeof($data->_option); $i++) {	
+					$sql = "SELECT event_option_setting_id FROM event_option_setting WHERE base_event_option_setting_id = " . $data->_option[$i]->base_event_option_setting_id;
+					$resOptions = $this->_GetList($sql);
+					$optionIds = '';
+					for ($k=0; $k<sizeof($resOptions); $k++) {
+						$optionIds .= $resOptions[$k]['event_option_setting_id'] . ',';
+					}
+					$optionIds = substr($optionIds, 0, -1);
+					
+					$sql = "SELECT COUNT(*) AS counter FROM event_option o, event_participant p, event_item_v4 e ";
+					$sql .= "WHERE o.event_option_setting_id IN ($optionIds) AND ";
+					$sql .= "o.event_participant_id = p.event_participant_id AND ";
+					$sql .= "p.event_item_id = e.event_item_id AND e.event_item_status = 'c' ";
+					$sql .= "AND o.event_option_status = 'c' ";
+					$res = $this->_Get($sql);
+					$record = new stdClass();
+					$record->base_option_id = $data->_option[$i];
+					$record->counter = $res['counter'];
+					array_push($reply->option, $record);
+				}
+			}
+		}
+		*/
+		return json_encode($reply);
+
+	}
+
+
+	private function actionWriteToLog($data) {
+		
+		$reply = $this->_Insert('wa_log_v4', $data);
+		
+		return json_encode($reply);
+	}
+
+	private function actionInvoiceEventItemSet($data) {
+		$json =  json_encode($data);
+		$result = $this->_RestApiCall($json);
+		return $result;
+    }
+	
+	private function actionReCreateFaktura($data) {
+
+		$sql = "SELECT * FROM first_invoice WHERE invoice_id = $data->_invoice_id";
+		$invoice = $this->_GET($sql);
+
+		// -- Get the company id
+		$sql = "SELECT company_id FROM credit WHERE credit_id = " . $invoice['credit_id'];
+		$res = $this->_GET($sql);
+
+		$this->_Settings($res['company_id']);
+		$invoice['effective_rate'] = $this->Setting->effective_rate;
+		$invoice['effective_total'] = $this->Setting->effective_total;
+		return json_encode($invoice);
+	}
+	
+	private function actionEventSpecGet($data) {
+
+		/*
+		{
+			"_group" : "WebAppV4",
+			"_action" : "EventSpecGet",
+			"_event_item_id" : "12458".
+			"_credit_id" : "12344420804"
+		}
+		*/
+		
+		//$sql = "SElECT e.event_id, e.participant_on, e.note_label, e.hasVat, e.company_account_id FROM event_v4 e, event_item_v4 i WHERE e.event_id=i.event_id AND i.event_item_id = $data->_event_item_id";
+		if (isset($data->_credit_id)) {
+			$sql = "SElECT e.event_id, e.tdb_on, e.participant_on, e.note_label, e.has_vat, e.company_account_id, c.company_id_number, cr.amount, ";
+			$sql .= "i.people_company_on, i.people_company, i.people_company_address, i.people_company_postcode, i.people_company_city ";
+			$sql .= "FROM event_v4 e, event_item_v4 i, company c, credit cr ";
+			$sql .= "WHERE e.event_id=i.event_id AND i.event_item_id = $data->_event_item_id ";
+			$sql .= "AND e.company_id = c.company_id AND cr.credit_id = $data->_credit_id";
+			// echo $sql; die('');
+			$eventItem = $this->_Get($sql);
+			/*
+				SElECT 	e.event_id, e.participant_on, e.note_label, e.has_vat, e.company_account_id, 
+						c.company_id_number, cr.amount, i.people_company_on, i.people_company, i.people_company_address, 
+						i.people_company_postcode, i.people_company_city 
+				FROM event_v4 e, event_item_v4 i, company c, credit cr 
+				WHERE 	e.event_id=i.event_id AND i.event_item_id = 11490 AND e.company_id = c.company_id AND 
+						cr.credit_id = 12344419972 
+			*/
+		}
+		else {
+			// Recreate call
+			$sql = "SElECT e.event_id, e.tdb_on, e.participant_on, e.note_label, e.has_vat, e.company_account_id, c.company_id_number, cr.amount, ";
+			$sql .= "i.people_company_on, i.people_company, i.people_company_address, i.people_company_postcode, i.people_company_city ";
+			$sql .= "FROM event_v4 e, event_item_v4 i, company c, credit cr ";
+			$sql .= "WHERE e.event_id=i.event_id AND i.event_item_id = $data->_event_item_id ";
+			$sql .= "AND e.company_id = c.company_id AND i.credit_id = cr.credit_id";
+			$eventItem = $this->_Get($sql);
+			// print_r($sql); die('');
+		}
+
+		//$invoice->people_company_on = 'n'; // NEW 2021-07-03
+
+		//print_r($eventItem); die('');
+		//echo $sql; die('');
+
+		if ($eventItem['has_vat'] == 'y' && $eventItem['company_account_id'] > '0') {
+			$sql = "SELECT v.vat_rate FROM company_account ca, vat_item v ";
+			$sql .= "WHERE ca.company_account_id = " . $eventItem['company_account_id'] . " AND ca.vat_code = v.vat_code ";
+			// Handle if zero
+			$resVat = $this->_Get($sql);
+			$eventItem['vat'] = $resVat['vat_rate'];
+			// $eventItem['vat_amount'] = $eventItem['amount'] * $eventItem['vat'] / 100;
+			$eventItem['vat_amount'] = $this->vatCalculate($eventItem['amount'], $eventItem['vat']);
+			//$eventItem['vat_amount'] = number_format($eventItem['vat_amount'], 2);
+		}
+		else {
+			$eventItem['has_vat'] = 'n';
+		}
+		
+		
+
+		if ($eventItem['participant_on'] == 'y' && $eventItem['tdb_on'] == 'n') {
+			$sql = "SElECT * FROM event_participant WHERE event_item_id = $data->_event_item_id";
+			$participants = $this->_GetList($sql);
+
+			for ($i=0; $i < sizeof($participants); $i++) {
+
+				$sql = "SELECT event_selection_setting_id, text sel_label FROM event_selection_setting ";
+				$sql .= "WHERE event_id = " . $eventItem['event_id'] . " ORDER BY event_selection_setting_id";
+				$participants[$i]['option'] = $this->_GetList($sql);
+				
+				for ($j=0; $j < sizeof($participants[$i]['option']); $j++) {
+					$sql = "SELECT os.text AS option_text, o.value ";
+					$sql .= "FROM event_option o, event_option_setting os ";
+					$sql .= "WHERE o.event_option_setting_id = os.event_option_setting_id AND o.event_participant_id = " . $participants[$i]['event_participant_id'];
+					$sql .= " AND os.event_selection_setting_id = " . $participants[$i]['option'][$j]['event_selection_setting_id'];
+					$res = $this->_Get($sql);
+					if ($res['code'] == '1') {
+						if ($res['option_text'] == 'Rabatt') { // 2021-10-13
+							$participants[$i]['option'][$j]['option_text'] = 'Rabatt (' . $res['value'] . 'kr)';
+						}
+						else {
+							if ($eventItem['tdb_on'] == 'n') {
+								$participants[$i]['option'][$j]['option_text'] = $res['option_text'];
+							}
+							else {
+								$participants[$i]['option'][$j]['option_text'] = $res['option_text'] . ' (' . $res['value'] . 'kr)';
+							}
+						}
+					}
+					else {
+						$participants[$i]['option'][$j]['option_text'] = 'Ej vald';
+					}
+				}
+			}
+			$eventItem['participant'] = $participants;
+		}
+		else if ($eventItem['tdb_on'] == 'y') {
+			$sql = "SElECT * FROM event_participant WHERE event_item_id = $data->_event_item_id";
+			$participants = $this->_GetList($sql);
+			
+			for ($i=0; $i < sizeof($participants); $i++) {
+				$sql = "SELECT event_option_setting_id, value_text AS option_text,  value_text AS sel_label, value FROM event_option WHERE event_participant_id = " . $participants[$i]['event_participant_id'];
+				$participants[$i]['option'] = $this->_GetList($sql);
+				for ($k=0; $k<sizeof($participants[$i]['option']); $k++) {
+					if ($participants[$i]['option'][$k]['event_option_setting_id'] > 0) {
+
+						//$participants[$i]['option'][$k]['option_text'] .= ' (' . $participants[$i]['option'][$k]['value'] . 'kr)';
+
+						$sql = "SELECT s.text AS option_text, o.value, o.text ";
+						$sql .= "FROM event_option_setting o, event_selection_setting s  ";
+						$sql .= "WHERE o.event_option_setting_id = " . $participants[$i]['option'][$k]['event_option_setting_id'] . " AND ";
+						$sql .= "o.event_selection_setting_id = s.event_selection_setting_id";
+						$res = $this->_Get($sql);
+						if ($res['code'] == '1') {
+							$participants[$i]['option'][$k]['sel_label'] = $res['option_text'];
+							$participants[$i]['option'][$k]['option_text'] = $res['text'] . ' (' . $participants[$i]['option'][$k]['value'] . 'kr)';
+						}
+						else {
+							$participants[$i]['option'][$k]['option_text'] .= ' (' . $participants[$i]['option'][$k]['value'] . 'kr)';
+						}
+					}
+					else {
+						$participants[$i]['option'][$k]['option_text'] .= ' (' . $participants[$i]['option'][$k]['value'] . 'kr)';
+					}
+
+				}
+
+			}
+			$eventItem['participant'] = $participants;
+		}
+		
+		
+		return json_encode($eventItem);
+	}
+
+	private function vatCalculate($amount, $vatRate) {
+        $vatResult = new stdClass();
+        $vatRate = (float) $vatRate;
+        $total = (float) $amount;                
+        $formula = ($vatRate / 100) + 1;
+        $amount = $total / $formula; 
+        $vat = $total - $amount;
+        $dif = $total - $amount - $vat; 
+        if ($dif > 0 || $dif < 0 ) {
+            $amount = $amount + $dif;
+        }
+        // $vatResult->amount = round($amount, 2);
+        // $vatResult->vat = round($vat, 2);
+        return number_format($vat, 2);     
+    }
+	
+	private function actionGetEventItemIdByCreditId($data) {
+		// --
+		// Används vid faktura utskrift
+		//
+		$sql = "SELECT i.event_item_id FROM invoice_request r, event_item_v4 i ";
+		$sql .= "WHERE r.credit_id = $data->_credit_id AND r.approved_code = i.approved_code ";
+		$result = $this->_Get($sql);
+		// Ny part
+		if ($result['code'] == '0') {
+			$sql = "SELECT company_id_number FROM company co, credit cr ";
+			$sql .= " WHERE co.company_id = cr.company_id AND cr.credit_id =  $data->_credit_id";
+			$result2 = $this->_Get($sql);
+			$reply = new stdClass();
+			$reply->code = '2';
+			$reply->has_vat = 'n';
+			$reply->company_id_number = $result2['company_id_number'];
+			return json_encode($reply);
+		}
+		else {
+			return json_encode($result);
+		}
+	}
+
+	private function actionSetConfirmed($data) {
+		/*
+		Set a transaction complete, update, people, name, and invoice_id_id
+
+		{
+			"_group" : "WebAppV4",
+			"_action" : "SetConfirmed",
+		 	"_credit_id" : "12344411754",
+            "_event_item_id" : "14",
+            "_email" : "bo.grus@yahoo.com",
+            "_invoice_event" : "n",
+            "_invoice_event_item_id" : ""
+		}
+
+		1. Get the people name, people_id from credit_id
+		2. Update event_item
+		3. Update people (if mobile no is applied) 
+		4. Update inovoice_request_item, if from invoice request
+
+		*/
+		
+		//return json_encode($data);
+		//die('');
+		// --
+		// -- 1. Get the people name, people_id from credit_id
+		// --
+		$sql = "SELECT p.people_id, CONCAT(p.last_name, ' ' ,p.first_name) AS people_name ";
+		$sql .= "FROM people p, credit c ";
+		$sql .= "WHERE c.credit_id = $data->_credit_id AND c.people_id = p.people_id";
+		$result = $this->_Get($sql);
+		
+		// --
+		// -- 2. Update event_item
+		// --
+		$paramUpdate = new stdClass();
+		$paramUpdate->people_id = $result['people_id'];
+		
+		$peopleName = $result['people_name'];
+		$peopleName = str_replace ("'", "\'", $peopleName);
+		$paramUpdate->people_name = $peopleName;
+	
+		$paramUpdate->credit_id = $data->_credit_id;
+		$paramUpdate->event_item_status = 'c';
+		$reply = $this->_Update('event_item_v4', 'event_item_id', $data->_event_item_id, $paramUpdate);
+		
+		// --
+		// -- 3. Update people (if mobile no is applied) and the email
+		// --
+		$sql = "SELECT mobile, invoice_event_item_id, email, amount FROM event_item_v4 WHERE event_item_id = $data->_event_item_id ";
+		$resEvent = $this->_Get($sql);
+		
+		
+		$paramUpdate = new stdClass();
+		if (strlen($resEvent['mobile']) > 7 ) {
+			$paramUpdate->mobile = $resEvent['mobile'];
+		}
+		$paramUpdate->email = $resEvent['email'];
+		$res = $this->_Update('people', 'people_id', $result['people_id'], $paramUpdate);
+	
+		if ($resEvent['invoice_event_item_id'] > '0') {
+			$paramUpdate = new stdClass();
+			$paramUpdate->people_id = $result['people_id'];
+			$paramUpdate->people_name = $result['people_name'];
+			$paramUpdate->event_item_id = $data->_event_item_id;
+			$paramUpdate->invoice_event_item_status = 'c';
+			$paramUpdate->amount = $resEvent['amount'];
+			$paramUpdate->email = $resEvent['email'];
+			$dt = new DateTime();
+			$paramUpdate->confirmed_datetime = $dt->format('Y-m-d H:i:s');
+			$reply = $this->_Update('invoice_event_item', 'invoice_event_item_id', $resEvent['invoice_event_item_id'], $paramUpdate);
+		}
+		$reply = new stdClass();
+		$reply->code = '1';
+		return json_encode($reply);
+	}
+
+	private function actionSetDeniedInvoice($data) {
+		$paramUpdate = array();
+		$paramUpdate['invoice_event_item_status'] = 'd';
+		$reply = $this->_Update('invoice_event_item', 'invoice_event_item_id', $data->_invoice_event_item_id, $paramUpdate);
+		return json_encode($reply);
+	}
+	
+	private function actionSetApprovedCodeEventItem($data) {
+		$paramUpdate = array();
+		$paramUpdate['approved_code'] = $data->approved_code;
+		$reply = $this->_Update('event_item_v4', 'event_item_id', $data->_event_item_id, $paramUpdate);
+		return json_encode($reply);
+	}
+	
+	// New 2021-08-17
+	private function actionWriteToVisitorLog($data) {
+		$reply = $this->_Insert('visitor_log', $data);
+		return json_encode($reply);
+	}
+}

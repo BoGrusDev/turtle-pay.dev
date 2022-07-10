@@ -1,0 +1,154 @@
+<?php
+/*
+    Class Trans
+
+	Date: 2018-10-16
+
+	Call:
+	{
+		"_group" : "Trans",
+		"_action" : "List",
+		"_bankid" : "no",
+		"_personal_id_number" : "193303110682",
+		"_company_id"
+	}
+	{
+		"_group" : "Trans",
+		"_action" : "Get",
+		"_company_id" : "1",
+		"_sales_person_people_id" : "3",
+		"_credit_id" : "12344410351"
+	}
+
+*/
+
+class TransClass extends ActionBase {
+
+	public function Run($data) {
+
+		$actionMethod = 'action' . $data->_action;
+		echo $this->$actionMethod($data);
+
+	}
+
+	public function actionList($data) {
+		$sql = "SELECT c.credit_id, c.start_date, c.purchase_date, c.receipt_number, c.amount, c.credit_status FROM credit c ";
+		$sql .= "WHERE personal_id_number = $data->_personal_id_number AND company_id = $data->_company_id "; 
+		$trans = $this->_GetList($sql);
+		return json_encode($trans);
+	}
+
+	private function actionGet($data) {
+
+		$this->_Settings($data->_company_id);
+
+		$replyValidate = $this->salePersonValidate($data->_company_id, $data->_sales_person_people_id);
+		if ($replyValidate->code != '1') {
+			return json_encode($replyValidate);
+			die ('');
+		}
+
+		$sql = "SElECT c.credit_id, c.start_date, c.people_id, c.company_id, c.store_id, c.cr_id, c.sales_person_people_id, c.purchase_date,";
+		$sql .= "c.receipt_number,c.amount,c.first_invoice_email_sent,i.invoice_filename, i.duedate, c.first_invoice_ocrno as first_invoice_sent,";
+		$sql .= "c.credit_status,c.from_refundable,co.company_name,s.store_name, CONCAT(p.first_name, ' ' ,p.last_name) AS name,";
+		$sql .= "p.address,p.postcode,p.city,p.email, CONCAT(ps.first_name, ' ' ,ps.last_name) AS salesperson, p.personal_id_number, p.email, c.source ";
+		$sql .= ',ei.event_item_id '; // new 20210812
+		$sql .= "FROM credit c ";
+		$sql .= "LEFT JOIN company co ON c.company_id = co.company_id ";
+		$sql .= "LEFT JOIN store s ON c.store_id = s.store_id ";
+		$sql .= "LEFT JOIN people p ON c.people_id = p.people_id ";
+		$sql .= "LEFT JOIN people ps ON c.sales_person_people_id = ps.people_id ";
+		$sql .= "LEFT JOIN first_invoice i ON c.credit_id = i.credit_id ";
+		$sql .= "LEFT JOIN event_item_v4 ei on ei.credit_id = c.credit_id "; // new 20210812
+		$sql .= "WHERE c.credit_id = '" . $data->_credit_id . "'";
+		$result = $this->_Get($sql);
+
+		if ($result['code'] == "1") {
+			//$result['amount'] = number_format($result['amount'], 2);
+		}
+		$today = date("Y-m-d");
+		//echo $result['duedate'] . " - " .  $today;
+
+		if ($result['duedate'] <= $today) {
+			$result['credit_status'] = "d"; // due and will be handle next monthly job
+		}
+			// new 20210812
+		else if (is_numeric($result['event_item_id']) ) {
+			$result['credit_status'] = 'a';
+		}
+		else {
+
+			// Check balance of Company
+			$sql = "SELECT SUM(amount) AS balance FROM btrans WHERE account_no = '2981' AND company_id = $data->_company_id";
+			$res = $this->_Get($sql);
+			if ($res['code'] == "1") {
+				
+				$balance = $res['balance']; // Negativ means a clain to Turle
+				// Add the possible Refund to Balance
+					//echo $balance;
+					//die('');
+				$balance =  $res['balance'] + $result['amount'];
+				if ($balance <= 0) {
+					//Refunding is possible
+				}
+				//if ($balance >= $this->Setting->company_credit_limit) {
+				//	$result['credit_status'] = "d";
+				//}
+				$result['balance']  = $balance;
+				$result['company_balance']  = $this->Setting->company_credit_limit;
+
+				/*
+				$balance = $res['balance']; // Negativ means a clain to Turle
+				// Add the possible Refund to Balance
+					//echo $balance;
+					//die('');
+				$balance =  $res['balance'] + $result['amount'];
+				if ($balance <= 0) {
+					//Refunding is possible
+				}
+				if ($balance >= $this->Setting->company_credit_limit) {
+					$result['credit_status'] = "d";
+				}
+				$result['balance']  = $balance;
+				$result['company_balance']  = $this->Setting->company_credit_limit;
+				*/
+			}
+		}
+		$result['amount'] = number_format($result['amount'], 2);
+		return json_encode($result);
+	}
+
+	private function salePersonValidate($company_id, $sales_person_people_id) {
+
+		$sql = "SELECT priv FROM company_people  WHERE priv IN ('sp','pr') AND company_id = $company_id AND people_id = $sales_person_people_id";
+		$result = $this->_Get($sql);
+	
+		if ($result['code']  == '1' ) {
+			// OK
+		}
+		else {
+			$result['code'] = '5';
+			$result['denied_code'] = 'sales_person_not_connected_to_company';
+		}
+		return (object) $result;
+
+		/*
+			// Check if Sales person is activeand connected to company
+			$sql = "SELECT count(*) AS count FROM people WHERE people_id = $sales_person_people_id AND is_sp = 'y' AND people_status = 'a'";
+			$resultCheck = $this->_Get($sql);
+			if ($resultCheck['count'] == "0") {
+				$resultCheck['code'] = '5';
+				$resultCheck['denied_code'] = 'sales_person_not_active';
+				return (object) $resultCheck;
+			}
+			$sql = "SELECT count(*) AS count FROM company_people WHERE cp_status = 'a' AND company_id = $company_id AND people_id = $sales_person_people_id";
+			$result = $this->_Get($sql);
+			if ($result['count'] ==  '0') {
+				$result['code'] = '5';
+				$result['denied_code'] = 'sales_person_not_connected_to_company';
+			}
+			return (object) $result;
+		*/
+	}
+
+}

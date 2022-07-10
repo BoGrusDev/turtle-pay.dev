@@ -1,0 +1,119 @@
+#FLAGGA 0
+#FORMAT PC8
+#SIETYP 4
+#PROGRAM "Turtle Pay Kundportal" 2021.1
+#GEN 20220207
+#FNAMN "Saltsj”badens Slalomklubb"
+#ORGNR 814000-9252
+#KPTYP EUBAS97
+#KONTO 1641 "Turtle Pay avr„kning"
+#KONTO 6570 "Transaktionsavgift"
+#KONTO 3613 "L„ger"
+#KONTO 1940 "Bank"
+#KONTO 8400 "R„nta"
+#VER T 1 20220116 "Turtle Pay Avr„kning"
+{
+#TRANS 1641 {} 2554.20
+#TRANS 6570 {} 25.80
+#TRANS 3613 {} -2580.00
+}
+#VER T 2 20220117 "Turtle Pay Avr„kning"
+{
+#TRANS 1641 {} 5999.40
+#TRANS 6570 {} 60.60
+#TRANS 3613 {} -6060.00
+}
+#VER T 3 20220118 "Turtle Pay Avr„kning"
+{
+#TRANS 1641 {} -5999.40
+#TRANS 1940 {} 8553.60
+#TRANS 6570 {} 25.80
+#TRANS 3613 {} -2580.00
+}
+#VER T 4 20220120 "Turtle Pay Avr„kning"
+{
+#TRANS 1641 {} 5108.40
+#TRANS 1940 {} 2554.20
+#TRANS 6570 {} 77.40
+#TRANS 3613 {} -7740.00
+}
+#VER T 5 20220121 "Turtle Pay Avr„kning"
+{
+#TRANS 1641 {} 1610.80
+#TRANS 1940 {} 5940.00
+#TRANS 6570 {} 94.20
+#TRANS 3613 {} -7645.00
+}
+#VER T 6 20220122 "Turtle Pay Avr„kning"
+{
+#TRANS 1641 {} 4276.80
+#TRANS 6570 {} 43.20
+#TRANS 3613 {} -4320.00
+}
+#VER T 7 20220123 "Turtle Pay Avr„kning"
+{
+#TRANS 1641 {} 2554.20
+#TRANS 6570 {} 25.80
+#TRANS 3613 {} -2580.00
+}
+#VER T 8 20220124 "Turtle Pay Avr„kning"
+{
+#TRANS 1641 {} -16104.40
+#TRANS 1940 {} 16104.40
+}
+#VER T 9 20220125 "Turtle Pay Avr„kning"
+{
+#TRANS 1641 {} -7620.00
+#TRANS 3613 {} 7620.00
+}
+#VER T 10 20220126 "Turtle Pay Avr„kning"
+{
+#TRANS 1641 {} 5214.33
+#TRANS 6570 {} 52.67
+#TRANS 3613 {} -5267.00
+}
+#VER T 11 20220127 "Turtle Pay Avr„kning"
+{
+#TRANS 1641 {} 10355.40
+#TRANS 6570 {} 104.60
+#TRANS 3613 {} -10460.00
+}
+#VER T 12 20220128 "Turtle Pay Avr„kning"
+{
+#TRANS 1641 {} -2762.13
+#TRANS 1940 {} 7949.73
+#TRANS 6570 {} 52.40
+#TRANS 3613 {} -5240.00
+}
+#VER T 13 20220131 "Turtle Pay Avr„kning"
+{
+#TRANS 1641 {} 8188.29
+#TRANS 1940 {} 5187.60
+#TRANS 6570 {} 135.11
+#TRANS 3613 {} -13511.00
+}
+#VER T 14 20220201 "Turtle Pay Avr„kning"
+{
+#TRANS 1641 {} -7406.19
+#TRANS 1940 {} 12118.59
+#TRANS 6570 {} 47.60
+#TRANS 3613 {} -4760.00
+}
+#VER T 15 20220202 "Turtle Pay Avr„kning"
+{
+#TRANS 1641 {} -5971.70
+#TRANS 1940 {} 5969.70
+#TRANS 8400 {} 2.00
+}
+#VER T 16 20220203 "Turtle Pay Avr„kning"
+{
+#TRANS 1641 {} 51.00
+#TRANS 6570 {} 9.00
+#TRANS 3613 {} -60.00
+}
+#VER T 17 20220204 "Turtle Pay Avr„kning"
+{
+#TRANS 1641 {} 1584.00
+#TRANS 6570 {} 16.00
+#TRANS 3613 {} -1600.00
+}

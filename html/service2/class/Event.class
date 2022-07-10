@@ -1,0 +1,529 @@
+<?php
+/*
+   @[class]EventClass
+
+   @[desc]
+   * Handling calls from pages/event/event.js
+   * Calling kapi and the class Event.class
+   * This class a bridge between Kundportal and kapi  
+   @[end-desc]
+
+   @[update]2020-09-02
+
+   @[todo]
+   @[end-todo]
+
+*/
+
+class EventClass extends ActionPublic {
+
+	public function Run($data) {
+		/*
+			@[function]
+			$[type]global
+			@[desc]
+			* This is the Entry point for all AJax call from the kundportal
+			* Include the classes in the _action param
+			* Check the token, if is logged in
+			* If not logged in return code 9
+			@[end-desc]
+			@[update]2020-09-02
+			@[param] 
+			* All internal fuction return a JSON whith a echo.
+			@[end-param] 
+		*/
+		$peopleId = $this->_CheckToken($data->_token);
+		if ($peopleId) {
+			$data->_people_id = $peopleId;
+			$actionMethod = 'action' . $data->_action;
+			echo $this->$actionMethod($data);
+		} else {
+			$reply = new stdClass();
+			$reply->code = "9";
+			return json_encode($reply);
+		}
+	}
+	
+	public function actionEventCollection($data) {
+		/*
+			@[function]
+			$[type]internal
+			@[desc]
+			* 
+			@[end-desc]
+			@[update]
+			@[param] 
+			@[end-param] 
+		*/
+		// --
+		// Used by Event inställningar
+
+		$param = new stdClass();
+		$param->_group = "Event";
+		$param->_action = "EventCollection";
+		$param->_company_id = $data->_user_id;
+		$param->_event_id = $data->_event_id;
+		$param->_people_id = $data->_people_id;
+		$result = $this->_RestApiCall(json_encode($param));
+
+		return $result;
+	}
+
+	public function actionEventCollectionSelection($data) {
+		// --
+		// Used by Event inställningar
+		$param = new stdClass();
+		$param->_group = "Event";
+		$param->_action = "EventCollectionSelection";
+		$param->_company_id = $data->_user_id;
+		$param->_event_id = $data->_event_id;
+		$param->_people_id = $data->_people_id;
+		$result = $this->_RestApiCall(json_encode($param));
+
+		return $result;
+	}
+
+	private function actionEventCollectionSelectionUpdate($data) {
+		/*
+			@[function]
+			$[type]internal
+			@[desc]
+			* 
+			@[end-desc]
+			@[update]
+			@[param] 
+			@[end-param] 
+		*/
+		$data->_company_id = $data->_user_id;
+		$result = $this->_RestApiCall(json_encode($data));
+		return $result;
+	}
+	
+	private function actionEventCollectionSelectionRemove($data) {
+		/*
+			@[function]
+			$[type]internal
+			@[desc]
+			* 
+			@[end-desc]
+			@[update]
+			@[param] 
+			@[end-param] 
+		*/
+		$data->_company_id = $data->_user_id;
+		$result = $this->_RestApiCall(json_encode($data));
+		return $result;
+
+	}
+
+	private function actionEventCollectionUpdate($data) {
+		$data->_company_id = $data->_user_id;
+		$result = $this->_RestApiCall(json_encode($data));
+		return $result;
+	}
+
+	private function actionEventCreate($data) {
+		/*
+			@[function]
+			$[type]internal
+			@[desc]
+			* 
+			@[end-desc]
+			@[update]
+			@[param] 
+			@[end-param] 
+		*/
+        $data->_company_id = $data->_user_id;
+		$data->_people_id = $data->_people_id;
+		$result = $this->_RestApiCall(json_encode($data));
+		return $result;
+	}
+
+	public function actionEventGet($data) {
+		/*
+			@[function]
+			$[type]internal
+			@[desc]
+			* 
+			@[end-desc]
+			@[update]
+			@[param] 
+			@[end-param] 
+		*/
+		$param = new stdClass();
+		$param->_group = "Event";
+		$param->_action = "EventGet";
+		$param->_company_id = $data->_user_id;
+		$param->_event_id = $data->_event_id;
+		$param->_people_id = $data->_people_id;
+		$result = $this->_RestApiCall(json_encode($param));
+
+		return $result;
+	}
+	
+	private function actionEventInherit($data) {
+		/*
+			@[function]
+			$[type]internal
+			@[desc]
+			* 
+			@[end-desc]
+			@[update]
+			@[param] 
+			@[end-param] 
+		*/
+		$data->_company_id = $data->_user_id;
+		$result = $this->_RestApiCall(json_encode($data));
+		return $result;
+	}
+
+	private function actionEventItemList2($data) {
+		/*
+			@[function]
+			$[type]internal
+			@[desc]
+			* 
+			@[end-desc]
+			@[update]
+			@[param] 
+			@[end-param] 
+		*/
+		// -- 
+		// -- Create the report after the paramers from the Panel
+		//
+		$data->_company_id = $data->_user_id;
+		$result = $this->_RestApiCall(json_encode($data));
+		return $result;
+	}
+
+	private function actionEventItemPanel($data) {
+		/*
+			@[function]EventItemPanel
+			$[type]internal
+			@[desc]
+			* Load 
+			@[end-desc]
+			@[update]
+			@[param] 
+			@[end-param] 
+		*/
+		// -- 
+		// -- Load the Panel data and set it dynamic
+		//
+		$data->_company_id = $data->_user_id;
+		$result = $this->_RestApiCall(json_encode($data));
+		return $result;
+	}
+
+	private function actionEventItemPanelReportLoad($data) {
+		/*
+			@[function]EventItemPanelReportLoad
+			$[type]internal
+			@[desc]
+			* Load 
+			@[end-desc]
+			@[update]
+			@[param] 
+			@[end-param] 
+		*/
+		// -- 
+		// -- Load the Panel data and set it dynamic
+		//
+		$data->_company_id = $data->_user_id;
+		$result = $this->_RestApiCall(json_encode($data));
+		return $result;
+	}
+
+	private function actionEventItemPanelReportList($data) {
+		/*
+			@[function]EventItemPanelReportList
+			$[type]internal
+			@[desc]
+			* Load 
+			@[end-desc]
+			@[update]
+			@[param] 
+			@[end-param] 
+		*/
+		// -- 
+		// -- Load the Panel data and set it dynamic
+		//
+		$data->_company_id = $data->_user_id;
+		$result = $this->_RestApiCall(json_encode($data));
+		return $result;
+	}
+
+	private function actionEventItemPanelReportUpdate($data) {
+		/*
+			@[function]EventItemPanelReportUpdate
+			$[type]internal
+			@[desc]
+			* Create or update a panel report 
+			@[end-desc]
+			@[update]
+			@[param] 
+			@[end-param] 
+		*/
+		// -- 
+		// -- Load the Panel data and set it dynamic
+		//
+		$data->_company_id = $data->_user_id;
+		$result = $this->_RestApiCall(json_encode($data));
+		return $result;
+	}
+	
+
+	public function actionEventList($data) {
+		/*
+			@[function]
+			$[type]internal
+			@[desc]
+			* 
+			@[end-desc]
+			@[update]
+			@[param] 
+			@[end-param] 
+		*/
+
+		$param = new stdClass();
+		$param->_group = "Event";
+		$param->_action = "EventList";
+		$param->_company_id = $data->_user_id;
+		$param->_people_id = $data->_people_id;
+		$result = $this->_RestApiCall(json_encode($param));
+
+		return $result;
+	}
+
+	public function actionEventItemList($data) {
+		/*
+			@[function]
+			$[type]internal
+			@[desc]
+			* 
+			@[end-desc]
+			@[update]
+			@[param] 
+			@[end-param] 
+		*/
+		$param = new stdClass();
+		$param->_group = "Event";
+		$param->_action = "EventItemList";
+		$param->_company_id = $data->_user_id;
+		$param->_people_id = $data->_people_id;
+		$param->_event_id = $data->_event_id;
+		$param->_options = $data->_options;
+		$result = $this->_RestApiCall(json_encode($param));
+
+		return $result;
+	}
+
+	public function actionEventItemLoad($data) {
+		/*
+			@[function]
+			$[type]internal
+			@[desc]
+			* 
+			@[end-desc]
+			@[update]
+			@[param] 
+			@[end-param] 
+		*/
+		$param = new stdClass();
+		$param->_group = "Event";
+		$param->_action = "EventItemLoad";
+		$param->_company_id = $data->_user_id;
+		$param->_people_id = $data->_people_id;
+		$param->_event_id = $data->_event_id;
+		$param->_webform_id = $data->_webform_id;
+		$result = $this->_RestApiCall(json_encode($param));
+
+		return $result;
+	}
+
+	private function actionEventStatusSet($data) {
+		/*
+			@[function]
+			$[type]internal
+			@[desc]
+			* 
+			@[end-desc]
+			@[update]
+			@[param] 
+			@[end-param] 
+		*/
+		$data->_company_id = $data->_user_id;
+		$result = $this->_RestApiCall(json_encode($data));
+		return $result;
+	}
+	
+	private function actionEventTemplateList($data) {
+		/*
+			@[function]
+			$[type]internal
+			@[desc]
+			* 
+			@[end-desc]
+			@[update]
+			@[param] 
+			@[end-param] 
+		*/
+		$param = new stdClass();
+		$param->_group = "Event";
+		$param->_action = "EventTemplateList";
+		$param->_company_id = $data->_user_id;
+		$param->_people_id = $data->_people_id;
+		$result = $this->_RestApiCall(json_encode($param));
+
+		return $result;
+	}
+
+	private function actionGetLogoList($data) {
+		/*
+			@[function]
+			$[type]internal
+			@[desc]
+			* 
+			@[end-desc]
+			@[update]
+			@[param] 
+			@[end-param] 
+		*/
+		$folder = LOGO_FOLDER;
+		$list = scandir($folder);
+		
+		$companyPrefix = $data->_user_id . '-';
+		$prefixPos = strpos($companyPrefix, '-') + 1;
+		$reply = new stdClass();
+		$reply->code = '1';
+		$reply->dir = array();
+		for ($i=0; $i < sizeof($list); $i++) {
+			if ($list[$i] == '.' || $list[$i] == '..' || $list[$i] == '.DS_Store') {
+				// skip
+			}
+			else {
+				// NEW PART
+				$dir = $list[$i];
+				if (substr($dir, 0, $prefixPos) == $companyPrefix) {
+					$position = strpos($dir, '-') + 1;
+					$dir = substr($dir ,$position);
+					array_push($reply->dir, $dir);
+				}
+			}
+		}
+		return json_encode($reply);
+	}
+	
+	private function actionParticipantDetails($data) {
+		/*
+			@[function]
+			$[type]internal
+			@[desc]
+			* 
+			@[end-desc]
+			@[update]
+			@[param] 
+			@[end-param] 
+		*/
+		$data->_company_id = $data->_user_id;
+		$result = $this->_RestApiCall(json_encode($data));
+		return $result;
+	}
+
+	private function actionParticipantDetailsPerform($data) {
+		/*
+			@[function]
+			$[type]internal
+			@[desc]
+			* 
+			@[end-desc]
+			@[update]
+			@[param] 
+			@[end-param] 
+		*/
+		$data->_company_id = $data->_user_id;
+		$result = $this->_RestApiCall(json_encode($data));
+		return $result;
+	}
+
+
+	private function actionWebformUpdate($data) {
+		/*
+			@[function]
+			$[type]internal
+			@[desc]
+			* 
+			@[end-desc]
+			@[update]
+			@[param] 
+			@[end-param] 
+		*/
+		$data->_group = "Event";
+		$data->_action = "WebformUpdate";
+		$data->_company_id = $data->_user_id;
+
+		$result = $this->_RestApiCall(json_encode($data));
+		return $result;
+	}
+
+	function actionCheckLimit($data) {
+		$data->_company_id = $data->_user_id;
+		$result = $this->_RestApiCall(json_encode($data));
+		return $result;
+	}
+
+	public function actionEventAttachAdd($data) {
+		// Insert Attachent 
+		// Used by: pages/event-webform.js.inc
+		/*
+			{
+				"_group" : "Event",
+				"_action" : "EventAttachAdd",
+				"_people_id" : "1",
+				"_company_id" : "69",
+				"event_id" : "419",
+				"filename" : "69-419-min-test-file.png",
+				"realname" : "Min Test File.png
+			}
+		*/
+		$param = new stdClass();
+		$param->_group = "Event";
+		$param->_action = "EventAttachAdd";
+		$param->_company_id = $data->_user_id;
+		$param->_people_id = $data->_people_id;
+		$param->event_id = $data->event_id;
+		$param->filename = $data->filename;
+		$param->realname = $data->realname;
+		$reply = $this->_RestApiCall(json_encode($param));
+		return $reply;
+	}
+
+	public function actionEventAttachRemove($data) {
+		// Mark attachemt as Removed status to r
+		// Used by: pages/event-webform.js.inc
+		/*
+			{
+				"_group" : "Event",
+				"_action" : "EventAttachRemove",
+				"event_attach_id" : "4"
+			}
+		*/
+		$param = new stdClass();
+		$param->_group = "Event";
+		$param->_action = "EventAttachRemove";
+		$param->_company_id = $data->_user_id;
+		$param->_people_id = $data->_people_id;
+		$param->event_id = $data->event_id;
+		$param->event_attach_id = $data->event_attach_id;
+		$reply = $this->_RestApiCall(json_encode($param));
+		return $reply;
+		
+	}
+
+	public function actionEventGetTdbLast($data) {
+		$data->_company_id = $data->_user_id;
+		$result = $this->_RestApiCall(json_encode($data));
+		return $result;
+	}
+	
+}

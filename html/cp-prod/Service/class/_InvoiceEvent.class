@@ -1,0 +1,778 @@
+<?php
+/*
+    PeopleClass
+
+	Date: 2019-08-02
+
+*/
+
+//ini_set('display_errors', 1);
+//ini_set('display_startup_errors', 1);
+//error_reporting(E_ALL);
+
+class InvoiceEventClass extends ActionBase {
+
+	public function Run($data) {
+
+		//$data->_company_id = $data->_user_id;
+
+        $actionMethod = 'action' . $data->_action;
+        return $this->$actionMethod($data);
+
+        /*
+		$sql = "SELECT COUNT(*) principal FROM company_people ";
+		$sql .= "WHERE people_id = $data->_people_id AND company_id = $data->_company_id AND priv = 'pr'";
+
+		$result = $this->_Get($sql);
+		if ($result['code'] == '1' && $result['principal'] == '1' ) {
+			echo $this->$actionMethod($data);
+		}
+		else {
+			$reply = new StdClass();
+			$reply->code = "8"; // not allowed
+			echo json_encode($reply);
+        }
+        */
+
+    }
+    
+	private function actionCheckEventCode($data) {
+
+		/*
+		{
+	        "_action" : "actionCheckEventCode",
+			"_event_code" : "4A7B3B5FFDC404A23790860C62ED5496"
+		}
+		*/
+        
+		$sql = "SELECT invoice_event_item_id, company_id, store_id, sp_id, email, ";
+		$sql .= "referens, amount, allowed_edit, invoice_event_item_status "; 
+        $sql .= "FROM invoice_event_item ";
+        $sql .= "WHERE invoice_event_item_code = '$data->_event_code'";
+        $result = $this->_Get($sql);
+		
+		return json_encode($result);
+	}
+
+
+	private function actionGetInvoiceEvent($data) {
+		$sql = "SELECT f.invoice_event_id, f.invoice_event_name, c.known_as, f.invoice_event_status ";
+		$sql .= "FROM invoice_event f, company c ";
+		$sql .= "WHERE f.company_id = c.company_id AND f.invoice_event_status = 'a' ";
+		$sql .= "ORDER by c.known_as, f.invoice_event_name";
+		$result = $this->_GetList($sql);
+		return json_encode($result);
+	}
+
+	private function actionGetOverview($data) {
+		
+		$sql = "SELECT i.*, f.invoice_event_name, c.known_as ";
+		$sql .= "FROM invoice_event_item i, invoice_event f, company c ";
+		$sql .= "WHERE i.invoice_event_id = f.invoice_event_id AND i.company_id = c.company_id AND f.invoice_event_status = 'a' ";
+		if ($data->_event_id > '0') {
+			$sql .= " AND f.invoice_event_id = $data->_event_id ";
+		}
+		if ($data->_status <> '0') {
+			$sql .= " AND i.invoice_event_item_status = '" . $data->_status . "'";
+		}
+		$sql .= "ORDER by c.known_as";
+		$result = $this->_GetList($sql);
+		return json_encode($result);
+	}
+
+	private function actionUpdateItem($data) {
+		$paramUpdate = array ();
+		$paramUpdate['invoice_event_item_status'] = 'd';
+		$res = $this->_Update('invoice_event_item', 'invoice_event_item_id', $data->_event_item_id, $paramUpdate);
+		return json_encode($res);
+	}
+
+	private function actionEmailPre($data) {
+
+		/*
+		{
+			"_group" : "InvoiceEvent",
+			"_action" : "EmailPre",
+			"_send_date" : "2019-09-12"
+		}
+		*/
+		$dt = new DateTime();
+		$sendDate = $dt->format('Y-m-d');
+
+		$sql = "SELECT  i.invoice_event_item_id, ";
+        $sql .= "i.invoice_event_id, ";
+        $sql .= "i.email, ";
+        $sql .= "e.invoice_event_name, ";
+        $sql .= "c.wa_url, ";
+        $sql .= "i.sent_datetime, ";    
+        $sql .= "i.reminder_days, ";
+        $sql .= "e.invoice_event_status, "; 
+        $sql .= "i.invoice_event_item_status, "; 
+        $sql .= "c.known_as, ";
+        $sql .= "c.company_name, ";
+        $sql .= "i.reminder_times, ";
+        $sql .= "i.auto_reminder, ";
+        $sql .= "i.reminder_last_datetime, ";   
+        $sql .= "i.reminder_next_date, i.sent_datetime ";
+        $sql .= "FROM    invoice_event e, ";
+		$sql .= "invoice_event_item i, ";
+		$sql .= "company c  ";
+        $sql .= "WHERE e.invoice_event_id = i.invoice_event_id AND ";
+		$sql .= "e.invoice_event_status IN ('a','p') AND ";
+		$sql .= "i.invoice_event_item_status = 'a' AND ";
+        $sql .= "e.company_id = c.company_id AND ";
+        $sql .= "i.planed_date <=  '$sendDate'  ";
+        $sql .= "ORDER BY c.known_as, i.email = 'y' ";
+
+
+		/*
+		$sql = "SELECT i.invoice_event_item_id, i.email, e.invoice_event_name, e.wa_url, i.planed_date, e.invoice_event_status, i.invoice_event_item_status, c.known_as, c.company_id, i.amount ";
+		$sql .= "FROM invoice_event e, invoice_event_item i, company c ";
+		$sql .= "WHERE e.invoice_event_id = i.invoice_event_id AND e.invoice_event_status = 'a' AND i.invoice_event_item_status = 'a' AND i.company_id = c.company_id AND ";
+		$sql .= "i.planed_date <= '$sendDate'";
+		*/
+		$result = $this->_GetList($sql);
+	
+		return json_encode($result);
+	}
+
+	private function actionEmailReminderPre($data) {
+
+		/*
+		{
+			"_group" : "InvoiceEvent",
+			"_action" : "EmailReminderPre"
+		
+		}
+		*/
+		$dt = new DateTime();
+		$reminderDate = $dt->format('Y-m-d');
+
+		$sql = "SELECT  i.invoice_event_item_id, ";
+        $sql .= "i.invoice_event_id, ";
+        $sql .= "i.email, ";
+        $sql .= "e.invoice_event_name, ";
+        $sql .= "c.wa_url, ";
+        $sql .= "i.sent_datetime, ";    
+        $sql .= "i.reminder_days, ";
+        $sql .= "e.invoice_event_status, "; 
+        $sql .= "i.invoice_event_item_status, "; 
+        $sql .= "c.known_as, ";
+        $sql .= "c.company_name, ";
+        $sql .= "i.reminder_times, ";
+        $sql .= "i.auto_reminder, ";
+        $sql .= "i.reminder_last_datetime, ";   
+        $sql .= "i.reminder_next_date, i.sent_datetime ";
+        $sql .= "FROM    invoice_event e, ";
+		$sql .= "invoice_event_item i, ";
+		$sql .= "company c  ";
+        $sql .= "WHERE e.invoice_event_id = i.invoice_event_id AND ";
+		$sql .= "e.invoice_event_status IN ('a','p') AND ";
+		$sql .= "i.invoice_event_item_status IN ('s','r') AND ";
+        $sql .= "e.company_id = c.company_id AND ";
+        $sql .= "i.reminder_times > 0 AND ";
+        $sql .= "i.reminder_next_date <=  '$reminderDate' AND ";
+        $sql .= "i.auto_reminder = 'y' ";
+        $sql .= "ORDER BY c.known_as, i.email = 'y' ";
+
+		//echo $sql; die('');
+
+		$result = $this->_GetList($sql);
+		return json_encode($result);
+		
+	}
+
+	private function actionEmailBulk($data) {
+
+		/*
+		
+		{
+			"_group" : "InvoiceEvent",
+			"_action" : "EmailBulk",
+			"_send_date" : "2019-09-14",
+			"_pre" : "yes"
+		}
+
+		*/
+
+		$dt = new DateTime();
+		$sendDate = $dt->format('Y-m-d');
+
+		$sql = "SELECT  i.invoice_event_item_id, ";
+        $sql .= "i.invoice_event_id, ";
+        $sql .= "i.email, ";
+        $sql .= "e.invoice_event_name, ";
+        $sql .= "c.wa_url, ";
+        $sql .= "i.sent_datetime, ";    
+        $sql .= "i.reminder_days, ";
+        $sql .= "e.invoice_event_status, "; 
+        $sql .= "i.invoice_event_item_status, "; 
+        $sql .= "c.known_as, ";
+		$sql .= "c.company_name, ";
+		$sql .= "c.company_id, ";
+		$sql .= "c.email_report, ";
+        $sql .= "i.reminder_times, ";
+        $sql .= "i.auto_reminder, ";
+        $sql .= "i.reminder_last_datetime, ";   
+		$sql .= "i.reminder_next_date, i.sent_datetime, ";
+		$sql .= "i.invoice_event_item_code, ";
+		$sql .= "e.body, ";
+		$sql .= "e.invoice_event_type, ";
+		$sql .= "e.webform_link ";
+        $sql .= "FROM    invoice_event e, ";
+		$sql .= "invoice_event_item i, ";
+		$sql .= "company c  ";
+        $sql .= "WHERE e.invoice_event_id = i.invoice_event_id AND ";
+		$sql .= "e.invoice_event_status IN ('a','p') AND ";
+		$sql .= "i.invoice_event_item_status = 'a' AND ";
+        $sql .= "e.company_id = c.company_id AND ";
+        $sql .= "i.planed_date <=  '$sendDate'  ";
+        $sql .= "ORDER BY c.known_as, i.email = 'y' ";
+
+		/*
+		$sql = "SELECT i.invoice_event_item_id, i.email, e.invoice_event_name, e.body, e.wa_url, i.planed_date, i.invoice_event_item_code, e.invoice_event_status, i.invoice_event_item_status, c.known_as, c.company_id , i.auto_reminder, i.reminder_days, c.email_report ";
+		$sql .= "FROM invoice_event e, invoice_event_item i, company c ";
+		$sql .= "WHERE e.invoice_event_id = i.invoice_event_id AND e.invoice_event_status = 'a' AND i.invoice_event_item_status = 'a' AND i.company_id = c.company_id AND ";
+		$sql .= "i.planed_date <= '$sendDate'";
+		*/
+
+		$result = $this->_GetList($sql);
+	
+		//print_r($result); 
+		// die('');
+
+		if ($data->_pre == "yes") {
+			print_r($result);
+			return json_encode($result);
+			die('');
+		}
+
+		$result = $this->_GetList($sql);
+		
+		$log = array();
+
+		if (sizeof($result) > 50) {
+			$bulkSize = 50;
+		}
+		else {
+			$bulkSize = sizeof($result);
+		}
+
+		for ($i = 0; $i < $bulkSize; $i++) {
+		//for ($i = 0; $i < sizeof($result); $i++) {
+		//for ($i = 0; $i < 1; $i++) {
+			$param = new stdClass();
+			$param->_item_id = $result[$i]['invoice_event_item_id'];
+			$param->_from = $result[$i]['known_as'];
+			$param->_event_code = $result[$i]['invoice_event_item_code'];
+			$param->_email = $result[$i]['email'];
+			$param->_subject =  $result[$i]['invoice_event_name'];
+			$param->_email_report = $result[$i]['email_report'];
+			$param->_body = $result[$i]['body'];	
+			$param->_wa_url	= $result[$i]['wa_url'];
+			$param->_invoice_event_type = $result[$i]['invoice_event_type'];
+			
+			$param->webform_link = $result[$i]['webform_link'];	
+			$param->_company_id	= $result[$i]['company_id'];  // NEW EVENT
+
+			$reply = $this->actionEmailDirect($param);
+			
+			//-- $reply= "OK";
+			
+			$log[$i] = new stdClass();
+			$log[$i]->item_id = $result[$i]['invoice_event_item_id'];
+			$log[$i]->status = $reply;
+			$log[$i]->email = $result[$i]['email'];
+			if ($reply == "OK") {
+				$paramUpdate = array ();
+				$paramUpdate['invoice_event_item_status'] = 's';
+				$dt = new DateTime();
+				$paramUpdate['sent_datetime'] = $dt->format('Y-m-d H:i:s');
+				if ($result[$i]['auto_reminder'] == 'y') {
+					$dateNow= $dt->format('Y-m-d');
+					$paramUpdate['reminder_next_date'] = date("Y-m-d", strtotime("+" . $dateNow . " + " . $result[$i]['reminder_days'] . " days"));
+				}
+				$res = $this->_Update('invoice_event_item', 'invoice_event_item_id', $result[$i]['invoice_event_item_id'], $paramUpdate);
+			}
+			
+		}
+        
+        $sendOk = 0;
+        $sendFail = 0;
+        $dt = new DateTime();
+        $actionDateTime = $dt->format('Y-m-d H:i:s');
+		for ($i=0; $i < sizeof($log); $i++) {
+			$param = array();
+            $param['item_id'] = $log[$i]->item_id;
+            if ($log[$i]->status == 'OK') {
+                $sendOk++;
+            }
+            else {
+                $sendFail++;
+            }
+			$param['status'] = $log[$i]->status;
+			$param['email'] = $log[$i]->email;
+			$param['email_type'] = 'r';
+			$param['action_dt'] = $actionDateTime;
+			$this->_Insert('invoice_event_log', $param);
+		}
+
+		$reply = new stdClass();
+		$reply->type = "Email";
+        $reply->sendTotal = sizeof($log);
+        $reply->sendOk = $sendOk;
+        $reply->sendFail = $sendFail;
+		
+		echo json_encode($reply);
+	
+		die('');
+		
+	}
+	
+	private function actionEmailReminderBulk($data) {
+
+		/*
+		{
+			"_group" : "InvoiceEvent",
+			"_action" : "EmailReminderBulk",
+			"_pre" : "yes"
+		}
+		
+		*/
+		
+		$dt = new DateTime();
+		$reminderDate = $dt->format('Y-m-d');
+		//echo $reminderDate;
+
+		$sql = "SELECT  i.invoice_event_item_id, ";
+        $sql .= "i.invoice_event_id, ";
+        $sql .= "i.email, ";
+        $sql .= "e.invoice_event_name, ";
+        $sql .= "c.wa_url, ";
+        $sql .= "i.sent_datetime, ";    
+        $sql .= "i.reminder_days, ";
+        $sql .= "e.invoice_event_status, "; 
+        $sql .= "i.invoice_event_item_status, "; 
+		$sql .= "c.known_as, ";
+		$sql .= "c.company_id, ";
+		$sql .= "c.company_name, ";
+		$sql .= "c.email_report, ";
+        $sql .= "i.reminder_times, ";
+        $sql .= "i.auto_reminder, ";
+        $sql .= "i.reminder_last_datetime, ";   
+		$sql .= "i.reminder_next_date, ";
+		$sql .= "i.sent_datetime, ";
+		$sql .= "i.invoice_event_item_code, ";
+		$sql .= "e.reminder_text_on,"; 
+		$sql .= "e.reminder_body,";
+		$sql .= "e.body,";
+		$sql .= "e.invoice_event_type, ";
+		$sql .= "e.webform_link ";
+        $sql .= "FROM  invoice_event e, ";
+		$sql .= "invoice_event_item i, ";
+		$sql .= "company c  ";
+        $sql .= "WHERE e.invoice_event_id = i.invoice_event_id AND ";
+		$sql .= "e.invoice_event_status IN ('a','p') AND ";
+		$sql .= "i.invoice_event_item_status IN ('s','r') AND ";
+        $sql .= "e.company_id = c.company_id AND ";
+        $sql .= "i.reminder_times > 0 AND ";
+        $sql .= "i.reminder_next_date <=  '$reminderDate' AND ";
+        $sql .= "i.auto_reminder = 'y' ";
+        $sql .= "ORDER BY c.known_as, i.email = 'y' ";
+
+		//echo $sql; die('');
+
+		/*
+		$sql = "SELECT i.invoice_event_item_id, i.invoice_event_id, i.email, e.invoice_event_name, e.body, e.wa_url, i.sent_datetime, c.company_id, ";
+		$sql .= "i.reminder_days, e.invoice_event_status, i.invoice_event_item_status, c.known_as, i.reminder_times, e.reminder_text_on, e.reminder_body, ";
+		$sql .= "i.auto_reminder, i.invoice_event_item_code, i.reminder_last_datetime, i.reminder_next_date, c.email_report ";
+		$sql .= "FROM invoice_event e, invoice_event_item i, company c "; 
+		$sql .= "WHERE e.invoice_event_id = i.invoice_event_id AND e.invoice_event_status = 'a' AND ";
+		$sql .= "(i.invoice_event_item_status = 's' OR i.invoice_event_item_status = 'r') AND ";
+		$sql .= "i.company_id = c.company_id AND i.reminder_times > 0 AND ";
+		$sql .= "i.reminder_next_date <= '$reminderDate' AND ";
+		$sql .= "i.auto_reminder = 'y'" ;
+		$sql .= "ORDER BY c.known_as, i.email = 'y'" ;
+		*/
+
+		$result = $this->_GetList($sql);
+
+		//print_r($result); die('');
+
+		if ($data->_pre == "yes") {
+			return json_encode($result);
+			die('');
+		}
+		
+		$log = array();
+
+		if (sizeof($result) > 50) {
+			$bulkSize = 50;
+		}
+		else {
+			$bulkSize = sizeof($result);
+		}
+
+
+		for ($i = 0; $i < $bulkSize; $i++) {
+		//for ($i = 0; $i < sizeof($result); $i++) {
+			$param = new stdClass();
+			$param->_item_id = $result[$i]['invoice_event_item_id'];
+			$param->_from = $result[$i]['known_as'];
+			$param->_event_code = $result[$i]['invoice_event_item_code'];
+			$param->_email = $result[$i]['email'];
+			$param->_subject =  $result[$i]['invoice_event_name'];
+			$param->_email_report = $result[$i]['email_report'];
+			$param->_wa_url	= $result[$i]['wa_url'];
+			$param->_invoice_event_type = $result[$i]['invoice_event_type'];
+			if($result[$i]['reminder_text_on'] == "y") {
+				$param->_body = $result[$i]['reminder_body'];
+			}
+			else {
+				$param->_body = $result[$i]['body'];	
+			}
+			$param->webform_link = $result[$i]['webform_link'];	
+			$param->_company_id	= $result[$i]['company_id'];  // NEW EVENT
+
+			$reply = $this->actionEmailDirect($param);
+			
+			$log[$i] = new stdClass();
+			$log[$i]->item_id = $result[$i]['invoice_event_item_id'];
+			$log[$i]->status = $reply;
+			$log[$i]->email = $result[$i]['email'];
+			if ($reply == "OK") {
+				$paramUpdate = array ();
+				$paramUpdate['invoice_event_item_status'] = 'r';
+				$dt = new DateTime();
+				$paramUpdate['reminder_last_datetime'] = $dt->format('Y-m-d H:i:s');
+				$dateNow= $dt->format('Y-m-d');
+				$paramUpdate['reminder_next_date'] = date("Y-m-d", strtotime("+" . $dateNow . " + " . $result[$i]['reminder_days'] . " days"));
+				$paramUpdate['reminder_times'] = $result[$i]['reminder_times'] - 1;
+				$res = $this->_Update('invoice_event_item', 'invoice_event_item_id', $result[$i]['invoice_event_item_id'], $paramUpdate);	
+			}
+        }
+        $sendOk = 0;
+        $sendFail = 0;
+        $dt = new DateTime();
+		$actionDateTime = $dt->format('Y-m-d H:i:s');
+		for ($i=0; $i < sizeof($log); $i++) {
+			$param = array();
+            $param['item_id'] = $log[$i]->item_id;
+            if ($log[$i]->status == 'OK') {
+                $sendOk++;
+            }
+            else {
+                $sendFail++;
+            }
+			$param['status'] = $log[$i]->status;
+			$param['email'] = $log[$i]->email;
+			$param['email_type'] = 'r';
+			$param['action_dt'] = $actionDateTime;
+			$this->_Insert('invoice_event_log', $param);
+		}
+
+		$reply = new stdClass();
+		$reply->type = "Reminder";
+        $reply->sendTotal = sizeof($log);
+        $reply->sendOk = $sendOk;
+        $reply->sendFail = $sendFail;
+		
+		echo json_encode($reply);
+
+		die('');
+		
+	}
+
+	private function actionEmailDirect($data) {
+
+		/*
+		{
+			"_group" : "InvoiceEvent",
+			"_action" : "MailDirect",
+			"_item_id : "44",
+			"_from" : "Test Bolaget",
+			"_email : $result[$i]['email'],
+        	"_subject : "My Mail",
+			"_body" : "Hej här hämtar ....",	
+			"_wa_url" : "test-bolaget";
+
+		}
+		
+		*/
+		
+		$from = $data->_from;
+		
+		$subject = $data->_subject;
+		$body = $data->_body;
+		$body = str_replace("\n", "<br>", $body);
+		
+		$email = $data->_email; // PROD
+		//$email = "bo.grus@yahoo.com";
+		//$email = "bo.grusell@goodminton.se";
+		$eventCode = $data->_event_code;
+		// $linkUrl = 'https://www.turtle-pay.com/' . $data->_wa_url . '/?f=';  // CHANGE FOR PRODUCT
+		$linkUrl = SITE_URL . $data->_wa_url . '/?' . $data->_invoice_event_type . '=' . $eventCode;
+		//$linkUrl .= $eventCode;
+
+		$toSubject = $subject . ' ';
+
+		$html = '';
+		$html .= '<div style="width:780px; margin: 10px auto 0; font-family: Helvetica,Arial,sans-serif, Verdana; padding:6px">';
+		$html .= '<p>' . $body . '</p>';
+		//$html .= '<p><a href="' . $linkUrl . '">Hämta din faktura här!</a></p>';
+
+		$html .= '<p><a href="' . $linkUrl . '">' . $data->webform_link . '</a></p>';
+		//$html .= '<p><a href="' . $linkUrl . '">' . $mailData['webform_link'] . '</a></p>';
+
+		$html .= '</div>';
+		require_once 'PHPMailerAutoload.php';
+		$mail = new PHPMailer;
+		$mail->isSMTP();
+
+		/*
+			
+			
+			$mail->Host = 'smtp.gmail.com';
+			$mail->SMTPAuth = true;
+			$mail->Username = 'info.turtlepay@gmail.com';
+			$mail->Password = 'SegTp_2019';
+
+			$mail->CharSet = 'UTF-8';
+			$mail->From = 'info@turtle-pay.com';
+			//$mail->FromName = 'TurtlePay';
+			$mail->FromName = $from;
+			$mail->addAddress($email);
+			//$mail->addBCC('faktura@turtle-pay.com');
+			$mail->addBCC('bo.grus@yahoo.com');
+			$mail->addReplyTo($data->_email_report);
+		*/
+		// 2022-03-31
+		/*
+			if (ENV_TYPE == 'prod') {
+				$mail->Host = 'smtp.gmail.com';
+				$mail->SMTPAuth = true;
+				$mail->Username = 'info.turtlepay@gmail.com';
+				$mail->Password = 'SegTp_2019';
+				$mail->CharSet = 'UTF-8';
+				$mail->From = 'info@turtle-pay.com';
+				$mail->FromName = $from;
+				$mail->addAddress($email);
+				$mail->addBCC('bo.grus@yahoo.com');
+				$mail->addReplyTo($data->_email_report);
+			}
+			else {
+				$mail->Host = 'mail.grus.zone';
+				$mail->SMTPAuth = true;
+				$mail->Username = 'demo@grus.zone';
+				$mail->Password = 'Test@2021';
+				$mail->CharSet = 'UTF-8';
+				$mail->From = 'demo@grus.zone';
+				$mail->FromName = 'Demo - TurtlePay';
+				$mail->Port = 465;
+				//$mail->SMTPDebug = 1; 
+				$mail->SMTPSecure = 'ssl';
+				$mail->addReplyTo('demo@grus.zone');
+				$mail->addAddress('bo.grus@yahoo.com');
+			}
+		*/
+
+		$mail->Host = 'mail.turtle-shop.se';
+		$mail->SMTPAuth = true;
+		$mail->Username = 'info@turtle-shop.se';
+		$mail->Password = 'SegTp@2022';
+		$mail->CharSet = 'UTF-8';
+		$mail->From = 'info@turtle-pay.com';
+		$mail->FromName = 'Turtle Pay';
+		$mail->Port = 465;
+		$mail->SMTPSecure = 'ssl';
+		$mail->From = 'info@turtle-pay.com';
+		$mail->FromName = $from;
+		$mail->addAddress($email);
+		$mail->addReplyTo($data->_email_report);
+		$mail->addBCC('info@turtle-shop.se');
+
+		$mail->isHTML(true);
+		$mail->Subject = $toSubject;
+		//$mailInvoice->Body = $this->htmlInvoice . '<div style="width:100%; padding:20px 0 10px 0; text-align:center"><a href="' . DOCVIEW . 'o/' . $this->orderid . '.html"' . '" style="font-size:20px; font-weight:bold; color: green">Skriv ut</a>';
+		$mail->Body = $html;
+
+		if(!$mail->send()) {
+			return 'FAIL';
+		} else {
+			return 'OK';
+			//echo $mail->ErrorInfo;
+		}
+		
+	}
+
+	private function actionSentEmail($data) {
+
+		/*
+		
+		{
+			"_group" : "InvoiceEvent",
+			"_action" : "SentEmail",
+			"_from_date" : "2019-09-14"
+			"_to_date" : "2019-09-22"
+		}
+
+		*/
+
+		$data->_from_date . ' 00:00:00';
+		$data->_to_date . ' 23:59:59';
+		
+		$sql = "SELECT l.invoice_event_log_id,e.invoice_event_name, l.email, i.referens, i.amount, l.action_dt, l.status, l.email_type ";
+		$sql .= "FROM invoice_event_log l, invoice_event e, invoice_event_item i ";
+		//$sql .= "WHERE (l.action_dt > '$data->_from_date' AND l.action_dt < '$data->_to_date' AND l.item_id = i.invoice_event_item_id AND i.invoice_event_id = e.invoice_event_id";
+		$sql .= "WHERE l.item_id = i.invoice_event_item_id AND i.invoice_event_id = e.invoice_event_id";
+		$result = $this->_GetList($sql);
+	
+		//echo $sql; die('');
+
+		if (sizeof($result) > 0) {
+			for ($i=0; $i < sizeof($result); $i++) {
+				if ($result[$i]['email_type']  == 'e') {
+					$result[$i]['email_type'] = 'Email';
+				}
+				else if ($result[$i]['email_type']  == 'r'){
+					$result[$i]['email_type'] = "Reminder";
+				}
+			}
+		}
+		echo json_encode($result);
+	}
+
+	private function actionBookingOrderPre() {
+		/*
+		{
+			"_group" : "InvoiceEvent",
+			"_action" : "BookingOrderPre"
+		}
+		*/
+
+		$today = Date('Y-m-d');		
+		$lastBookingDate = date("Y-m-d", strtotime("+" . $today . " -1 days"));
+
+		// $lastBookingDate = "2020-09-01";
+
+		$sql = "SELECT b.company_id, c.company_name, c.email_report, b.booking_date, count(t.account_no) AS transno ";
+		$sql .= "FROM booking b, btrans t, company c ";
+		$sql .= "WHERE t.account_no = '2981' AND b.booking_id = t.booking_id AND t.prel = 'n' AND ";
+		$sql .= "b.booking_date = '$lastBookingDate' AND ";
+		$sql .= "c.company_id = b.company_id AND has_bo_notify_on = 'y' ";
+		$sql .= "GROUP BY b.company_id, c.company_name, c.email_report, booking_date ";
+
+		$result = $this->_GetList($sql);
+
+		return json_encode($result);
+	}
+
+	private function actionBookingOrderSend() {
+		/*
+		{
+			"_group" : "InvoiceEvent",
+			"_action" : "BookingOrderSend"
+		}
+		*/
+		$today = Date('Y-m-d');		
+		$lastBookingDate = date("Y-m-d", strtotime("+" . $today . " -1 days"));
+
+		// $lastBookingDate = "2020-09-01";
+
+		$sql = "SELECT b.company_id, c.company_name, c.email_report, b.booking_date, count(t.account_no) AS transno ";
+		$sql .= "FROM booking b, btrans t, company c ";
+		$sql .= "WHERE t.account_no = '2981' AND b.booking_id = t.booking_id AND t.prel = 'n' AND ";
+		$sql .= "b.booking_date = '$lastBookingDate' AND ";
+		$sql .= "c.company_id = b.company_id AND has_bo_notify_on = 'y' ";
+		$sql .= "GROUP BY b.company_id, c.company_name, c.email_report, b.booking_date ";
+
+		$result = $this->_GetList($sql);
+
+		for ($i=0; $i<sizeof($result); $i++) {
+		//for ($i=0; $i<1; $i++) {
+			$subject = "Bokföringsorder";
+
+			$body = 'Hej,'; 
+			$body .= '<br><br>';
+			
+			$body .= 'Ny bokföringsorder för gårdagens transaktioner hos ' . $result[$i]['company_name'] . ' finns nu att hämta.';
+			$body .= '<br><br>';
+
+			
+			$body .= 'Logga in på ';
+			$body .= '<a href="https://www.turtle-pay.com/logga-in">www.turtle-pay.com/logga-in</a>'; 
+			$body .= ' med ditt BankID.';
+			
+			$body .= '<br><br>';
+			$body .= 'Denna avisering kan stängas av under ”Företagsdetaljer” när du är inloggad.';
+			
+			$body .= '<br><br>';
+			$body .= 'Med vänlig hälsning,';
+			$body .= '<br><br>';
+			$body .= 'Turtle Pay';
+			$body .= '<br>';
+			$body .= '08-806220';
+			$body .= '<br>';
+			$body .= 'info@turtle-pay.com';
+
+			$htmlBody = '';
+			$htmlBody .= '<div style="width:780px; margin: 10px auto 0; font-family: Helvetica,Arial,sans-serif, Verdana; padding:6px">';
+			$htmlBody .= '<p>' . $body . '</p>';
+					
+			$htmlBody .= '</div>';
+
+			require_once 'PHPMailerAutoload.php';
+			
+			$mail = new PHPMailer;
+			$mail->isSMTP();
+			/*
+				$mail->Host = 'smtp.gmail.com';
+				$mail->SMTPAuth = true;
+				$mail->Username = 'info.turtlepay@gmail.com';
+				$mail->Password = 'SegTp_2019';
+
+				$mail->CharSet = 'UTF-8';
+				$mail->From = 'info@turtle-pay.com';
+				$mail->FromName = "Turtle Pay";
+			
+				// $email = 'bo.grus@yahoo.com';
+				$email = $result[$i]['email_report']; 
+				$mail->addAddress($email);
+				
+				$mail->addBCC('bo.grusell@turtle-pay.com');
+				$mail->addBCC('stellan.forsberg@turtle-pay.com');
+				$mail->addReplyTo('info@turtle-pay.com');
+		
+			*/
+			$mail->Host = 'mail.turtle-shop.se';
+			$mail->SMTPAuth = true;
+			$mail->Username = 'info@turtle-shop.se';
+			$mail->Password = 'SegTp@2022';
+			$mail->CharSet = 'UTF-8';
+			$mail->From = 'info@turtle-pay.com';
+			$mail->FromName = 'Turtle Pay';
+			$mail->Port = 465;
+			$mail->SMTPSecure = 'ssl';
+			$mail->From = 'info@turtle-pay.com';
+			$mail->FromName = "Turtle Pay";
+			$email = $result[$i]['email_report']; 
+			$mail->addAddress($email);
+			$mail->addReplyTo('info@turtle-pay.com');
+			$mail->addBCC('info@turtle-shop.se');
+
+			$mail->isHTML(true);
+			$mail->Subject = $subject;
+			$mail->Body = $htmlBody;
+
+			if(!$mail->send()) {
+				$result[$i]['status'] = "failed";
+			} else {
+				$result[$i]['status'] = "sent";	
+			}
+		}
+
+		return json_encode($result);
+	}
+
+
+}

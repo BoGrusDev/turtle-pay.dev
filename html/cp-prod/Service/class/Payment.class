@@ -1,0 +1,526 @@
+<?php
+/*
+    PaymentClass
+
+	Date: 2018-11-25
+
+	Actions:
+		-
+
+	Call:
+
+*/
+
+class PaymentClass extends ActionBase {
+
+	public function Run($data) {
+		$actionMethod = 'action' . $data->_action;
+		echo $this->$actionMethod($data);
+	}
+
+	private function actionPaymentList($data) {
+		/*
+		{
+			"_group" : "Payment",
+			"_action" : "PaymentList"
+		}
+		*/
+		$sql = "SELECT t.company_id, c.company_name, c.bank_account, sum(t.amount) AS to_pay ";
+
+        $sql .= "FROM booking b, btrans t, company c ";
+        $sql .= "WHERE t.account_no = '2981' AND b.booking_id = t.booking_id AND ";
+		$sql .= "b.booking_date <= '$data->_booking_date' AND ";
+        $sql .= "c.company_id = t.company_id ";
+		$sql .= "AND t.prel IN ('y','n') AND b.prel IN ('y','n') ";
+        $sql .= "GROUP BY t.company_id, c.company_name, c.bank_account ";
+		$result = $this->_GetList($sql);
+
+		return json_encode($result);
+	}
+
+	private function actionVendorPayment($data) {
+		/*
+		{
+			"_group" : "Payment",
+			"_action" : "VendorPayment",
+			"booking_date" : "2018-11-27",
+			"company_id" : "5",
+			"amount" : "1176",
+			"bank_account" : " 555-1010"
+		}
+		people-ocr 223444103857
+		*/
+		//print_r($data);
+
+		$booking = new StdClass();
+		$booking->booking_date = $data->booking_date;
+	   	$booking->booking_text = "Vendors payment";
+	    $booking->booking_type = "vendor-pmt";
+	    $booking->company_id = $data->company_id;
+	    $booking->bank_account = $data->bank_account;
+		$booking->receipt_number = "Turtle Pay";
+		$booking->prel = "n";
+
+		$booking->_trans = array();
+		// Start trans 2981 // Vendors payment
+		$trans = new StdClass();
+		$trans->account_no = '2981';
+		$trans->amount = +$data->amount;
+		$trans->trans_type = 'vendor-pmt';
+		$trans->company_id = $data->company_id;
+		array_push($booking->_trans, $trans);
+		// Start trans  // Bank account
+		$trans = new StdClass();
+		$trans->account_no = '1930';
+		$trans->amount = -$data->amount;
+		$trans->trans_type = 'vendor-pmt';
+		$trans->company_id = $data->company_id;
+		array_push($booking->_trans, $trans);
+
+		//print_r($booking);
+
+		$this->_bookNew($booking);
+
+
+	}
+
+	private function actionIncommingPayment($data) {
+		/*
+		{
+			"_group" : "Payment",
+			"_action" : "IncommingPayment",
+			"booking_date" : "2020-10-15",
+			"ocrno" : "123444109680",
+			"amount" : "77"
+		}
+
+		http://turtle-pay.prod/api/
+
+		{
+			"_key" : "test-key",
+			"_group" : "Booking",
+			"_action" : "PayIn",
+			"booking_date" : "2020-11-10",
+			"ocrno" : "123444124267",
+			"amount" : "1000"
+		}
+		
+		*/
+
+		$param = new stdClass();
+		$param->_key = "test-key";
+		$param->_group = "Booking";
+		$param->_action = "PayIn";
+		$param->booking_date = $data->booking_date;
+		$param->ocrno = $data->ocrno;
+		$param->amount = $data->amount;
+
+		// echo json_encode($param); die('');
+
+		return $reply = $this->_RestApiCall(json_encode($param));
+
+	}
+
+
+/*
+	private function actionIncommingPayment($data) {
+		/ *
+		{
+			"_group" : "Payment",
+			"_action" : "IncommingPayment",
+			"booking_date" : "2020-10-15",
+			"ocrno" : "123444109680",
+			"amount" : "77"
+		}
+
+		- If first char in ocr is 1 get info in credit firstinvoice
+		  - people_id
+		  - amount (credit)
+        - Get company / standard fee.
+		- Get Sum of payment done on this ocrno
+		  - Amount
+		  - Fee
+		* /
+
+		//-- print_r($data); 
+
+		if (!isset($data->ocrno)) {
+			return $this->_Reply('0', "param_ocrno_not_set");
+		}
+		if (!isset($data->amount)) {
+			return $this->_Reply('0', "param_amount_not_set");
+		}
+		if (!isset($data->booking_date)) {
+			return $this->_Reply('0', "booking_date_not_set");
+		}
+		if (!is_numeric($data->amount)) {
+			return $this->_Reply('0', "amount_not_valid");
+		}
+		// Date check in ControlPanel at the moment
+
+		if (substr($data->ocrno , 0, 1) == "1") {
+			// 
+			// Get Invoce for credit
+			//
+			
+			$sql = "SELECT people_id, credit_id, credit_amount, fee, total, duedate FROM first_invoice WHERE ocrno = '$data->ocrno'";
+			$invoiceObj = $this->_Get($sql);
+			//-- print_r($invoiceObj);
+
+			if ($invoiceObj['code'] != "1") {
+				return $this->_Reply('0', "ocrno_not_exist");
+			};
+
+			//-- print_r($invoiceObj);
+
+			// Get Credit
+			$sql = "SELECT credit_status FROM credit WHERE credit_id = " . $invoiceObj['credit_id'];
+			$creditObj = $this->_Get($sql);
+			//-- print_r($creditObj);
+
+			$booking = new StdClass();
+			$booking->booking_date = $data->booking_date;
+		   	$booking->booking_text = "Customer payment";
+		    $booking->booking_type = "cust-pmt";
+		    $booking->people_id = $invoiceObj['people_id'];
+		    $booking->ocrno = $data->ocrno;
+			$booking->credit_id = $invoiceObj['credit_id'];
+
+			$booking->_trans = array();
+
+			$peopleId = $invoiceObj['people_id'];;
+			
+			// 
+			// -- Check people balance on 1680, if dept, bokka all to the the 1680
+			// -- same go for if Credit is closed or refnded
+			//
+			// --Om person har aktuell skuld på 1680
+
+			$sql = "SELECT SUM(amount) AS balance FROM btrans WHERE account_no = '1680' AND prel = 'n' AND people_id = " . $invoiceObj['people_id'];
+			$res1680 = $this->_Get($sql);
+			
+			// --
+			// -- Check if pre setllement is done dvs (en månadskörning har gjorts)
+	
+			 $sqlPre =  "SELECT count(btrans_id) AS numbers FROM btrans WHERE prel = 'y' AND credit_id= '" . $invoiceObj['credit_id'] . "'";
+			 $resPre = $this->_Get($sqlPre);
+			 $preNumbers = (float)$resPre['numbers'];
+
+			if ($res1680['balance'] > 0 || $invoiceObj['credit_id'] == 'c' || $creditObj['credit_status'] == 'r') {
+
+				$trans = new StdClass();
+				$trans->account_no = '1930'; // Bank account
+				$trans->amount = +$data->amount;
+				$trans->people_id = $booking->people_id;
+				$trans->trans_type = 'cust-pmt';
+				array_push($booking->_trans, $trans);
+				// -- $creditAmount = $data->amount ;
+
+				$trans = new StdClass();
+				$trans->account_no = '1680';
+				$trans->amount = -$data->amount;
+				$trans->people_id = $booking->people_id;
+				$trans->trans_type = 'cust-pmt';
+				array_push($booking->_trans, $trans);
+				//print_r($booking); 
+				
+				// --
+				// -- Do the booking
+				// -- 
+				$booking_id = $this->_bookNew($booking);
+				if ($booking_id > 0) {
+					// Check ig overdue is set, if 1680 in balance set it to 0
+					$sql = "SELECT SUM(amount) AS balance FROM btrans WHERE account_no = '1680' AND prel = 'n' AND people_id = " . $peopleId;
+					$res = $this->_Get($sql);
+					if ($res['balance'] <= 0) {
+						$param = array ();
+						$param['overdue'] = '0';
+						$this->_Update('people', 'people_id', $peopleId, $param);
+					}
+					$reply = new StdClass();
+					$reply->code = "1";
+					$reply->booking_id = $booking_id;
+					return json_encode($reply);
+				} else {
+					return $this->_Reply('0', "booking_data_problem");
+				}
+
+			}	
+			else {
+				
+			
+				//
+				// Get the balans on 1380 (inkl. prel)
+				//
+				$sqlBalance1380 = "SELECT SUM(amount) AS balance FROM btrans ";
+				$sqlBalance1380 .= " WHERE account_no = '1380' AND prel IN ('n','p') AND credit_id = " . $invoiceObj['credit_id'];
+				$resBalance1380 = $this->_Get($sqlBalance1380);
+				// The balance is positiv, when its a dept
+
+				//
+				// If payed more than the dept
+				// Move over payed part to 1680
+				//
+				
+				
+				
+				$amountOverPay = 0;
+				if ((float)$data->amount > (float)$resBalance1380['balance']) {
+					//die('Overpay');
+					// Calculate over payed part
+					$amountOverPay = (float)$data->amount - (float)$resBalance1380['balance'];
+					
+					$trans = new StdClass();
+					$trans->account_no = '1680';
+					$trans->amount = -$amountOverPay;
+					$trans->people_id = $booking->people_id;
+					$trans->trans_type = 'cust-pmt';
+					array_push($booking->_trans, $trans);
+				}
+				$amountToCredit = $data->amount - $amountOverPay;
+				$transAccount = '1380';
+				$trans = new StdClass();
+				$trans->account_no = '1930'; // Bank account
+				// $trans->amount = +$data->amount;
+				$trans->amount = +$data->amount;
+				$trans->people_id = $booking->people_id;
+				$trans->credit_id = $invoiceObj['credit_id'];
+				$trans->trans_type = 'cust-pmt';
+				array_push($booking->_trans, $trans);
+				$creditAmount = $data->amount ;
+
+				if ($amountToCredit > 0 ) {
+					$trans = new StdClass();
+					$trans->account_no = $transAccount;
+					//$trans->amount = -$creditAmount;
+					$trans->amount = -$amountToCredit;
+					$trans->people_id = $booking->people_id;
+					$trans->credit_id = $invoiceObj['credit_id'];
+					$trans->trans_type = 'cust-pmt';
+					array_push($booking->_trans, $trans);
+				}
+				//print_r($booking);
+				//die('');
+
+
+				// --
+				// -- Do the booking
+				// -- 
+				$booking_id = $this->_bookNew($booking);
+				if ($booking_id > 0) {
+
+					// -- 
+					// -- Get the current balance on 1380 on the credit
+					// --
+					$resBalance1380 = $this->_Get($sqlBalance1380);
+					
+					//print_r($resBalance1380);
+					if ((float)$resBalance1380['balance'] == 0 && $creditObj['credit_status'] == 'p' && $data->booking_date <= $invoiceObj['duedate']) {
+						// Update credit_id
+						$param = array ();
+						$param['credit_status'] = 'c';
+						$this->_Update('credit', 'credit_id', $invoiceObj['credit_id'], $param);
+						//print_r($param);
+					}
+					else if ($creditObj['credit_status'] == 'p') {
+						// Update credit_id
+						$param = array ();
+						$param['credit_status'] = 'a';
+						$this->_Update('credit', 'credit_id', $invoiceObj['credit_id'], $param);
+					}
+					$reply = new StdClass();
+					$reply->code = "1";
+					$reply->booking_id = $booking_id;
+					return json_encode($reply);
+				} else {
+					return $this->_Reply('0', "booking_data_problem");
+				}
+			}	
+		}
+
+		else if (substr($data->ocrno , 0, 1) == "2") {
+
+			// -- $sql = "SELECT people_id FROM minvoice WHERE ocrno = '" . $data->ocrno . "'";
+			$sql = "SELECT people_id FROM people WHERE ocrno = '" . $data->ocrno . "'";
+			$invoiceObj = $this->_Get($sql);
+			if ($invoiceObj['code'] != "1") {
+				return $this->_Reply('0', "ocrno_not_exist");
+				die('');
+			};
+
+			$peopleId = $invoiceObj['people_id'];
+			
+			$booking = new StdClass();
+			$booking->booking_date = $data->booking_date;
+		   	$booking->booking_text = "Customer payment";
+		    $booking->booking_type = "cust-pmt";
+		    $booking->people_id = $peopleId;
+		    $booking->ocrno = $data->ocrno;
+
+			$booking->_trans = array();
+
+			$trans = new StdClass();
+			$trans->account_no = '1930'; // Bank account
+			$trans->amount = +$data->amount;
+			$trans->people_id = $peopleId;
+			$trans->trans_type = 'cust-pmt';
+			array_push($booking->_trans, $trans);
+
+			$trans = new StdClass();
+			$trans->account_no = '1680';
+			$trans->amount = -$data->amount;
+			$trans->people_id = $peopleId;
+			$trans->trans_type = 'cust-pmt';
+			array_push($booking->_trans, $trans);
+
+			$booking_id = $this->_bookNew($booking); //$this->_Book($booking);
+			if ($booking_id > 0) {
+				// Update credit_id
+				$reply = new StdClass();
+				$reply->code = "1";
+				$reply->booking_id = $booking_id;
+
+				// Check ig overdue is set, if 1680 in balance set it to 0
+				$sql = "SELECT SUM(amount) AS balance FROM btrans WHERE account_no = '1680' AND prel = 'n' AND people_id = " . $peopleId;
+				$res = $this->_Get($sql);
+				if ($res['balance'] <= 0) {
+					$param = array ();
+					$param['overdue'] = '0';
+					$this->_Update('people', 'people_id', $peopleId, $param);
+				}
+				return json_encode($reply);
+			} else {
+				return $this->_Reply('0', "booking_data_problem");
+			}
+
+		}
+
+		else if (substr($data->ocrno , 0, 1) == "3") {
+			$sql = "SELECT people_id, bond_id, bond_status FROM bond WHERE ocrno = '$data->ocrno'";
+			$bondObj = $this->_Get($sql);
+
+			$booking = new StdClass();
+			$booking->booking_date = $data->booking_date;
+		   	$booking->booking_text = "Bond payment";
+		    $booking->booking_type = "bond-pmt";
+		    $booking->people_id = $bondObj['people_id'];
+		    $booking->ocrno = $data->ocrno;
+			$booking->credit_id = $bondObj['bond_id'];
+
+			$booking->_trans = array();
+
+			$trans = new StdClass();
+			$trans->account_no = '1930'; // Bank account
+			$trans->amount = +$data->amount;
+			$trans->people_id = $booking->people_id;
+			$trans->credit_id = $bondObj['bond_id'];
+			$trans->trans_type = 'bond-pmt';
+			array_push($booking->_trans, $trans);
+				
+			$trans = new StdClass();
+			$trans->account_no = '2350';
+			$trans->amount = -$data->amount;
+			$trans->people_id = $booking->people_id;
+			$trans->credit_id = $bondObj['bond_id'];
+			$trans->trans_type = 'bond-pmt';
+			array_push($booking->_trans, $trans);
+			
+			$booking_id = $this->_bookNew($booking);
+
+			if ($bondObj['bond_status'] == 'p') {
+				$param = array ();
+				$param['bond_status'] = 'o';
+				$this->_Update('bond', 'bond_id', $bondObj['bond_id'], $param);
+			}
+			$reply = new StdClass();
+			$reply->code = "1";
+			$reply->booking_id = $booking_id;
+			return json_encode($reply);
+		}
+
+		else {
+			return $this->_Reply('0', "ocrno_not valid");
+		}
+	}
+	*/
+	private function actionIncommingFileLoad($data) {
+		/*
+		{
+			"_group" : "Payment",
+			"_action" : "IncommingFileLoad",
+			"_file" : "payment-2020-08-26.txt"
+		}
+		*/
+		$reply = new stdClass();
+
+		$fn = fopen('_payments/' . $data->_file, "r");
+
+        // I fail;
+        $rows = 0;
+		$list = array();
+		
+		$index = -2;
+		$date = false;
+        while(! feof($fn))  {
+			$line = fgets($fn);
+			$col =  explode(';', $line);
+			
+			if ($index == -2) {
+				if (strpos(' ' . $col[0], 'Datum') > 0) {
+					$line = fgets($fn);
+					$col =  explode(';', $line);
+					$date = $col[0];
+					$line = fgets($fn);
+					$col =  explode(';', $line);
+					$serial_no = $col[0];
+					$index = -1;
+					$sql = "SELECT * FROM payment_file WHERE serial_no = $serial_no";
+					$resCheck = $this->_Get($sql);
+					if ($resCheck['code'] == '1') {
+						$resCheck['code'] = '2';
+						return json_encode($resCheck);
+						die('');
+					}
+				}
+				else {
+					$reply->code = '0';
+					$reply->denied_code = 'wrong-format';
+					return json_encode($reply);
+				}
+			} 
+			else {
+				$index++;
+				$line = trim($line);
+				$col = explode(';', $line); 
+				$list[] = new stdClass();
+				$list[$index]->date = $date; 
+				$list[$index]->ocrno = $col[0];
+				if (isset($col[1])) {
+					$amount = $col[1]; 
+					$amount = str_replace (',', '.', $amount);
+					$amount = str_replace (' ', '', $amount);				
+					$list[$index]->amount = (float)$amount; 
+				}
+			}
+			
+		}
+		$param = new stdClass();
+		$param->filename = $data->_file;
+		$param->serial_no = $serial_no;
+		$param->payment_date = $date;
+		$this->_Insert('payment_file', $param);
+
+		$reply->code = '1';
+		$reply->list = $list;
+		return json_encode($reply);
+	}
+
+}
+
+/*
+SELECT b.company_id, c.company_name, c.bank_account, sum(t.amount)
+FROM booking b, btrans t, company c
+WHERE t.account_no = '2981' AND b.booking_id = t.booking_id AND
+c.company_id = b.company_id
+GROUP BY b.company_id, c.company_name, c.bank_account
+*/

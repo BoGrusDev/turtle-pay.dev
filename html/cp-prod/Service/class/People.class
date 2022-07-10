@@ -1,0 +1,1513 @@
+<?php
+/*
+    Class PeopleListClass
+
+	Date: 2018-10-04
+
+	UPDATE 	2020-03-13 - SPAR
+
+	Add GetPre and Update Pre
+
+	Call:
+	{
+		"_group" : "People"
+		"_action" : "List"
+	}
+
+	Reply:
+
+*/
+
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+class PeopleClass extends ActionBase {
+
+	/*
+		{
+			"_group" : "People"
+			"_action" : "List"
+		}
+	*/
+
+	public function Run($data) {
+		$actionMethod = 'action' . $data->_action;
+		echo $this->$actionMethod($data);
+	}
+
+	private function actionList($data) {
+		/*
+			{
+				"_group" : "People"
+				"_action" : "List",
+			}
+		*/
+		$sql = "SELECT people_id, personal_id_number, CONCAT(last_name, ', ', first_name) AS people_name, address, postcode, city, has_uc_check, people_status, email, mobile, created_date, ocrno, overdue FROM people ORDER BY last_name, first_name";
+		$result = $this->_GetList($sql);
+		return json_encode($result);
+	}
+
+	private function actionGet($data) {
+		/*
+			{
+				"_group" : "People",
+				"_action" : "Get",
+				"_people_id" : "2"
+
+			}
+		*/
+		$sql = "SELECT * FROM people WHERE people_id = $data->_people_id";
+		return json_encode($this->_Get($sql));
+	}
+
+	private function actionPeopleUpdate($data) {
+		$result = $this->_Update("people", "people_id", $data->_people_id, $data);
+		return json_encode($result);
+	}
+
+	public function actionTransList($data) {
+		/*
+			{
+				"_group" : "People",
+				"_action" : "TransList",
+				"_people_id" : "5"
+
+			}
+		*/
+		// Should be moved to Config and Settings
+		$this->FirstInvoiceUrl = 'https://turtle-pay/f-invoice/';
+
+		$sql = "SELECT t.btrans_id, t.booking_id, b.booking_date, b.booking_text, t.trans_type, b.ocrno, t.credit_id, b.booking_type,";
+		$sql .= "s.store_name, co.company_name, co.known_as, t.account_no, t.amount, b.company_id ";
+		$sql .= "FROM btrans t ";
+		$sql .= "LEFT JOIN booking b ON t.booking_id = b.booking_id ";
+		$sql .= "LEFT JOIN company co ON b.company_id = co.company_id ";
+		$sql .= "LEFT JOIN store s ON b.store_id = s.store_id ";
+		// $sql .= "AND b.credit_id = cr.credit_id ";
+		$sql .= "WHERE b.people_id =  $data->_people_id AND ";
+		$sql .= "t.account_no IN ('1380', '1680', '2350')";
+		$sql .= " AND t.prel IN ('y','n') AND b.prel IN ('y','n') ";
+		$sql .= "ORDER BY b.booking_date, t.booking_id, t.btrans_id"; // 2020-10-07
+
+		$list = $this->_GetList($sql);
+
+		$balance1380 = 0;
+		$balance1680 = 0;
+		$balance2350 = 0;
+		$total = 0;
+
+		for ($i = 0; $i < sizeof($list); $i++) {
+			if ($list[$i]['account_no'] == "1380") {
+				$list[$i]['amount_1380'] = number_format($list[$i]['amount'], 2);
+				$balance1380 += $list[$i]['amount'];
+				$list[$i]['balance_1380'] = number_format($balance1380, 2);
+				if ($i > 0) {
+					$list[$i]['balance_1680'] = $list[$i - 1]['balance_1680'];
+					$list[$i]['balance_2350'] = $list[$i - 1]['balance_2350'];
+				} else {
+					$list[$i]['balance_1680'] = number_format(0, 2);
+					$list[$i]['balance_2350'] = number_format(0, 2);
+				}
+			} else if ($list[$i]['account_no'] == "1680") {
+				$balance1680 += $list[$i]['amount'];
+				$list[$i]['amount_1680'] = number_format($list[$i]['amount'], 2);
+				$list[$i]['balance_1680'] = number_format($balance1680, 2);
+				if ($i > 0) {
+					$list[$i]['balance_1380'] = $list[$i - 1]['balance_1380'];
+					$list[$i]['balance_2350'] = $list[$i - 1]['balance_2350'];
+				}
+				else {
+					$list[$i]['balance_1380'] = number_format(0, 2);
+					$list[$i]['balance_2350'] = number_format(0, 2);
+				}
+
+			} else if ($list[$i]['account_no'] == "2350") {
+				$balance2350+= $list[$i]['amount'];
+				//$list[$i]['amount_2350'] = $list[$i]['amount'];
+				$list[$i]['amount_2350'] = number_format($list[$i]['amount'], 2);
+				$list[$i]['balance_2350'] = number_format($balance2350, 2);
+				if ($i > 0) {
+					$list[$i]['balance_1680'] = $list[$i - 1]['balance_1680'];
+					$list[$i]['balance_1380'] = $list[$i - 1]['balance_1380'];
+				}
+				else {
+					$list[$i]['balance_1680'] = number_format(0, 2);
+					$list[$i]['balance_1380'] = number_format(0, 2);
+				}
+			}
+
+			$total += $list[$i]['amount'];
+			$list[$i]['total'] = number_format($total, 2);
+		}
+
+		return json_encode($list);
+
+	
+
+		//return json_encode($result);
+	}
+
+	// Moved to Tools
+	public function actionGetBooking($data) {
+		/*
+			{
+				"_group" : "People",
+				"_action" : "GetBooking",
+				"_type" : "btrans",
+				"_id" : "id"
+			}
+		*/
+		if ($data->_type == 'btrans') {
+			$sql = "SELECT b.* FROM booking b, btrans t ";
+			$sql .= "WHERE t.btrans_id = $data->_id AND t.booking_id = b.booking_id";
+			$booking = $this->_Get($sql);
+		}
+		else {
+			$sql = "SELECT b.* FROM booking b ";
+			$sql .= "WHERE t.booking_id = $data->_id ";
+			$booking = $this->_Get($sql);
+		}
+
+		//print_r($booking);
+
+		$sql = "SELECT * FROM btrans ";
+		$sql .= "WHERE booking_id = " . $booking['booking_id'];
+		$trans = $this->_GetList($sql);
+		$booking['trans'] = $trans;
+		return json_encode($booking);
+	}
+
+	private function actionCreditsList($data) {
+		/*
+			{
+				"_group" : "People",
+				"_action" : "Credits",
+				"_people_id" : "2"
+
+			}
+		*/
+		$sql = "SELECT c.credit_id, c.start_date, co.known_as, c.company_id, c.amount, c.receipt_number, c.monthly_no, c.interest_margin, c.credit_status ";
+		$sql .= "FROM credit c, company co ";
+		$sql .= "WHERE c.people_id = $data->_people_id AND c.company_id = co.company_id";
+
+		return json_encode($this->_GetList($sql));
+	}
+
+	private function actionCreditGet($data) {
+		/*
+			{
+				"_group" : "People",
+				"_action" : "CreditGet",
+				"_credit_id_id" : "123444"
+
+			}
+		*/
+		$sql = "SELECT c.credit_id, c.start_date, co.company_name, c.company_id, c.amount, c.credit_status, ";
+		$sql .= "s.store_name, CONCAT(ps.first_name, ' ' ,ps.last_name) AS salesperson ";
+		$sql .= "FROM credit c ";
+		$sql .= "LEFT JOIN company co ON c.company_id = co.company_id ";
+		$sql .= "LEFT JOIN store s ON c.store_id = s.store_id ";
+		$sql .= "LEFT JOIN people ps ON c.sales_person_people_id = ps.people_id ";
+		$sql .= "WHERE c.credit_id = $data->_credit_id";
+
+		return json_encode($this->_Get($sql));
+	}
+
+	private function actionCreditListLoad($data) {
+
+		$sql = "SELECT b.booking_date, b.booking_type, t.* FROM btrans t, booking b ";
+		$sql .= "WHERE t.credit_id = $data->_credit_id AND t.account_no = '1380' ";
+		$sql .= "AND t.prel IN ('y','n') AND b.prel IN ('y','n') ";
+		$sql .= "AND b.booking_id = t.booking_id ORDER BY b.booking_date, b.booking_id, t.btrans_id"; // 2020-10-07
+
+		$list = $this->_GetList($sql);
+
+		$balance = 0;
+		for ($i = 0; $i < sizeof($list); $i++) {
+			$balance += $list[$i]['amount'];
+			$list[$i]['balance'] = number_format($balance, 2);
+		}
+		return json_encode($list);
+	}
+
+	private function actionBondListLoad($data) {
+
+		$sql = "SELECT b.booking_date, b.booking_type, t.* FROM btrans t, booking b ";
+		$sql .= "WHERE t.credit_id = $data->_bond_id AND t.account_no = '2350' AND ";
+		$sql .= "t.prel='n' ";
+		$sql .= "AND b.booking_id = t.booking_id ORDER BY b.booking_date, t.btrans_id";
+
+		$list = $this->_GetList($sql);
+
+		$balance = 0;
+		for ($i = 0; $i < sizeof($list); $i++) {
+			$balance += $list[$i]['amount'];
+			$list[$i]['balance'] = number_format($balance, 2);
+		}
+		return json_encode($list);
+	}
+
+	private function actionInvoiceList($data) {
+		$sql = "SELECT * FROM first_invoice WHERE people_id = $data->_people_id ORDER BY date";
+		$oInvoice = $this->_GetList($sql);
+
+		$invoice = array();
+		$index = -1;
+		for ($i = 0; $i < sizeof($oInvoice); $i++)
+		{
+			$invoice[] = new stdClass();
+			$index++;
+
+			$invoice[$index]->invoice_filename = $oInvoice[$i]['invoice_filename'];
+			$invoice[$index]->ocrno = $oInvoice[$i]['ocrno'];
+			$invoice[$index]->date = $oInvoice[$i]['date'];
+			$invoice[$index]->duedate = $oInvoice[$i]['duedate'];
+			$invoice[$index]->name = $oInvoice[$i]['name'];
+			$invoice[$index]->company_name = $oInvoice[$i]['company_name'];
+			$invoice[$index]->shop_name = $oInvoice[$i]['shop_name'];
+			$invoice[$index]->receipt_number = $oInvoice[$i]['receipt_number'];
+			$monthlyPaymentTotal = str_replace(",","",$oInvoice[$i]['monthly_payment_total']);
+			$invoice[$index]->monthly_payment_total = number_format($monthlyPaymentTotal, 2);
+			$total = str_replace(",","",$oInvoice[$i]['total']);
+			$invoice[$index]->total = number_format($total, 2);
+			//$invoice[$index]->total = number_format('65.00',2);
+			$invoice[$index]->email_sent = $oInvoice[$i]['email_sent'];
+			$invoice[$index]->printed = $oInvoice[$i]['printed'];
+			$invoice[$index]->type = "First";
+		}
+
+		$sql = "SELECT * FROM minvoice WHERE people_id = $data->_people_id ORDER BY date";
+		$oMinvoice = $this->_GetList($sql);
+		for ($i = 0; $i < sizeof($oMinvoice); $i++)
+		{
+			$invoice[] = new stdClass();
+			$index++;
+			$invoice[$index]->invoice_filename = $oMinvoice[$i]['invoice_filename'];
+			$invoice[$index]->ocrno = $oMinvoice[$i]['ocrno'];
+			$invoice[$index]->date = $oMinvoice[$i]['date'];
+			$invoice[$index]->duedate = $oMinvoice[$i]['duedate'];
+			$invoice[$index]->name = $oMinvoice[$i]['name'];
+			$invoice[$index]->company_name = '';
+			$invoice[$index]->shop_name = '';
+			$monthlyPaymentTotal = str_replace(",","",$oMinvoice[$i]['monthly_payment_total']);
+			$invoice[$index]->monthly_payment_total = number_format($monthlyPaymentTotal, 2);
+
+			$total = str_replace(",","",$oMinvoice[$i]['pay_all']);
+			$invoice[$index]->total = number_format($total, 2);
+
+			$overdue = str_replace(",","",$oMinvoice[$i]['overdue']);
+			$invoice[$index]->overdue = number_format($overdue, 2);
+
+
+			if ($oMinvoice[$i]['invoice_type'] == "c") {
+				$collection = str_replace(",","",$oMinvoice[$i]['coll_due_total']);
+				$invoice[$index]->collection = number_format($collection, 2);
+			}
+			$invoice[$index]->email_sent = "X";
+			$invoice[$index]->printed = "X";
+			$invoice[$index]->type = "Monthly";
+		}
+
+		return json_encode($invoice);
+
+	}
+
+	private function actionCompanyConnections($data) {
+		/*
+			{
+				"_group" : "People"
+				"_action" : "CompanyConnections",
+				"_people_id" : "1"
+			}
+		*/
+
+		$sql = "SELECT cp.cp_id, c.company_name, c.known_as, cp.priv FROM company_people cp, company c ";
+		$sql .= "WHERE cp.people_id = $data->_people_id AND ";
+		$sql .= "cp.company_id = c.company_id ";
+		$sql .= "ORDER BY c.company_name";
+		$result = $this->_GetList($sql);
+		return json_encode($result);
+	}
+
+
+	private function actionGetPreTrans($data) {
+		/*	
+			// NEW 2020-02-06
+			{
+				"_group" : "People",
+				"_action" : "GetPreYrans",
+				"_btrans_id" : "5475"
+
+			}
+		*/
+
+		$sql = "SELECT btrans_id, booking_id, trans_type, amount, credit_id FROM btrans WHERE btrans_id = " . $data->_btrans_id;
+		$btrans1 = $this->_Get($sql);
+
+		if ($btrans1['amount'] > 0) {
+			$amount = - $btrans1['amount'];
+		}
+		else if ($btrans1 ['amount'] < 0) {
+			$amount = $btrans1['amount'] * -1;
+		}
+		else {
+			$amount = $btrans1['amount'];
+		}
+
+		$sql = "SELECT  btrans_id, booking_id, trans_type, amount, credit_id FROM btrans WHERE ";
+		$sql .= "booking_id = " . $btrans1['booking_id'] . " AND ";
+		$sql .= " amount = $amount AND ";
+		$sql .= "trans_type='" .  $btrans1['trans_type'] . "' ";
+		//echo strlen($btrans1['credit_id']); die(''); 
+		if (strlen($btrans1['credit_id']) > 0 ) {
+			$sql .= "AND credit_id = " . $btrans1['credit_id']; 
+		}
+		else {
+			$sql .= "AND credit_id IS NULL"; 
+		}
+		$sql .= " AND btrans_id <> $data->_btrans_id";
+		$btrans2 = $this->_Get($sql);
+
+		$trans = new StdClass();
+		$trans->_btrans_id1 = $btrans1['btrans_id'];
+		$trans->amount1 = $btrans1['amount'];
+		$trans->_trans_type1 = $btrans1['trans_type'];
+		$trans->_btrans_id2 = $btrans2['btrans_id'];
+		$trans->amount2 = $btrans2['amount'];
+		$trans->_trans_type2 = $btrans2['trans_type'];
+
+		return json_encode($trans);
+		
+	}
+
+	private function actionUpdatePreTrans($data) {
+		/*	
+			// NEW 2020-02-06
+			{
+				"_group" : "People",
+				"_action" : "UpdatePreTrans",
+				"_btrans_id1": "26371",
+				"amount1": "350.00",
+				"_trans_type1": "interest",
+				"_btrans_id2": "26370",
+				"amount2": "-350.00",
+				"_trans_type2": "interest"
+			}
+		*/
+		$param1 = new stdClass();
+		$param1->amount = $data->amount1;
+		$reply1 = $this->_Update('btrans', 'btrans_id', $data->_btrans_id1, $param1);
+
+		$param2 = new stdClass();
+		$param2->amount = $data->amount2;
+		$reply2 = $this->_Update('btrans', 'btrans_id', $data->_btrans_id2, $param2);
+
+		print_r($reply1); 
+	}
+
+	private function actionGetFee($data) {
+		//$sql = "SELECT * FROM btrans WHERE trans_type = '$data->_trans_type' AND booking_id = $data->_booking_id";
+		$sql = "SELECT amount FROM btrans WHERE trans_type = '$data->_trans_type' AND account_no != '1680' AND booking_id = $data->_booking_id";
+		$result = $this->_Get($sql);
+		return json_encode($result);
+	}
+
+	public function actionCreditingPeople($data) {
+		
+		/*
+		{"_group":"People","_action":"CreditingPeople","booking_date":"2020-11-27","people_id":"214","type":"billing-fee","amount":"29.00"}
+		*/
+
+		$param = new stdClass();
+		$param->_key = "test-key";
+		$param->_group = "Booking";
+		$param->_action = "CreditingPeople";
+		$param->booking_date = $data->booking_date;
+		$param->people_id = $data->people_id;
+		$param->amount = $data->amount;
+		$param->type = $data->type;
+		
+		return $reply = $this->_RestApiCall(json_encode($param));
+	}
+
+	private function setTransBooking($transType, $accountNo, $amount, $peopleId, $creditId = null, $companyId = null) {
+		$trans = new stdClass();
+		$trans->trans_type = $transType;
+		$trans->account_no = $accountNo;
+		$trans->amount = $amount;
+		$trans->people_id = $peopleId;
+		if (!empty($creditId)) {
+			$trans->credit_id = $creditId;
+		}
+		if (!empty($companyId)) {
+			$trans->company_id = $companyId;
+		}
+
+		return $trans;
+	}
+
+	private function actionCancelBooking($data) {
+		//
+		// -- ReeBook the prel setting
+		//
+		$sql = "UPDATE booking set prel='x' WHERE booking_id = $data->_booking_id";
+		$this->_Query($sql);
+		$sql = "UPDATE btrans set prel='x' WHERE booking_id = $data->_booking_id";
+		$this->_Query($sql);
+	}
+
+	private function actionCreditAmor($data) {
+		$booking = new StdClass();
+		$booking->booking_date = $data->_booking_date;
+		$booking->booking_text = 'Crediting';
+		$booking->booking_type = 'crediting';
+		$booking->people_id = $data->_people_id;
+		$booking->credit_id = $data->_credit_id;
+
+		$booking->_trans = [];
+		$booking->_trans[] = new stdClass();
+		$booking->_trans[0] = $this->setTransBooking('crediting', '1380', $data->_amount, $data->_people_id, $data->_credit_id);
+		$booking->_trans[] = new stdClass();
+		$booking->_trans[1] = $this->setTransBooking('crediting', '1680', -$data->_amount, $data->_people_id, $data->_credit_id);
+
+		$this->_BookNew($booking);
+	}
+	
+	/*
+		Crediting Interest
+	*/
+	private function actionCreditInterest($data) {
+
+
+		$param = new stdClass();
+		$param->_key = "test-key";
+		$param->_group = "Booking";
+		$param->_action = "CreditingInterest";
+		$param->booking_date = $data->_booking_date;
+		$param->people_id = $data->_people_id;
+		$param->credit_id = $data->_credit_id;
+		$param->amount = $data->_amount;
+		// $param->type = $data->type;
+		
+		return $reply = $this->_RestApiCall(json_encode($param));
+
+	}
+
+	/*
+		Crediting Overdue interest
+	*/
+	private function actionCreditOinterest($data) {
+		$booking = new StdClass();
+		$booking->booking_date = $data->_booking_date;
+		$booking->booking_text = 'Crediting';
+		$booking->booking_type = 'crediting';
+		$booking->people_id = $data->_people_id;
+		
+		$booking->_trans = [];
+		$booking->_trans[] = new stdClass();
+		$booking->_trans[0] = $this->setTransBooking('crediting', '8301', $data->_amount, $data->_people_id);
+		$booking->_trans[] = new stdClass();
+		$booking->_trans[1] = $this->setTransBooking('crediting', '1680', -$data->_amount, $data->_people_id);
+
+		$this->_BookNew($booking);
+	}
+
+	/*
+		Crediting Full
+	*/
+	private function actionCreditFull($data) {
+
+
+		$param = new stdClass();
+		$param->_key = "test-key";
+		$param->_group = "Booking";
+		$param->_action = "CreditingCredit";
+		$param->booking_date = $data->_booking_date;
+		$param->people_id = $data->_people_id;
+		$param->credit_id = $data->_credit_id;
+		$param->company_id = $data->_company_id;
+		$param->amount = $data->_amount;
+		// $param->type = $data->type;
+		if (isset($data->_receipt_number)) {
+			$param->receipt_number = $data->_receipt_number; // 2021-11-01
+		}
+		return $reply = $this->_RestApiCall(json_encode($param));
+
+
+		/*
+
+		$booking = new StdClass();
+		$booking->booking_date = $data->_booking_date;
+		$booking->booking_text = 'Crediting';
+		$booking->booking_type = 'crediting';
+		$booking->people_id = $data->_people_id;
+		$booking->credit_id = $data->_credit_id;
+		$booking->company_id = $data->_company_id;
+		
+		$booking->_trans = [];
+		$booking->_trans[] = new stdClass();
+		$booking->_trans[0] = $this->setTransBooking('crediting', '2981', $data->_amount, $data->_people_id, $data->_credit_id, $data->_company_id);
+		$booking->_trans[] = new stdClass();
+		$booking->_trans[1] = $this->setTransBooking('crediting', '1380', -$data->_amount, $data->_people_id, $data->_credit_id, $data->_company_id);
+
+		$this->_BookNew($booking);
+		*/
+		/*
+		$param = array ();
+		$param['credit_status'] = 'c';
+		$this->_Update('credit', 'credit_id', $data->_credit_id, $param);
+		*/
+	}
+
+
+	/*
+		Ny section for UC
+	*/
+
+	public function actionGetAssessment($data) {
+
+		/*
+		{
+			"_group" : "People",
+			"_action" : "GetAssessment",
+			"_people_id" " : "2"
+		}
+		*/
+
+		// -- 
+		// -- Get the current UC id
+		// ---
+		$sql = "SELECT uc_id FROM uc ";
+		$sql .= "WHERE people_id = $data->_people_id ";
+		$sql .= "ORDER BY uc_id DESC";
+		$result = $this->_Get($sql);
+		if ($result['code'] == '1') {
+			$UcId = $result['uc_id'];
+		}
+		else {
+			return json_encode($result);
+		}
+	
+
+		$reply = new stdClass();
+		$reply->people_id_number = ''; // W08002
+		$reply->name = ''; // W08003
+		$reply->total_income = '0'; // W49592
+		$reply->marks = '0'; // W61109
+		$reply->marks_total = '0'; // W61110
+		$reply->applys = '0'; // W61111
+		$reply->applys_total = '0'; // W61112
+		$reply->mark_date = ''; // W61507
+		$reply->question_12 = '0'; // W6020
+		$reply->dept_amount = '0'; // W61206
+		$reply->trustee = "n";
+		$reply->mark_type = "";
+		$reply->limit = 0;
+		$reply->status = "process";
+        
+        $sql = "SELECT uc_item_id, uc_item, value FROM uc_item ";
+		$sql .= "WHERE uc_id = $UcId ";
+		$sql .= " ORDER BY uc_item_id";
+		//echo $sql; die('');
+		$result = $this->_GetList($sql);
+        
+		$incomeSet = false;
+		for ($i = 0; $i < sizeof($result); $i++) {
+			$terms = $result[$i]['uc_item'];
+			
+			switch ($terms) {
+				case 'W08002' :
+					$reply->people_id_number = $result[$i]['value'];
+					break;
+				case 'W08003' :
+				$reply->name = $result[$i]['value'];
+					break;
+				case 'W49592' :
+					if ($incomeSet == false) {
+						$reply->total_income = (float)$result[$i]['value'];
+						$incomeSet = true;
+					}
+					break;
+				
+				case 'W61109' : 
+					$reply->marks = (float)$result[$i]['value'];
+					break;
+				case 'W61110' : 
+					$reply->marks_total = (float)$result[$i]['value'];
+					if ($reply->marks_total > 0) {
+						$reply->status = "denied";
+					}
+					break;
+				case 'W61111' : 
+					$reply->applys = (float)$result[$i]['value'];
+					break;
+				case 'W61112' : 
+					$reply->applys_total = (float)$result[$i]['value'];
+					break;
+				case 'W61507' :
+					$reply->mark_date = $result[$i]['value'];
+					break;
+				case 'W64020' :
+					$reply->question_12 = $result[$i]['value'];
+					break;
+				case 'W61503' :
+					$reply->dept_amount =(float) $result[$i]['value'];
+					break;
+				case "W08018" : // Förvalatare
+					if ($result[$i]['value'] == 'J') {
+						$reply->trustee = 'j';
+						$reply->status = "denied";
+					}
+					else {
+						$reply->trustee = 'n';
+					}
+					break;
+				case "W61506" :
+					$reply->mark_type = $result[$i]['value'];
+					$reply->mark_text = $result[$i]['value'];
+					break;
+			}
+		}
+		
+		if ($reply->status == "process") {
+			if ($reply->total_income <= 25000) {
+				$reply->limit = '0';
+				$reply->status = "denied";
+			}
+
+			else if ($reply->total_income > 25000 && $reply->total_income < 70000) {
+				$reply->limit = '3000';
+				$reply->status = "confirmed";
+			}
+			else if ($reply->total_income < 100000) {
+				$reply->limit = '10000';
+				$reply->status = "confirmed";
+			}
+			else if ($reply->total_income < 150000) {
+				$reply->limit = '20000';
+				$reply->status = "confirmed";
+			}
+			else if ($reply->total_income < 250000) {
+				$reply->limit = '50000';
+				$reply->status = "confirmed";
+			}
+			else if ($reply->total_income < 400000) {
+				$reply->limit = '70000';
+				$reply->status = "confirmed";
+			}
+			else if ($reply->total_income < 600000) {
+				$reply->limit = '100000';
+				$reply->status = "confirmed";
+			}
+			else if ($reply->total_income  < 800000) {
+				$reply->limit = '150000';
+				$reply->status = "confirmed";
+			}
+			else if ($reply->total_income  >= 800000) {
+				$reply->limit = '200000';
+				$reply->status = "confirmed";
+			}
+			else {
+				$reply->limit = '0';
+				$reply->status = "denied";
+			} 
+		}
+		else {
+			$reply->limit = '0';
+		}
+       
+		return json_encode($reply);
+	
+	}
+
+	public function actionGetUcStatus($data) {
+
+		/*
+		{
+			"_group" : "People",
+			"_action" : "GetUcStatus",
+			"_people_id" " : "1"
+		}
+		*/
+
+		$sql = "SELECT uc_id FROM uc ";
+		$sql .= "WHERE people_id = $data->_people_id ";
+		$sql .= "ORDER BY uc_id DESC";
+		$result = $this->_Get($sql);
+		if ($result['code'] == '1') {
+			$UcId = $result['uc_id'];
+		}
+		else {
+			return json_encode($result);
+		}
+		
+		$UcTerms = array(
+		//'W08002',
+		//'W08003',
+		'W08018',
+		'W49501',
+		'W49592',
+		'W61109',
+		'W61113',
+		'W61110',
+		'W61112',
+		'W61501',
+		'W61502',
+		'W61503',
+		'W61504',
+		'W61505',
+		'W61507',
+		"W64001",
+		"W64001",
+		'W64020',
+		"W61203",
+		"W61204",
+		'W61206');
+
+
+		$reply = array();
+		
+
+        $sql = "SELECT uc_item_id, uc_item, value FROM uc_item ";
+		$sql .= "WHERE uc_id = $UcId ";
+		$sql .= "ORDER BY uc_item_id";
+		//echo $sql; die('');
+		$result = $this->_GetList($sql);
+        
+		//$incomeSet = false;
+		$count = -1;
+		for ($i = 0; $i < sizeof($result); $i++) {
+			$term = $result[$i]['uc_item'];
+			if (in_array($term, $UcTerms)) {
+				$count++;
+				$reply[] = new stdClass();
+				$reply[$count]->uc_item_id = $result[$i]['uc_item_id'];
+				$reply[$count]->uc_item = $result[$i]['uc_item'];
+				$reply[$count]->value = $result[$i]['value'];
+				$reply[$count]->text = $this->ucItem[$result[$i]['uc_item']];	
+			}
+		}
+		/*
+		if ($reply->status == "process") {
+			if ($reply->total_income <= 25000) {
+				$reply->limit = '0';
+				$reply->status = "denied";
+			}
+
+			else if ($reply->total_income > 25000 && $reply->total_income < 70000) {
+				$reply->limit = '3000';
+				$reply->status = "confirmed";
+			}
+			else if ($reply->total_income < 100000) {
+				$reply->limit = '10000';
+				$reply->status = "confirmed";
+			}
+			else if ($reply->total_income < 150000) {
+				$reply->limit = '20000';
+				$reply->status = "confirmed";
+			}
+			else if ($reply->total_income < 250000) {
+				$reply->limit = '50000';
+				$reply->status = "confirmed";
+			}
+			else if ($reply->total_income < 400000) {
+				$reply->limit = '70000';
+				$reply->status = "confirmed";
+			}
+			else if ($reply->total_income < 600000) {
+				$reply->limit = '100000';
+				$reply->status = "confirmed";
+			}
+			else if ($reply->total_income  < 800000) {
+				$reply->limit = '150000';
+				$reply->status = "confirmed";
+			}
+			else if ($reply->total_income  >= 800000) {
+				$reply->limit = '200000';
+				$reply->status = "confirmed";
+			}
+			else {
+				$reply->limit = '0';
+				$reply->status = "denied";
+			} 
+		}
+		else {
+			$reply->limit = '0';
+		}
+       */
+		return json_encode($reply);
+	}
+
+	public function actionGetUcFull($data) {
+		/*
+		{
+			"_group" : "People",
+			"_action" : "GetUcFull",
+			"_people_id" : "333",
+			"_filter" : "n"
+		}
+		*/
+
+		// -- 
+		// -- Get the current UC id
+		// ---
+		$sql = "SELECT uc_id FROM uc ";
+		$sql .= "WHERE people_id = $data->_people_id ";
+		$sql .= "ORDER BY uc_id DESC";
+		$result = $this->_Get($sql);
+		if ($result['code'] == '1') {
+			$UcId = $result['uc_id'];
+		}
+		else {
+			return json_encode($result);
+		}
+
+		$sql = "SELECT uc_item_id, uc_item, value FROM uc_item ";
+		$sql .= "WHERE uc_id = $UcId ";
+		$sql .= "ORDER BY uc_item_id";
+		//echo $sql; die('');
+		$result = $this->_GetList($sql);
+		for ($i = 0; $i < sizeof($result); $i++)
+		{
+			$terms = $result[$i]['uc_item'];
+			if (isset($this->ucItem[$terms])) {
+				$result[$i]['text'] = $this->ucItem[$result[$i]['uc_item']];
+			}
+			else {
+				$result[$i]['text'] = '';
+			}
+		}
+
+		/*
+		if ($data->_filter == "y") {
+			$newResult = array();
+			$index = -1;
+			for ($i = 0; $i < sizeof($result); $i++) {
+				$terms = $result[$i]['uc_item'];
+				if (in_array($terms, $this->ucFilter)) {
+					$newResult[] = array();
+					$index++;
+					$newResult[$index]['uc_item_id'] = $result[$i]['uc_item_id'];
+					$newResult[$index]['uc_item'] = $result[$i]['uc_item'];
+					$newResult[$index]['text'] = $result[$i]['text'];
+					$newResult[$index]['value'] = $result[$i]['value'];
+				}
+			}
+			return json_encode($newResult);
+		}
+		else {
+			return json_encode($result);
+		}
+		*/
+
+		return json_encode($result);
+	}
+
+	public function actionChangeCreditStatus($data) {
+		$param = array ();
+		// $param['credit_status'] = $data->credit_status;
+		$param['interest_margin'] = $data->interest_margin;
+		$param['monthly_no'] = $data->monthly_no;
+		$reply = $this->_Update('credit', 'credit_id', $data->_credit_id, $param);
+		return json_encode($reply);
+	}
+
+	public $ucItem = array(
+		'W4C001'=>'Antal av kredittyp 1',
+		'W4C002'=>'Antal av kredittyp 2',
+		'W4C003'=>'Antal av kredittyp 3',
+		'W4C004'=>'Antal av kredittyp 4',
+		'W4C005'=>'Antal av kredittyp 5',
+		'W4C009'=>'UC Intern information',
+		'W4C013'=>'Saldo nya kontokrediter', 
+		'W4C016'=>'Aktuell utnyttjandegrad av kontokrediter',
+		'W4C022'=>'Antal kontotyp(1, 4, 5) senaste 12 mån',
+		'W4C023'=>'Bolån',
+		'W4C024'=>'Aktuell Skuldsättningsgrad exkl bolån',
+		'W4C025'=>'Aktuell Skuldsättningsgrad inkl bolån',
+		'W4C026'=>'Genomsnittlig skuldsättningsgrad exkl bolån',
+		'W4C027'=>'Genomsnittlig skuldsättningsgrad inkl bolån',
+		'W4C028'=>'Antal aktiva kontokrediter ',
+		'W4C029'=>'Antal nya blanco',
+		'W4C030'=>'Antal nya avbetalningslån',
+		'W4C031'=>'Antal nya kontokrediter',
+		'W4C032'=>'Antal nya bolån',
+		'W4C033'=>'Totalt antal nya lån exkl bolån',
+		'W4C034'=>'Totalt antal nya lån inkl bolån',
+		'W4C035'=>'Förändring i saldo totalt exkl bolån',
+		'W4C036'=>'Förändring i saldo totalt inkl bolån',
+		'W4C037'=>'Förändring blanco i saldo',
+		'W4C038'=>'Förändring avbet i saldo',
+		'W4C039'=>'Förändring kontokredit i saldo', 
+		'W4C040'=>'Förändring bolån i saldo',
+		'W4C041'=>'Medelutnyttjandegrad kontokrediter', 
+		'W4D001'=>'Summa belopp, andel',
+		'W4D002'=>'Saldo',
+		'W4D003'=>'Antal låntagare',
+		'W4D004'=>'Typ av lån',
+		'W00701'=>'Rubriktext',
+		'W00702'=>'Registrerat värde',
+		'W08001'=>'UC intern information',
+		'W08002'=>'Personnummer',
+		'W08003'=>'Namn',
+		'W08004'=>'Bostadsadress',
+		'W08005'=>'Postnummer',
+		'W08006'=>'Postadress',
+		'W08007'=>'Personnummer Make/Maka alternativt vårdnadshavare',
+		'W08008'=>'Namn Make/Maka alternativt vårdnadshavare',
+		'W08009'=>'Länskod, folkbokföring',
+		'W08010'=>'Kommunkod, folkbokföring',
+		'W08011'=>'Församlingskod, folkbokföring',
+		'W08012'=>'Län, folkbokföring',
+		'W08013'=>'Kommun, folkbokföring',
+		'W08014'=>'Församling, folkbokföring',
+		'W08015'=>'Äktenskapsförord',
+		'W08018'=>'Förvaltare utsedd',
+		'W08020'=>'Spärrkod',
+		'W08021'=>'Datum, spärrad',
+		'W08022'=>'Körkort förkommit',
+		'W08023'=>'Pass förkommit',
+		'W08024'=>'Id-handling förkommit',
+		'W08025'=>'Skyddad adress',
+		'W08026'=>'Kod, rörelse',
+		'W08028'=>'Spärrinformation',
+		'W08029'=>'UC intern Information',
+		'W08030'=>'Civilstånd kod',
+		'W08031'=>'Civilståndsdatum',
+		'W08035'=>'Namn ',
+		'W08036'=>'Mantalskrivningsår ',
+		'W08037'=>'Fd länskod, folkbokföring',
+		'W08038'=>'Fd kommunkod, folkbokföring',
+		'W08039'=>'Fd församlingskod, folkbokföring',
+		'W08040'=>'Fd län, folkbokföring',
+		'W08041'=>'Fd kommun, folkbokföring',
+		'W08042'=>'Fd församling, folkbokföring',
+		'W08043'=>'Civilstånd, text',
+		'W08044'=>'Vårdnadshavare',
+		'W08045'=>'Äktenskapsförord, text',
+		'W08049'=>'Typ av adress',
+		'W08050'=>'c/o adress',
+		'W08051'=>'Fortsättning på bostadsadress',
+		'W08052'=>'Land',
+		'W08054'=>'Ny-/återregistrerad hos UC',
+		'W08070'=>'Namn',
+		'W08071'=>'Gatu- och boxadress',
+		'W08072'=>'Postort',
+		'W08080'=>'UC intern information',
+		'W08081'=>'UC intern information',
+		'W08083'=>'Förnamn',
+		'W08084'=>'Efternamn',
+		'W08085'=>'Tilltalsnamn',
+		'W1A001'=>'Riskprognos UC Risk Person med engagemang',
+		'W1A002'=>'Riskprognos UC Risk Person utan engagemang',
+		'W1A076'=>'Riskprognos UC E-Score',
+		'W1A091'=>'Riskprognos UC Risk Person med engagemang',
+		'W1A092'=>'Riskprognos UC Risk Person med engagemang',
+		'W1A093'=>'Riskprognos UC Risk Person utan engagemang',
+		'W1A094'=>'Riskprognos UC Risk Person utan engagemang',
+		'W1A095'=>'Riskprognos UC E-Score',
+		'W1A096'=>'Riskprognos UC E-Score',
+		'W12001'=>'Obstext',
+		'W12101'=>'Obstext',
+		'W12201'=>'Obstext',
+		'W12501'=>'Obstext',
+		'W12601'=>'Obstext',
+		'W12701'=>'Obstext',
+		'W12801'=>'Obstext',
+		'W12901'=>'Obstext',
+		'W13105'=>'Mallbeslut',
+		'W13106'=>'Kreditbelopp',
+		'W13107'=>'Kontonummer',
+		'W13111'=>'Riskprognos UC Risk Person',
+		'W13114'=>'Orsakstabell',
+		'W13125'=>'Riskprognos UC Risk Person för medsökande',
+		'W13130'=>'Styr redov. av sammanfattning',
+		'W13131'=>'Får orsakstexter lagras',
+		'W13132'=>'UC intern Information',
+		'W13133'=>'Externt konto/kortnummer',
+		'W13134'=>'Kortet giltigt t o m datum',
+		'W13135'=>'Kundens egen beslutsrubrik',
+		'W13136'=>'UC intern Information',
+		'W13137'=>'Sökandes uppgivna inkomst',
+		'W13138'=>'Medsökandes uppgivna inkomst',
+		'W13139'=>'Riskprognos UC Risk Person',
+		'W13140'=>'Riskprognos UC Risk Person för medsökande',
+		'W13141'=>'Sökt kredit',
+		'W13142'=>'Beräknad limit',
+		'W13143'=>'Redigerad beräknad limit',
+		'W13144'=>'UC intern information',
+		'W13145'=>'UC intern information',
+		'W13146'=>'UC intern information',
+		'W13147'=>'Riskprognos UC Risk Person',
+		'W13148'=>'Riskprognos UC Risk Person för medsökande',
+		'W13149'=>'Mallbeslut',
+		'W13201'=>'Orsakstexter',
+		'W13202'=>'Kreditråd',
+		'W13301'=>'Beslutsmall',
+		'W13302'=>'Mallnamn',
+		'W13309'=>'Mallsvar',
+		'W13350'=>'Kontonummer',
+		'W13351'=>'Beställningsmall',
+		'W13401'=>'Öppet fält',
+		'W13402'=>'Öppet fält',
+		'W13403'=>'Öppet fält',
+		'W13404'=>'Öppet fält',
+		'W13405'=>'Öppet fält',
+		'W13406'=>'Öppet fält',
+		'W13407'=>'Öppet fält',
+		'W13408'=>'Öppet fält',
+		'W13409'=>'Öppet fält',
+		'W13410'=>'Öppet fält',
+		'W13411'=>'Öppet fält',
+		'W13412'=>'Öppet fält',
+		'W13413'=>'Öppet fält',
+		'W13414'=>'Öppet fält',
+		'W13415'=>'Öppet fält',
+		'W13416'=>'Öppet fält',
+		'W13417'=>'Öppet fält',
+		'W13418'=>'Öppet fält',
+		'W13419'=>'Öppet fält',
+		'W13420'=>'Öppet fält',
+		'W13711'=>'Riskprognos UC Risk Person',
+		'W13725'=>'Riskprognos UC Risk Person för medsökande',
+		'W13732'=>'UC intern Information',
+		'W13736'=>'UC intern Information',
+		'W13739'=>'UC intern Information',
+		'W13740'=>'UC intern Information',
+		'W13741'=>'UC intern Information',
+		'W15004'=>'Händelsedatum',
+		'W15006'=>'Händelsetext',
+		'W15007'=>'Händelsedatum med dag',
+		'W2B001'=>'Datum för adressändring',
+		'W2B002'=>'Historisk bostadsadress',
+		'W2B003'=>'Historiskt postnummer',
+		'W2B004'=>'Historisk postanstallt',
+		'W24001'=>'c/o-adress',
+		'W24002'=>'Fortsättnings på bostadsadress',
+		'W24003'=>'Bostadsadress',
+		'W24004'=>'Postnummer',
+		'W24005'=>'Postanstalt',
+		'W24080'=>'c/o-adress',
+		'W24081'=>'Forts bostadsadress', 
+		'W24082'=>'Bostadsadress',
+		'W24083'=>'Postnummer',
+		'W24084'=>'Postanstalt',
+		'W30001'=>'Text',
+		'W30002'=>'Text',
+		'W30003'=>'Namn',
+		'W30004'=>'Adress',
+		'W30005'=>'Postnummer',
+		'W30006'=>'Postanstalt',
+		'W30007'=>'Telefonnummer',
+		'W30008'=>'Objektnummer',
+		'W45001'=>'Datum',
+		'W45002'=>'Utnyttjade krediter',
+		'W45008'=>'Antal krediter',
+		'W45009'=>'Antal kreditgivare',
+		'W45010'=>'Utnyttjade krediter - eget',
+		'W45012'=>'Beviljad kredit – eget',
+		'W45022'=>'Beviljade krediter',
+		'W45023'=>'Utnyttjad kredit – Avbetalning',
+		'W45024'=>'Utnyttjad kredit – Kontokrediter',
+		'W45025'=>'Utnyttjad kredit – Blanco/Borgen',
+		'W45026'=>'Kod belopp',
+		'W45027'=>'Utnyttjad kredit – bostadskrediter villor',
+		'W45028'=>'Utnyttjad kredit – bostadskrediter bostadsrätt',
+		'W45030'=>'UC intern Information',
+		'W45031'=>'UC intern Information',
+		'W45032'=>'UC intern Information',
+		'W45033'=>'Antal krediter exkl. bolån',
+		'W45034'=>'Antal kreditgivare exkl. bolån',
+		'W45035'=>'Limit - Avbetalning',
+		'W45036'=>'Limit - Kontokrediter',
+		'W45037'=>'Limit - Blanco/Borgen',
+		'W45038'=>'Limit - Bolån fastigheter',
+		'W45039'=>'Limit - Bolån bostadsrätt',
+		'W45041'=>'Antal kontokrediter',
+		'W45043'=>'Antal - Bolån fastigheter',
+		'W45044'=>'Antal - Bolån bostadsrätt',
+		'W45045'=>'Totalt delat saldo exkl. bolån',
+		'W45046'=>'Totalt delas limit exkl. bolån',
+		'W45047'=>'Antal - Blancolån',
+		'W45048'=>'Delat saldo blancolån',
+		'W45049'=>'Antal - Avbetalning',
+		'W45050'=>'Delat saldo avbetalning',
+		'W45051'=>'Antal - Kontokrediter',
+		'W45052'=>'Delad limit kontokrediter',
+		'W45053'=>'Utnyttjandegrad kontokrediter',
+		'W45054'=>'Övertrasserad kontokredit',
+		'W45055'=>'Antal - Bolån, fastighet och bostadsrätt',
+		'W45056'=>'Delat saldo bolån, fastighet och bostadsrätt',
+		'W45057'=>'Delat saldo kontokredit',
+		'W45058'=>'Delat saldo bostadskrediter villor',
+		'W45059'=>'Delat saldo bostadsrättskrediter',
+		'W46001'=>'Långivare',
+		'W46002'=>'Kreditnummer',
+		'W46003'=>'Fråndatum',
+		'W46004'=>'Tilldatum',
+		'W46005'=>'Uppdateringsdatum',
+		'W46006'=>'Utnyttjad kredt',
+		'W46008'=>'Beviljad kredit',
+		'W46010'=>'Skötselkod',
+		'W46011'=>'Skötselkodstabell',
+		'W46012'=>'Skötselmånad',
+		'W46013'=>'Kredittyp',
+		'W46014'=>'Roll',
+		'W46015'=>'Info',
+		'W46016'=>'Avregistreringskod',
+		'W46101'=>'Antal krediter hos er',
+		'W46A01'=>'"Förändringar sedan SSÅÅMMDD',
+		'W46A02'=>'Inga inrapporterade förändringar av kreditengagemang sedan SSÅÅ-MM-DD',
+		'W46A11'=>'Datum, förändring',
+		'W46A12'=>'Kreditbelopp',
+		'W46A13'=>'Kredittyp',
+		'W46A14'=>'Kredittyp i klartext',
+		'W46A15'=>'Typ av förändring',
+		'W46A16'=>'Medlåntagare',
+		'W46A17'=>'Ny eller löst kredittyp, redigerad text',
+		'W46B01'=>'Förändringar sedan SSÅÅMMDD',
+		'W46B02'=>'Inga inrapporterade Summeringar av kreditengagemang sedan SSÅÅ-MM-DD',
+		'W46B10'=>'Kredittyp',
+		'W46B11'=>'Kredittyp i klartext',
+		'W46B12'=>'Nettoförändring Belopp',
+		'W46B13'=>'Nettoförändring antal',
+		'W46B14'=>'Antal nya lån',
+		'W46B15'=>'Antal lösta lån',
+		'W49101'=>'Inkomstår',
+		'W49102'=>'Taxering har inte kunnat fastställas.',
+		'W49103'=>'Förvärvsinkomst kod',
+		'W49115'=>'Överskott av aktiv näringsverksamhet',
+		'W49116'=>'Överskott av passiv näringsverksamhet',
+		'W49117'=>'Överskott av tjänst',
+		'W49118'=>'Överskott av kapital',
+		'W49119'=>'Underskott av kapital',
+		'W49121'=>'Allmänna avdrag',
+		'W49122'=>'Taxerad förvärvsinkomst',
+		'W49138'=>'Moms',
+		'W49139'=>'Överskjutande ingående moms',
+		'W49141'=>'Slutlig skatt',
+		'W49149'=>'Expansionsfondskatt',
+		'W49150'=>'Tillgodoräknad expansionsfondskatt',
+		'W49165'=>'Underskott av aktiv näringsverksamhet.',
+		'W49166'=>'Underskott av passiv näringsverksamhet.',
+		'W49192'=>'Sammanräknad inkomst',
+		'W49501'=>'Inkomstår',
+		'W49502'=>'Taxering har inte kunnat fastställas.',
+		'W49503'=>'Förvärvsinkomst kod',
+		'W49515'=>'Överskott av aktiv näringsverksamhet',
+		'W49516'=>'Överskott av passiv näringsverksamhet',
+		'W49517'=>'Överskott av tjänst',
+		'W49518'=>'Överskott av kapital',
+		'W49519'=>'Underskott av kapital',
+		'W49521'=>'Allmänna avdrag',
+		'W49522'=>'Taxerad förvärvsinkomst',
+		'W49538'=>'Moms',
+		'W49539'=>'Överskjutande ingående moms',
+		'W49541'=>'Slutlig skatt',
+		'W49549'=>'Expansionsfondskatt',
+		'W49550'=>'Tillgodoräknad expansionsfondskatt',
+		'W49565'=>'Underskott av aktiv näringsverksamhet.',
+		'W49566'=>'Underskott av passiv näringsverksamhet.',
+		'W49592'=>'Sammanräknad inkomst',
+		'W61109'=>'Antal anmärkningar',
+		'W61110'=>'Summa anmärkningar',
+		'W61111'=>'Antal ansökningar',
+		'W61112'=>'Summa ansökningar',
+		'W61113'=>'Antal anmärkningar i klartext',
+		'W61114'=>'Antal ansökningar i klartext',
+		'W61201'=>'Skuldsaldoredovisning i klartext',
+		'W61202'=>'Datum',
+		'W61203'=>'Skuldsaldo allmänna mål',
+		'W61204'=>'Skuldsaldo enskilda mål',
+		'W61205'=>'Summa mål',
+		'W61206'=>'Skuldsaldo saknas i klartext',
+		'W61207'=>'Antal a-mål',
+		'W61208'=>'Antal e-mål',
+		'W61209'=>'Summa antal mål',
+		'W61301'=>'Skuldsaldodatum',
+		'W61302'=>'Belopp A-mål',
+		'W61303'=>'Belopp E-mål',
+		'W61304'=>'Totalt antal mål',
+		'W61305'=>'Summatext',
+		'W61501'=>'Anmärkningstyptext',
+		'W61502'=>'Anmärkningsdatum',
+		'W61503'=>'Belopp',
+		'W61504'=>'Anmärkningstext 1',
+		'W61505'=>'Fordringsägare',
+		'W61506'=>'Anmärkningstyp',
+		'W61506'=>'Anmärkningstyp',
+		'W61507'=>'Anmärkningsdatum med dag',
+		'W61542'=>'Anmärkningstext 2',
+		'W61543'=>'Anmärkningstext 3',
+		'W61544'=>'Anmärkningstext 4',
+		'W61545'=>'Anmärkningstext 5',
+		'W61701'=>'Konkursansökningsdatum',
+		'W61702'=>'Tingsrätt',
+		'W61707'=>'Konkursansökningsdatum med dag',
+		'W62104'=>'Fastighetsdatum från lantmäteriet',
+		'W62105'=>'Summa taxvärde lagfart och tomträtt',
+		'W62106'=>'Status',
+		'W62107'=>'Andel av summa taxvärde lagfart och tomträtt',
+		'W62108'=>'Status för term W62107',
+		'W62109'=>'Antal fastigheter lagfart och tomträtt',
+		'W62110'=>'Summa taxvärde ofri grund',
+		'W62111'=>'Andel av summa taxvärde ofri grund',
+		'W62112'=>'Antal fastigheter ofri grund',
+		'W62114'=>'Summarad lagfart och tomträtt',
+		'W62115'=>'Summarad ofri grund',
+		'W62116'=>'Fastighetsdatum',
+		'W62202'=>'Fastighetens beteckning',
+		'W62210'=>'Fastighetens län i klartext',
+		'W62211'=>'Fastighetens kommun i klartext',
+		'W62212'=>'Fastighetens församling i klartext visas ej istället skickas kommun (samma som i W62111) i W62212.',
+		'W62216'=>'Markvärde',
+		'W62217'=>'Byggnadsvärde',
+		'W62218'=>'Taxeringsvärde',
+		'W62219'=>'Status taxeringsvärde',
+		'W62220'=>'Ägd andel enligt lagfart/tomträtt',
+		'W62221'=>'Status ägd andel',
+		'W62222'=>'Samtaxerad med annan fastighet',
+		'W62224'=>'Fastighetstyp',
+		'W62225'=>'Fastighetstyp i klartext',
+		'W62228'=>'Förvärvsdatum',
+		'W62230'=>'Areal',
+		'W62231'=>'Arealsort',
+		'W62232'=>'Arealsorttext',
+		'W62233'=>'Datum för inskrivning',
+		'W62234'=>'Lagfart/Tomträtt',
+		'W62235'=>'Samtaxerade fastigheter',
+		'W62303'=>'Taxeringsvärde',
+		'W62304'=>'Status taxeringsvärde',
+		'W62305'=>'Ägd andel enligt lagfart/tomträtt',
+		'W62306'=>'Status ägarandel',
+		'W62307'=>'Samtaxerad med annan fastighet',
+		'W62308'=>'Fastighetsbeteckning',
+		'W62309'=>'UC intern information',
+		'W62310'=>'UC intern information',
+		'W62311'=>'Fastighetens kommun i klartext',
+		'W64001'=>'Antal frågor',
+		'W64002'=>'Datum, frågetidpunkt',
+		'W64003'=>'Kreditbelopp',
+		'W64004'=>'Namn, frågeställare',
+		'W64005'=>'Kod näringsidkare, omfrågad',
+		'W64007'=>'UC intern information',
+		'W64011'=>'UC intern information',
+		'W64016'=>'Omfrågad som näringsidkare',
+		'W64020'=>'Antal frågor senaste 12 mån',
+		'W98001'=>'Aktuella avsnitt',
+		'W98002'=>'Aktuella avsnitt',
+		'W98003'=>'Aktuella avsnitt',
+		'W98004'=>'Aktuella avsnitt',
+		'W98005'=>'Aktuella avsnitt',
+		'W98006'=>'Aktuella avsnitt',
+		'W98007'=>'Aktuella avsnitt',
+		'W98008'=>'Aktuella avsnitt',
+		'W98009'=>'Aktuella avsnitt',
+		'W98010'=>'Aktuella avsnitt',
+		'W98011'=>'Aktuella avsnitt',
+		'W98012'=>'Aktuella avsnitt',
+		'W98013'=>'Aktuella avsnitt',
+		'W98014'=>'Aktuella avsnitt',
+		'W98015'=>'Aktuella avsnitt',
+		'W98016'=>'Aktuella avsnitt',
+		'W98017'=>'Aktuella avsnitt',
+		'W98018'=>'Aktuella avsnitt',
+		'W98019'=>'Aktuella avsnitt',
+		'W98020'=>'Aktuella avsnitt',
+		'W98021'=>'Typ av upplysning',
+		'W98022'=>'Typ av bilaga',
+		'W98023'=>'Levererad UC-typ',
+		'W98024'=>'Roll',
+		'W98026'=>'Sökt kredit',
+		'W98027'=>'Pers/Orgnummer för bilagan',
+		'W98028'=>'Namn för bilageobjektet',
+		'W98029'=>'Tilläggsbeställning',
+		'W98030'=>'Referens',
+		'W98031'=>'Extern beställare',
+		'W98032'=>'Kundid för onlinebevakning',
+		'W98034'=>'Lagringsdatum Lagomlagrad',
+		'W98035'=>'Lagringstid Lagomlagrad',
+		'W98036'=>'Rapportspråk',
+		'W98037'=>'Funktion aktuell bilaga',
+		'W98038'=>'Redigeringsprogram',
+		'W98042'=>'Beställningsdatum',
+		'W98051'=>'UC-typ i klartext',
+		'W98054'=>'Merinformation',
+		'W99001'=>'Levereras beställd UC-typ',
+		'W99002'=>'Hur skall styrelse redovisas',
+		'W99004'=>'UC-typ vid mallbedömning',
+		'W08027'=>'',
+		'W49191'=>'',
+		'W49591'=>'',
+		'W62312'=>'',
+		'W98040'=>'',
+		'W98041'=>'',
+		'W98052'=>'',
+		'W98101'=>'',
+		'W98102'=>'',
+		'W98103'=>'',
+		'W98104'=>'',
+		'W61210'=>'Historiskt skuldsaldo'
+	);
+
+	public function actionGetSpar($data) {
+		/*
+		{
+			"_group" : "People",
+			"_action" : "GetSpar",
+			"_people_id" : "1",
+			"_personal_id_number" : "195711040054"
+		}
+		*/
+		$sparObj = $this->_Spar($data->personal_id_number);
+
+		print_r($sparObj);
+	}
+
+	public function actionBondList($data)  {
+		$sql = "SELECT CONCAT(p.first_name, ' ', p.last_name) AS people_name, ";
+		$sql .= "b.* FROM bond b, people p ";
+		$sql .= "WHERE p.people_id = b.people_id AND p.people_id = $data->_people_id "; 
+		$sql .= "ORDER BY b.bond_id";
+	
+		return json_encode($this->_GetList($sql));
+	}
+
+	public function actionWriteOff($data) {
+		/*
+			{
+				"_group" : "People",
+				"_action" : "WriteOff",
+				"_people_id" : "703",
+				"_init" : "y"
+
+			}
+			311
+			521, 703
+			SELECT credit_id FROM credit WHERE people_id = 703 AND credit_status IN ('p', 'a', 'o')
+
+			SELECT c.credit_id, SUM(t.amount) 
+			FROM credit c, btrans t 
+			WHERE c.people_id = 703 AND c.credit_status IN ('p', 'a', 'o') AND
+			c.credit_id = t.credit_id AND t.account_no = '1380' AND t.prel='n'
+			GROUP BY c.credit_id;
+
+			SELECT SUM(amount) 
+			FROM btrans 
+			WHERE people_id = 703 AND account_no = '1680' AND prel='n'
+
+			SELECT booking_id FROM booking WHERE people_id=703 AND booking_type = 'p-settl' and prel='y'
+
+			UPDATE `btrans` SET prel='y' WHERE `booking_id` = 6882
+		*/
+
+		//-- Remove pre
+		$sql = "SELECT booking_id FROM booking WHERE people_id = $data->_people_id AND booking_type = 'p-settl' and prel='y' ";
+		$resPre = $this->_Get($sql);
+	
+		if (isset($resPre['booking_id'])) {
+			$bookingId = $resPre['booking_id'];
+		}
+		else {
+			$bookingId = 0;
+		}
+
+		
+		$sql = "SELECT c.credit_id, SUM(t.amount) AS summa ";
+		$sql .= "FROM credit c, btrans t ";
+		$sql .= "WHERE c.people_id = $data->_people_id AND c.credit_status IN ('p', 'a', 'o') AND ";
+		$sql .= "c.credit_id = t.credit_id AND t.account_no = '1380' AND t.prel='n' ";
+		$sql .= "GROUP BY c.credit_id ";
+		$res1380 = $this->_GetList($sql);
+
+		$sql = "SELECT SUM(amount) AS summa ";
+		$sql .= "FROM btrans ";
+		$sql .= "WHERE people_id = $data->_people_id AND account_no = '1680' AND prel='n' ";
+		$res1680 = $this->_Get($sql);
+
+		if ($data->_init == 'y') {
+			$reply = new stdClass('');
+			$reply->pre_booking_id = $bookingId;
+			$reply->credits = $res1380;
+			$reply->amount1680 = $res1680['summa'];
+			return json_encode($reply);
+			die('');
+		}
+		else {
+			if ($bookingId > 0) {
+				$param = new stdClass();
+				$param->prel = 'x';
+				$res = $this->_Update('booking', 'booking_id', $bookingId, $param);
+				$param2 = new stdClass();
+				$param2->prel = 'x';
+				$res2 = $this->_Update('btrans', 'booking_id', $bookingId, $param2);
+			}
+
+			$booking = new StdClass();
+			$booking->booking_date = Date('Y-m-d');
+			$booking->booking_text = 'Write-off';
+			$booking->booking_type = 'write-off';
+			$booking->people_id = $data->_people_id;
+			
+			$index = -1;
+			$booking->_trans = [];
+			if (sizeof($res1380) > 0) {
+				for ($i=0; $i < sizeof($res1380); $i++) {
+					$booking->_trans[] = new stdClass();
+					$index++;	
+					$booking->_trans[$index] = $this->setTransBooking('write-off', '6350', $res1380[$i]['summa'], $data->_people_id, $res1380[$i]['credit_id']);
+					$booking->_trans[] = new stdClass();
+					$index++;
+					$booking->_trans[$index] = $this->setTransBooking('write-off', '1380', -$res1380[$i]['summa'], $data->_people_id, $res1380[$i]['credit_id']);
+					$param = new stdClass();
+					$param->credit_status = "c";
+					$res = $this->_Update('credit', 'credit_id', $res1380[$i]['credit_id'], $param);
+				}
+			}
+
+			$booking->_trans[] = new stdClass();
+			$index++;	
+			$booking->_trans[$index] = $this->setTransBooking('write-off', '6350', $res1680['summa'], $data->_people_id);
+			$booking->_trans[] = new stdClass();
+			$index++;
+			$booking->_trans[$index] = $this->setTransBooking('write-off', '1680', -$res1680['summa'], $data->_people_id);
+		
+			$res = $this->_BookNew($booking);
+
+		}
+	}
+
+	public function actionInvoiceStatusGet($data) {
+		/*
+			{
+				"_group" : "People",
+				"_action" : "InvoiceStatusGet",
+				"_credit_id" : "12344410593"
+			}	
+		*/
+		$sql = " SELECT cr.start_date, co.company_name, st.store_name, cr.receipt_number, cr.amount, cr.monthly_no, ";
+		$sql .= " cr.monthly_index, cr.last_period, cr.invoice_id ";
+		$sql .= "FROM credit cr, company co, store st ";
+		$sql .= "WHERE cr.credit_id = $data->_credit_id  AND cr.company_id = co.company_id AND cr.store_id = st.store_id";
+		$result = $this->_Get($sql);
+		return json_encode($result);
+	}
+
+	private function actionPayout($data) {
+		$booking = new StdClass();
+		$booking->booking_date = $data->payout_date;
+		$booking->booking_text = 'Payout';
+		$booking->booking_type = 'payoff';
+		$booking->people_id = $data->_people_id;
+		
+		$booking->_trans = [];
+		$booking->_trans[] = new stdClass();
+		$booking->_trans[0] = $this->setTransBooking('payoff', '1680', $data->payout_amount, $data->_people_id);
+		$booking->_trans[] = new stdClass();
+		$booking->_trans[1] = $this->setTransBooking('payoff', '1930', -$data->payout_amount, $data->_people_id);
+
+		$this->_BookNew($booking);
+	}
+
+}

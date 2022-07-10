@@ -1,0 +1,168 @@
+<?php
+/*
+    Class SettlementCompanyClass
+
+	Date: 2019-08-06
+
+	LAETST THAT BOOK ALL
+
+	*/
+	ini_set('display_errors', 1);
+	ini_set('display_startup_errors', 1);
+	error_reporting(E_ALL);
+
+class SettlementCompanyTraceClass extends ActionBase {
+
+	/*
+	public function __construct() {
+		$this->_Settings();
+	}
+	*/
+
+	public function Run($data) {
+		$actionMethod = 'action' . $data->_action;
+		return $this->$actionMethod($data);
+	}
+
+	private function actionCompanyInterestBulk($data) {
+	/*
+		{
+			"_group" : "SettlementCompanyTrace",
+			"_action" : "CompanyInterestBulk",
+			"_from_date" : "2020-01-29",
+			"_to_date" : "2020-02-28",
+			"booking_date" : "2020-03-04"
+		}
+	*/
+		$sql = "SELECT company_id FROM company ORDER BY company_id";
+		$companyList = $this->_GetList($sql);
+		for ($i=0; $i < sizeof($companyList); $i++) {
+		
+			if ($companyList[$i]['company_id'] == '13') {
+				$param = new stdClass();
+				$param->_company_id = $companyList[$i]['company_id'];
+				$param->_from_date = $data->_from_date;
+				$param->_to_date = $data->_to_date;
+				$param->booking_date = $data->booking_date;
+				echo $this->companyInterest($param);
+			}
+		}
+	}
+
+	private function companyInterest($data) {
+
+		/*
+			{
+				"_group" : "SettlementCompany",
+				"_action" : "CompanyInterest",
+				"_company_id" : "13",
+				"_from_date" : "2019-07-29",
+				"_to_date" : "2019-08-28",
+				"booking_date" : "2019-09-03"
+			}
+
+			
+		*/
+
+		$this->_Settings($data->_company_id);
+		$interestRate = $this->Setting->base_interest + $this->Setting->company_interest_margin;
+		//echo "Rate: " . $interestRate . "\n";
+		$begin = new DateTime($data->_from_date);
+		//$begin->modify('+1 day'); //
+		$end = new DateTime($data->_to_date);
+		$end->modify('+1 day'); // need for the loop
+
+		$Trace = array();
+		$daterange = new DatePeriod($begin, new DateInterval('P1D'), $end);
+		$TraceIndex = -1;
+		$oInterest = array();
+		$iInterest = -1;
+		$totalInterest = 0;
+		foreach($daterange as $date) {
+			$dateBalance = $date->format("Y-m-d");
+			$dayBalance = $this->getVendorsBalance($data->_company_id, $dateBalance);
+			$Trace[] = new StdClass();
+			$TraceIndex++;
+			$Trace[$TraceIndex]->Date = $dateBalance;
+			$Trace[$TraceIndex]->DayBalance = $dayBalance;
+			
+			//echo $dateBalance;
+			if ($dayBalance > 0) {
+				$oInterest[] = new StdClass();
+				$iInterest++;
+				$oInterest[$iInterest]->date = $dateBalance;
+				$oInterest[$iInterest]->balance = $dayBalance;
+				$oInterest[$iInterest]->interest = $dayBalance * $interestRate / 100 / 360;
+				$oInterest[$iInterest]->interest = round($dayBalance * $interestRate / 100 / 360, 4);
+				$totalInterest += $oInterest[$iInterest]->interest;
+				//echo "$dateBalance; $dayBalance; " . round($oInterest[$iInterest]->interest, 2) . "\n";
+				
+				$Trace[$TraceIndex]->Interest = $oInterest[$iInterest]->interest;
+				$Trace[$TraceIndex]->SumInterest = $totalInterest;
+				// $Trace[$TraceIndex]->DateBalance = $dateBalance;
+				// $Trace[$TraceIndex]->SumBalance = $Balance;
+				
+			}
+		
+
+		}
+
+		print_r($Trace);
+		die('');
+		print_r($oInterest);
+		echo "TOTAL: " .  $totalInterest;
+		return;
+        $amount = round($totalInterest);
+        /*
+		if ($amount > 0) {
+
+			//$amount = round($totalInterest);
+			$trans = array();
+
+			$trans[] = new stdClass();
+			$trans[0]->trans_type = 'interest';
+			$trans[0]->account_no = '8300';
+			$trans[0]->amount = -$amount;
+			$trans[0]->company_id = $data->_company_id;
+
+			$trans[] = new stdClass();
+			$trans[1]->trans_type = 'interest';
+			$trans[1]->account_no = '2981';
+			$trans[1]->amount = $amount;
+			$trans[1]->company_id = $data->_company_id;
+
+			$booking = new StdClass();
+			$booking->booking_date = $data->booking_date;
+			$booking->booking_text = "Company settlemt";
+			$booking->booking_type = "c-settl";
+			$booking->company_id = $data->_company_id;
+			$booking->prel = "n";
+			$booking->_trans = $trans;
+
+			//print_r($booking);
+
+			// echo json_encode($booking);
+			//$this->_BookNew($booking);
+		}
+        */
+		//echo json_encode($oInterest);
+
+
+		}
+
+		private function getVendorsBalance($companyId, $date) {
+
+			$sql = "SELECT SUM(t.amount) AS sum ";
+			$sql .= "FROM booking b, btrans t ";
+			$sql .= "WHERE b.booking_id = t.booking_id AND t.account_no = '2981' AND b.booking_date <= '$date' AND t.prel='n' AND ";
+			$sql .= "b.company_id = '" . $companyId . "'";
+
+			$result = $this->_Get($sql);
+			if ($result['sum'] == null) {
+				$result['sum'] = "0";
+			}
+			return $result['sum'];
+		}
+
+		
+}

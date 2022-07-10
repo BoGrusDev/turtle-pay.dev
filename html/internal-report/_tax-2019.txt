@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<Skatteverket xmlns="http://xmls.skatteverket.se/se/skatteverket/ai/instans/infoForBeskattning/5.0"
+xmlns:gm="http://xmls.skatteverket.se/se/skatteverket/ai/gemensamt/infoForBeskattning/5.0"
+xmlns:ku="http://xmls.skatteverket.se/se/skatteverket/ai/komponent/infoForBeskattning/5.0"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" omrade="Kontrolluppgifter"
+xsi:schemaLocation="http://xmls.skatteverket.se/se/skatteverket/ai/instans/infoForBeskattning/5.0
+http://xmls.skatteverket.se/se/skatteverket/ai/kontrolluppgift/instans/Kontrolluppgifter_5.0.xsd ">
+<ku:Avsandare>
+<ku:Programnamn>KUfilsprogrammet</ku:Programnamn>
+<ku:Organisationsnummer>165591016786</ku:Organisationsnummer>
+<ku:TekniskKontaktperson>
+<ku:Namn>Stellan Forsberg</ku:Namn>
+<ku:Telefon>+46812345678</ku:Telefon>
+<ku:Utdelningsadress1>Döbelnsgatan 55</ku:Utdelningsadress1>
+<ku:Postnummer>11352</ku:Postnummer>
+<ku:Postort>Stockholm</ku:Postort>
+</ku:TekniskKontaktperson>
+<ku:Skapad>2020-01-24T12:10:10</ku:Skapad>
+</ku:Avsandare>
+<ku:Blankettgemensamt>
+<ku:Uppgiftslamnare>
+<ku:UppgiftslamnarePersOrgnr>165591016786</ku:UppgiftslamnarePersOrgnr>
+<ku:Kontaktperson>
+<ku:Namn>Stellan Forsberg</ku:Namn>
+<ku:Telefon>+46812345678</ku:Telefon>
+<ku:Epostadress>stellan.forsberg@turtle-pay.com</ku:Epostadress>
+<ku:Sakomrade>Skatteverket</ku:Sakomrade>
+</ku:Kontaktperson>
+</ku:Uppgiftslamnare>
+</ku:Blankettgemensamt>
+<ku:Blankett nummer="2336">
+<ku:Arendeinformation>
+<ku:Arendeagare>165591016786</ku:Arendeagare>
+<ku:Period>2019</ku:Period>
+</ku:Arendeinformation>
+<ku:Blankettinnehall>
+<ku:KU25>
+<ku:Inkomstar faltkod="203">2019</ku:Inkomstar>
+<ku:AvdragsgillRanta faltkod="540">2639</ku:AvdragsgillRanta>
+<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>
+<ku:UppgiftslamnareKU25>
+<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>
+</ku:UppgiftslamnareKU25>
+<ku:InkomsttagareKU25>
+<ku:Inkomsttagare faltkod="215">196406191160</ku:Inkomsttagare>
+</ku:InkomsttagareKU25>
+</ku:KU25>
+</ku:Blankettinnehall>
+</ku:Blankett>
+</Skatteverket>

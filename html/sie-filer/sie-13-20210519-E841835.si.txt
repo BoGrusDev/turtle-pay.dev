@@ -1,0 +1,63 @@
+#FLAGGA 0
+#FORMAT PC8
+#SIETYP 4
+#PROGRAM "Turtle Pay Kundportal" 2021.1
+#GEN 20210520
+#FNAMN "Djurg†rdens ridskola"
+#ORGNR 556035-3376
+#KPTYP BAS95
+#KONTO 8420 "R„nta"
+#KONTO 1651 "Turtle Pay avr„kning"
+#KONTO 6570 "Transaktionsavgift"
+#KONTO 3000 "Lektioner"
+#KONTO 2631 "Utg†ende moms 6 %"
+#KONTO 1930 "Bank"
+#VER T 1 20210402 "Turtle Pay Avr„kning"
+{
+#TRANS 8420 {} 1.00
+#TRANS 1651 {} -1.00
+}
+#VER T 2 20210503 "Turtle Pay Avr„kning"
+{
+#TRANS 8420 {} 3.00
+#TRANS 1651 {} -3.00
+}
+#VER T 3 20210507 "Turtle Pay Avr„kning"
+{
+#TRANS 1651 {} 4950.00
+#TRANS 6570 {} 50.00
+#TRANS 3000 {} -4716.98
+#TRANS 2631 {} -283.02
+}
+#VER T 4 20210508 "Turtle Pay Avr„kning"
+{
+#TRANS 1651 {} -3150.00
+#TRANS 3000 {} 2971.70
+#TRANS 2631 {} 178.30
+}
+#VER T 5 20210510 "Turtle Pay Avr„kning"
+{
+#TRANS 1651 {} -1308.00
+#TRANS 1930 {} 1308.00
+}
+#VER T 6 20210513 "Turtle Pay Avr„kning"
+{
+#TRANS 1651 {} -7360.00
+#TRANS 3000 {} 6943.40
+#TRANS 2631 {} 416.60
+}
+#VER T 7 20210518 "Turtle Pay Avr„kning"
+{
+#TRANS 1651 {} 81972.00
+#TRANS 6570 {} 828.00
+#TRANS 3000 {} -78113.22
+#TRANS 2631 {} -4686.78
+}
+#VER T 8 20210519 "Turtle Pay Avr„kning"
+{
+#TRANS 1651 {} -52422.50
+#TRANS 1930 {} 74612.00
+#TRANS 6570 {} 260.50
+#TRANS 3000 {} -21179.25
+#TRANS 2631 {} -1270.75
+}

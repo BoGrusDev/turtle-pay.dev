@@ -1,0 +1,43 @@
+#FLAGGA 0
+#FORMAT PC8
+#SIETYP 4
+#PROGRAM "Turtle Pay Kundportal" 2021.1
+#GEN 20220309
+#FNAMN "Djursholms Allm„nna SK"
+#ORGNR 816400-2258
+#KPTYP BAS95
+#KONTO 1600 "Turtle Pay avr„kning"
+#KONTO 3022 "Balett-aktivitet"
+#KONTO 1930 "Bank"
+#VER T 1 20220222 "Turtle Pay Avr„kning"
+{
+#TRANS 1600 {} 7200.00
+#TRANS 3022 {} -7200.00
+}
+#VER T 2 20220223 "Turtle Pay Avr„kning"
+{
+#TRANS 1600 {} 1800.00
+#TRANS 1930 {} 7200.00
+#TRANS 3022 {} -9000.00
+}
+#VER T 3 20220224 "Turtle Pay Avr„kning"
+{
+#TRANS 1600 {} -7200.00
+#TRANS 1930 {} 9000.00
+#TRANS 3022 {} -1800.00
+}
+#VER T 4 20220225 "Turtle Pay Avr„kning"
+{
+#TRANS 1600 {} 1800.00
+#TRANS 3022 {} -1800.00
+}
+#VER T 5 20220227 "Turtle Pay Avr„kning"
+{
+#TRANS 1600 {} 1800.00
+#TRANS 3022 {} -1800.00
+}
+#VER T 6 20220228 "Turtle Pay Avr„kning"
+{
+#TRANS 1600 {} -5400.00
+#TRANS 1930 {} 5400.00
+}

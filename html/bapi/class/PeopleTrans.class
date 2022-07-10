@@ -1,0 +1,155 @@
+<?php
+/*
+    Class PeopleTransClass
+
+	Date: 2018-10-03
+
+	Actions:
+		- List
+		- Get
+
+	* A transaction si a valid credit
+
+	Calls:
+	{
+		"_group" : "PeopleTrans",
+		"_action" : "List",
+		"_bankid" : "no",
+		"_company_id" : "3",
+		"_personal_id_number" : "196204021155"
+	}
+
+	Call:
+	{
+		"_group" : "PeopleTrans",
+		"_action" : "Get",
+		"_bankid" : "no",
+		"_credit_id" : "12344410229"
+	}
+
+	Replys:
+	Se end of file
+
+*/
+
+class PeopleTransClass extends ActionBase {
+
+	public function Run($data) {
+
+		$actionMethod = 'action' . $data->_action;
+		echo $this->$actionMethod($data);
+
+	}
+
+	private function actionList($data) {
+
+		$sql = "SELECT credit_id, start_date, purchase_date, receipt_number,amount, refundable, credit_status ";
+		$sql .= "FROM credit ";
+		$sql .= "WHERE personal_id_number = $data->_personal_id_number AND company_id = $data->_company_id AND credit_status='p'";
+		$result = $this->_GetList($sql);
+		//echo $sql;
+		//die('');
+		for ($i=0; $i < sizeof($result); $i++) {
+			$result[$i]['amount'] = number_format($result[$i]['amount'], 2);
+		}
+
+		return json_encode($result);
+
+	}
+
+	private function actionGet($data) {
+
+		$sql = "SElECT c.credit_id, c.start_date, c.people_id, c.company_id, c.store_id, c.cr_id, c.sale_person_people_id, c.purchase_date,";
+		$sql .= "c.receipt_number,c.amount,c.first_invoice_sent,c.first_invoice_email_sent,i.invoice_filename,";
+		$sql .= "c.credit_status,c.refundable,c.from_refundable,co.company_name,s.store_name, CONCAT(p.first_name, ' ' ,p.last_name) AS name,";
+		$sql .= "p.address,p.postcode,p.city,p.email, CONCAT(ps.first_name, ' ' ,ps.last_name) AS salesperson, p.personal_id_number, p.email ";
+		$sql .= "FROM credit c ";
+		$sql .= "LEFT JOIN company co ON c.company_id = co.company_id ";
+		$sql .= "LEFT JOIN store s ON c.store_id = s.store_id ";
+		$sql .= "LEFT JOIN people p ON c.people_id = p.people_id ";
+		$sql .= "LEFT JOIN people ps ON c.sale_person_people_id = ps.people_id ";
+		$sql .= "LEFT JOIN first_invoice i ON c.credit_id = i.credit_id ";
+		$sql .= "WHERE c.credit_id = '" . $data->_credit_id . "'";
+		$result = $this->_Get($sql);
+		$result['amount'] = number_format($result['amount'], 2);
+
+		return json_encode($result);
+
+	}
+
+}
+
+/*
+	Replys:
+
+	List:
+	[
+	    {
+	        "credit_id": "12344410227",
+	        "start_date": "2018-09-26",
+	        "purchase_date": "2018-09-26",
+	        "receipt_number": "1111",
+	        "amount": "0.00",
+	        "refundable": "y",
+	        "credit_status": "p"
+	    },
+	    {
+	        "credit_id": "12344410229",
+	        "start_date": "2018-09-28",
+	        "purchase_date": "2018-09-28",
+	        "receipt_number": "21014",
+	        "amount": "0.00",
+	        "refundable": "y",
+	        "credit_status": "p"
+	    },
+	    {
+	        "credit_id": "12344410231",
+	        "start_date": "2018-09-28",
+	        "purchase_date": "2018-09-28",
+	        "receipt_number": "31014",
+	        "amount": "0.00",
+	        "refundable": "y",
+	        "credit_status": "p"
+	    },
+	    {
+	        "credit_id": "12344410235",
+	        "start_date": "2018-09-28",
+	        "purchase_date": "2018-09-28",
+	        "receipt_number": "12345",
+	        "amount": "0.00",
+	        "refundable": "y",
+	        "credit_status": "p"
+	    }
+	]
+
+	Get:
+	{
+	    "credit_id": "12344410229",
+	    "start_date": "2018-09-28",
+	    "people_id": "4",
+	    "company_id": "3",
+	    "store_id": "10",
+	    "cr_id": "1",
+	    "sale_person_people_id": "13",
+	    "purchase_date": "2018-09-28",
+	    "receipt_number": "21014",
+	    "amount": "0.00",
+	    "first_invoice_sent": "n",
+	    "first_invoice_email_sent": "n",
+	    "invoice_filename": "12344410229-E49A4F88-3A45-E6B9-07A6-D55FA690A4B3.pdf",
+	    "credit_status": "p",
+	    "refundable": "y",
+	    "from_refundable": "y",
+	    "company_name": "MMB Butiken AB (Hair Bar)",
+	    "store_name": "MOOD Gallerian",
+	    "name": "Stellan Arne Forsberg",
+	    "address": "GYLLENSTIERNSGATAN 15 LGH 1306",
+	    "postcode": "11526",
+	    "city": "STOCKHOLM",
+	    "email": "Stellan.forsberg@mondayrelations.se",
+	    "salesperson": "Lubna Mohamed Jassem Al Houmadi",
+	    "personal_id_number": "196204021155",
+	    "code": "1"
+	}
+
+*/

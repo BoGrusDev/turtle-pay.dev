@@ -1,0 +1,119 @@
+<?php
+/*
+    UserClass
+
+	Date: 2019-04-09
+
+*/
+
+class UserClass extends ActionPortal {
+
+	public function Run($data) {
+
+		$actionMethod = 'action' . $data->_action;
+		echo $this->$actionMethod($data);
+
+	}
+
+	private function actionCheckAllowed($data) {
+
+		/*
+		User in the Turtle Pay List service
+		{
+		    "_group" : "User",
+		    "_action" : "CheckAllowed",
+		    "_personal_id_number" : "195711040054"
+		}
+		*/
+
+		$sql = "SELECT p.people_id, count(cp_id) AS positions FROM people p, company_people cp ";
+		$sql .= "WHERE p.personal_id_number = '$data->_personal_id_number' AND ";
+		// -- $sql .= "cp.people_id = p.people_id AND cp.priv IN ('pr', 'sp') AND cp.company_id IN ('75', '78')";
+		// $sql .= "cp.people_id = p.people_id AND cp.priv IN ('pr', 'sp')";
+		$sql .= "cp.people_id = p.people_id AND cp.priv IN ('pr', 'sp', 'ac', 'su')";
+		$result = $this->_Get($sql);
+		if ($result['code'] == '1') {
+			if (!is_numeric($result['positions'])) {
+				$result['code'] = '0';
+			}
+			else if ($result['positions'] < 1) {
+				$result['code'] = '0';
+			}
+		}
+		else {
+			$result['code'] = 0;
+		}
+
+		return json_encode($result);
+	}
+	
+	private function actionCheckExist($data) {
+
+		/*
+		{
+		    "_group" : "User",
+		    "_action" : "CheckExist",
+		    "_personal_id_number" : "195711040054"
+		}
+		*/
+
+		$sql = "SELECT people_id FROM people WHERE personal_id_number = '$data->_personal_id_number' AND people_status NOT IN ('b')";
+		//echo $sql; die(' 60 ');
+
+		$result = $this->_Get($sql);
+		//print_r($result);
+		return json_encode($result);
+
+	}
+	
+	private function actionPeopleInfo($data) {
+
+		$sql = "SELECT people_id, first_name, last_name FROM people ";
+		$sql .= "WHERE people_id = '$data->_people_id' ";
+		$resultInfo = $this->_Get($sql);
+
+		//print_r($resultInfo);
+
+		$sql = "SELECT c.company_id, cp.cp_id, c.known_as FROM company_people cp, company c ";
+		$sql .= "WHERE cp.people_id = $data->_people_id AND cp.priv = 'pr' AND ";
+		$sql .= "cp.company_id = c.company_id ";
+		$sql .= "ORDER BY c.known_as";
+		$resultConnection = $this->_GetList($sql);
+
+		//print_r($resultConnection);
+
+		$reply = new stdClass();
+		$reply->code = '1';
+		$reply->people_id = $resultInfo['people_id'];
+		$reply->first_name = $resultInfo['first_name'];
+		$reply->last_name = $resultInfo['last_name'];
+
+		if (sizeof($resultConnection) > 0 ) {
+			$reply->company = array();
+			for ($i = 0; $i < sizeof($resultConnection); $i++) {
+				$reply->company[] = new stdClass();
+				$reply->company[$i]->company_id = $resultConnection[$i]['company_id'];
+				$reply->company[$i]->known_as = $resultConnection[$i]['known_as'];
+			}
+		}
+
+		$reply->budget= $this->checkExistBudget($data->_people_id);
+		$reply->kyc= $this->checkExistKyc($data->_people_id);
+		return json_encode($reply);
+	}
+
+	private function checkExistBudget($peopleId) {
+		$sql = "SELECT COUNT(*) exist FROM budget WHERE budget_id = $peopleId";
+		$result = $this->_Get($sql);
+		return $result['exist'];
+	}
+
+	private function checkExistKyc($peopleId) {
+		$sql = "SELECT COUNT(*) exist FROM kyc WHERE kyc_id = $peopleId";
+		$result = $this->_Get($sql);
+		return $result['exist'];
+	}
+	
+}
+
+?>

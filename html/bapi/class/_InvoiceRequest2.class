@@ -1,0 +1,518 @@
+<?php
+/*
+    Class InvoiceRequestClass
+
+	Date: 2019-11-20
+
+	{
+		"_group" : "InvoiceRequest",
+		"_action" : "start",
+		"company_id" : "69",
+		"store_id" : "67",
+		"sales_person_people_id" : "1",
+		"personal_id_number" : "195711040054",
+		"amount" : "1200",
+		"_uc_confirm" : "y",
+		"source" : "te",
+		"device" : "te"
+	}
+	*/
+//require_once "UCTool.class";
+
+class InvoiceRequest2Class extends ActionBase {
+
+	public function Run($data) {
+
+		$actionMethod = 'action' . $data->_action;
+		echo $this->$actionMethod($data);
+
+	}
+
+   	private function actionStart($data){
+
+   		// Load Settings
+		$this->_Settings();
+
+		// Create Invoice request log item
+		$replyInvoiceRequest = $this->_Insert('invoice_request', $data);
+		if ($replyInvoiceRequest['code'] == "1") {
+			$invoiceRequestId = $replyInvoiceRequest['id'];
+		}
+		else {
+			$replyError = new StdClass();
+			$replyError->code = '0';
+			$replyError->denied_code = 'error_database';
+			return json_encode($replyError);
+			die ('');
+		}
+
+		// Check if all In parameras set data is
+		$replyValidate = $this->dataParamValidate($data, $invoiceRequestId);
+		if ($replyValidate->code != '1') {
+			return json_encode($replyValidate);
+		}
+
+		$replyValidate = $this->companyValidate($data->company_id);
+		if ($replyValidate->code != '1') {
+			$this->invoiceRequestDenied($invoiceRequestId, $replyValidate->denied_code );
+			return json_encode($replyValidate);
+			die ('');
+		}
+
+		$replyValidate = $this->contractSignValidate($data->company_id);
+		if ($replyValidate->code != '1') {
+			$this->invoiceRequestDenied($invoiceRequestId, $replyValidate->denied_code );
+			return json_encode($replyValidate);
+			die ('');
+		}
+
+		$replyValidate =  $this->storeValidate($data->company_id, $data->store_id);
+		if ($replyValidate->code != '1') {
+			return json_encode($replyValidate);
+			die ('');
+		}
+
+		$replyValidate =  $this->salePersonValidate($data->company_id, $data->sales_person_people_id);
+		if ($replyValidate->code != '1') {
+			return json_encode($replyValidate);
+			die ('');
+		}
+
+   		$peopleObj = $this->peopleGet($data->personal_id_number);
+
+		// ---
+		// Person not exits in TurtlePay - Check if Exist in SPAR
+		//
+   		if ($peopleObj->code != '1') {
+			$sparObj = $this->_Spar($data->personal_id_number);
+		
+			// --
+			// -- People not exist in Spar
+			// --
+			if($sparObj->status != "1") {
+				$replySpar = new StdClass();
+				$replySpar->code = '4';
+				$replySpar->denied_code = 'people_not_exist';
+				return json_encode($replySpar);
+				die ('');
+			}
+			// --
+			// -- Create new People in Turtle Pay with data from SPAR
+			// --
+			else {
+				//$sparObj->people->credit_limit = $this->Setting->customer_credit_limit;
+				$this->peopleCreateFromSpar($sparObj->people);
+				$peopleObj = $this->peopleGet($data->personal_id_number);
+				//-- 
+				// -- This was a temp. soluotion for handling Husse kredit limit
+				//
+				/*
+				if ($data->company_id == '69' ||  $data->company_id == '1' || $data->company_id == '62' || $data->company_id == '67' || $data->company_id == '66' || $data->company_id == '59' || $data->company_id == '46' || $data->company_id == '61' || $data->company_id == '56' || $data->company_id == '70' || $data->company_id == '53') {
+					$newSetting = new stdClass();
+					$newSetting->setting_type = 'p';
+					$newSetting->id = $peopleObj->people_id;
+					$newSetting->customer_credit_limit = '1100';
+					$this->_Insert('setting', $newSetting);
+				} 
+				*/
+			}
+		}
+
+		// -- 
+		// -- Person has an overdue and will be denied 
+		// --
+		if ($peopleObj->overdue >= '1') {
+			$reply = new StdClass();
+			$reply->code = "3";
+			$reply->denied_code = 'person_is_blocked';
+			return json_encode($reply);
+			die ('');
+		}
+
+
+		// -- 
+		// --Now the Person is loaded in personObj as a Array
+		// --
+
+		// --
+		// -- People is blocked, with blocked 
+		// --
+   		if ($peopleObj->people_status == 'b') { // "Kund är blokerad"
+   			//return $this->invoiceRequestMessage($invoiceRequestId,'d', "peisbl");
+			$reply = new StdClass();
+			$reply->code = "3";
+			$reply->denied_code = 'person_is_blocked';
+			return json_encode($reply);
+   		}
+		/*
+	   if ((float)$data->amount < (float)$this->Setting->first_invoice_minimum) {			 
+			$reply = new StdClass();
+			$reply->code = "0";
+			$reply->denied_code = 'to_low_purchase 1';
+			return json_encode($reply);
+		}	
+		*/
+		$this->_Settings($data->company_id, $peopleObj->people_id);
+
+		// --
+		// -- People has and UC and get zero credit, means blocked
+		// --
+		if ($peopleObj->has_uc_check == 'y') {
+			if ((float)$this->Setting->customer_credit_limit < 1) {
+				$reply = new StdClass();
+				$reply->code = "3";
+				$reply->denied_code = 'no_credit_limit';
+				return json_encode($reply);
+				die ('');
+			}
+		}
+
+   		$balance = $this->calculateBalance($peopleObj->people_id);
+		$requestedTotal = (float)$balance + (float)$data->amount;   
+
+		// $borrowSpace = (float)$this->Setting->customer_credit_limit - (float)$balance;
+
+		if ($peopleObj->has_uc_check == 'y') {
+			$borrowSpace = (float)$this->Setting->customer_credit_limit - (float)$balance;
+		}
+		else {
+			$borrowSpace = (float)$this->Setting->company_customer_limit - (float)$balance;
+		}
+
+		// echo $balance . " : " . $this->Setting->company_customer_limit . ' / ';
+		// print_r($data);
+		// print_r($peopleObj);
+		// echo $borrowSpace . " : " . $this->Setting->first_invoice_minimum;
+		
+		
+
+		if ($borrowSpace < (float)$data->amount) {
+		
+			if ($peopleObj->has_uc_check == 'n') {
+				$reply = new StdClass();
+				$reply->people_id = $peopleObj->people_id;
+				$reply->code = "8"; // Kredit upplyssning
+				return json_encode($reply);
+				die('');
+			}
+			else {
+				if ($borrowSpace <= 0) {
+					$reply = new StdClass();
+					$reply->code = "3";
+					$reply->denied_code = 'no_credit_limit';
+					return json_encode($reply);
+					die ('');
+				}
+				else {
+					$reply = new StdClass();
+					$reply->amount = $data->amount;
+					$reply->borrow_space = (string)$borrowSpace;
+					$reply->code = "2";
+					$reply->name = $peopleObj->first_name . ' ' . $peopleObj->last_name;
+					$reply->text = str_replace('<BorrowSpace>', $borrowSpace, $this->Text->borrowSpaceOption );
+					$reply->denied_code = 'to_low_borrowspace';
+					return json_encode($reply);
+					die('');
+				}
+			}
+		}
+		
+		//die('OK');
+		
+		/*
+   		// No Kredit space
+   	 	if ((float)$data->amount > $borrowSpace) {
+			if ($borrowSpace < 0) {
+				$borrowSpace = 0;
+			}
+   			$reply = new StdClass();
+   			$reply->amount = $data->amount;
+   			$reply->borrow_space = (string)$borrowSpace;
+   			$reply->code = "2";
+   			$reply->name = $peopleObj->first_name . ' ' . $peopleObj->last_name;
+   			$reply->text = str_replace('<BorrowSpace>', $borrowSpace, $this->Text->borrowSpaceOption );
+			$reply->denied_code = 'to_low_borrowspace';
+   			return json_encode($reply);
+			die('');
+   		}
+   		// Credit approved
+		*/
+
+		// Get store and company info
+
+		$shopInfoObj = $this->storeInfoGet($data->store_id);
+
+		// first_invoice_fee  = fee
+		// first_invoice_start_fee = start_fee
+ 		// adminstration_fee = admin_fee
+
+		// Deprecated ?
+   		//$monthlyPayment = $this->_MonthlyPayment($data->amount, $this->Setting->customerInterest, $this->Setting->repayment_term);
+
+		//$monthlyPaymentTotal = (float)$this->_MonthlyPayment($data->amount + (float)$this->Setting->first_invoice_fee + (float)$this->Setting->first_invoice_start_fee, $this->Setting->customerInterest, $this->Setting->repayment_term) + (float)$this->Setting->monthly_invoice_fee;
+		$monthlyPaymentTotal = $this->_MonthlyPayment2($data->amount,
+														$this->Setting->first_invoice_fee,
+														$this->Setting->first_invoice_start_fee,
+														$this->Setting->customerInterest,
+														$this->Setting->repayment_term,
+														$this->Setting->monthly_invoice_fee,
+														$this->Setting->administration_fee,
+														$this->Setting->credit_interest_grace_days
+													);
+
+		//$monthlyPaymentTotal = (float)$this->_MonthlyPayment($data->amount , $this->Setting->customerInterest, $this->Setting->repayment_term) + (double)$this->Setting->monthly_invoice_fee;
+
+		$reply = new StdClass();
+   		$reply->code = "1";
+   		$reply->approved_code = $this->_CreateGUID();
+   		$reply->personal_id_number = $peopleObj->personal_id_number;
+   		$reply->name = $peopleObj->first_name . ' ' . $peopleObj->last_name;
+   		$reply->address = $peopleObj->address;
+   		$reply->postaddress = $peopleObj->postcode . ' ' . $peopleObj->city;
+   		$reply->invoice_amount = str_replace('<RequestAmount>' , number_format($data->amount, 2), $this->Text->invoiceAmount);
+   		//$reply->payment_terms = "Lägsta månadsbelopp\n" . $this->Setting->repayment_term . " mån - ca <MonthlyPayment> kronor, exkl. avg.";
+		$reply->payment_terms = "Räntefritt " . $this->Setting->credit_interest_grace_days . " dagar";
+		if ($this->Setting->first_invoice_start_fee > 0) {
+			$reply->start_fee = "Uppläggningsavgift " . $this->Setting->first_invoice_start_fee . " kr";
+		}
+		else {
+			$reply->start_fee = "";
+		}
+		$reply->adm_fee = 'Aviavgift ' . $this->Setting->first_invoice_fee . ' kr'; //(Fix admin fee is avi avigft, i app)
+		$reply->possible_installment = $this->Text->possibleInstallment;
+   		$reply->possible_installment2 = str_replace('<MonthlyPayment>', $monthlyPaymentTotal, $this->Text->possibleInstallment2);
+		$reply->possible_installment2 = str_replace('<MonthNo>', $this->Setting->repayment_term, $reply->possible_installment2);
+		$reply->interest_info = '(Årsränta ' . $this->Setting->customerInterest . '%';
+		if ($this->Setting->administration_fee > 0) {
+			$reply->interest_info .= ", adm.avg. " . $this->Setting->administration_fee . " kr/mån";
+		}
+		$reply->interest_info .= ")";
+   		$bankidText = "\rFAKTURA\r\r<Companyname>\r<Storename>\rKöpesumma <RequestAmount> kr\r\rRäntefritt " . $this->Setting->credit_interest_grace_days . " dagar";
+		if ($this->Setting->first_invoice_start_fee > 0 ) {
+			$bankidText .= "\rUppläggningsavgift " . $this->Setting->first_invoice_start_fee  . " kr"; // Fix for naming
+		}
+		$bankidText .= "\rAviavgift <AdminFee> kr\r\rKvittoreferens _ReceiptNumber_\r \rMöjlig delbetalning\rLägsta månadsbelopp\r" . $this->Setting->repayment_term . " mån - ca <MonthlyPayment> kronor";
+
+		$bankidText = str_replace('<RequestAmount>' , number_format($data->amount, 2), $bankidText);
+
+   		$bankidText = str_replace('<Companyname>' , $shopInfoObj->company_name, $bankidText);
+   		$bankidText = str_replace('<Storename>' , $shopInfoObj->store_name, $bankidText);
+   		//$bankidText = str_replace('<FirstFee>' , $this->Setting->first_invoice_fee, $bankidText);
+   		$bankidText = str_replace('<AdminFee>' , $this->Setting->first_invoice_fee, $bankidText);
+   		$bankidText = str_replace('<MonthlyPayment>' ,$monthlyPaymentTotal, $bankidText);
+   		$reply->bankid_text = $bankidText . "\r(Årsränta " . $this->Setting->customerInterest . '%, aviavg. 29 kr';
+		if ($this->Setting->administration_fee > 0) {
+			$reply->bankid_text .= ", adm.avg " . $this->Setting->administration_fee . " kr/mån";
+		}
+		$reply->bankid_text .= ")";
+
+		$reply->bankid_text .= "\r\rJag godkänner Turtle Pays villkor\roch integritetspolicy";
+
+		// Update Invoice request with the approved code
+		$param = array ();
+   		$param['approved_code'] = $reply->approved_code;
+   		$param['people_id'] = $peopleObj->people_id;
+   		$param['invoice_request_status'] = 'a';
+		$param['fee'] = $this->Setting->first_invoice_fee;
+		$param['start_fee'] = $this->Setting->first_invoice_start_fee;
+		$param['admin_fee'] = $this->Setting->administration_fee;
+
+   		$this->_Update('invoice_request', 'invoice_request_id', $invoiceRequestId, $param);
+
+   		return json_encode($reply);
+
+   	}
+
+	private function companyValidate($company_id) {
+
+		// Check if company is active, return code = 1 and company_name else return 0
+
+   		$sql = "SELECT company_name, is_vendor, company_status FROM company WHERE company_id = $company_id";
+   		$result = $this->_Get($sql);
+		if ($result['code'] == "0") {
+			$result['code'] = '5';
+			$result['denied_code'] = 'company_not_exist';
+		} else {
+			if ($result['company_status'] != "a") {
+				$result['code'] = '5';
+				$result['denied_code'] = 'company_not_active';
+			}
+			else if ($result['is_vendor'] != "y") {
+				$result['code'] = '5';
+				$result['denied_code'] = 'company_is_not_vendor';
+			}
+		}
+		return (object) $result;
+
+	}
+
+	private function dataParamValidate($data, $invoiceRequestId) {
+
+		$resultValidate = new StdClass();
+		$resultValidate->code = '5';
+
+   		if (!isset($data->company_id)) {
+			$resultValidate->denied_code = 'no_company_id_param';
+   		}
+
+   		else if (!isset($data->store_id)) {
+   			$resultValidate->denied_code =  'no_store_id_param';
+   		}
+
+   		elseif (!isset($data->personal_id_number)) {
+   			$resultValidate->denied_code = 'no_personal_id_number_id_param';
+   		}
+
+   		else if (!isset($data->sales_person_people_id)) {
+   			$resultValidate->denied_code = 'no_sales_people_id_param';
+   		}
+
+   		else if (!isset($data->amount)) {
+   			$resultValidate->denied_code = 'no_amount_param';
+   		}
+		else if (!isset($data->_uc_confirm)) {
+   			$resultValidate->denied_code = 'no_uc_param';
+   		}
+		else {
+			// All paraemers are correct
+			$resultValidate->code = '1';
+		}
+		return $resultValidate;
+
+	}
+
+	private function calculateBalance($people_id) {
+		//$sql = "SELECT SUM(amount) AS balance FROM trans WHERE (account_no='1380' OR account_no='1680') AND people_id = $people_id";
+		$sql = "SELECT SUM(t.amount) AS balance FROM btrans t, booking b WHERE (t.account_no='1380' OR t.account_no='1680') AND b.people_id = $people_id AND t.booking_id = b.booking_id";
+		$result = $this->_Get($sql);
+		return  $result['balance'];
+	}
+
+	private function invoiceRequestDenied($invoice_request_id, $denied_code ) {
+	   $description = "";
+	   $param = array ();
+	   $param['denied_code'] = $denied_code;
+	   $param['invoice_request_status'] = 'd';
+	   return $this->_Update('invoice_request', 'invoice_request_id', $invoice_request_id, $param);
+
+    }
+	
+	private function peopleCreateFromSpar($people) {
+
+		// Create the OCR number for a customer
+		$controlNumber = '2' . substr($people->personal_id_number, 2, 6) . mt_rand(1000, 9999);
+		$people->ocrno = $this->ocrnoCreate($controlNumber);
+		
+		$result = $this->_Insert('people', $people);
+		
+		return $result;
+	}
+
+	private function ocrnoCreate($ocrno) {
+		$sum = 0;
+		for ($i=0; $i < strlen($ocrno); $i++) {
+		// Even
+			if ($i % 2 == 0) {
+				$res = $ocrno[$i] * 2;
+				//echo 'even: ' . $ocrno[$i] . ' ';
+			} else {
+				$res = $ocrno[$i];
+			}
+
+			if ($res > 9) {
+				$res = $res -9;
+			}
+			//echo $sum . '<br>';
+			$sum = $sum + $res;
+		}
+		//echo $sum . '<br>';
+		$nerast10 = ceil($sum / 10) * 10;
+		//echo $nerast10 . '<br>';
+		$checksum =  $nerast10 - $sum;
+		$ocr_number = $ocrno . $checksum; // 11
+		return $ocr_number;
+	}
+	
+	
+	/*
+	private function peopleCreateFromSpar($people) {
+
+		//$personObj->people->credit_limit = $this->Setting->creditLimit;
+		//$ucIdentity->rating = $this->Setting->defaultRating;
+		$result = $this->_Insert('people', $people);
+		// No validation check is done here
+		return $result;
+	}
+
+	*/
+	
+	
+	
+	private function peopleGet($personal_id_number) {
+
+		$sql = "SELECT * FROM people WHERE personal_id_number = '$personal_id_number'";
+		$result = $this->_Get($sql);
+		return (object) $result;
+
+	}
+
+	private function storeInfoGet($shop_id) {
+
+		$sql = "SELECT s.store_name, c.known_as AS company_name FROM store s, company c WHERE s.store_id = $shop_id AND s.company_id = c.company_id ";
+		$result = $this->_Get($sql);
+		return (object) $result;
+
+	}
+
+	private function salePersonValidate($company_id, $sales_person_people_id) {
+
+		$sql = "SELECT priv FROM company_people  WHERE priv IN ('sp','pr') AND company_id = $company_id AND people_id = $sales_person_people_id";
+		$result = $this->_Get($sql);
+
+		if ($result['code']  == '1' ) {
+			// OK
+		}
+		else {
+			$result['code'] = '5';
+			$result['denied_code'] = 'sales_person_not_connected_to_company';
+		}
+		return (object) $result;
+	}
+
+	private function storeValidate($company_id, $store_id) {
+
+		// Check if store connected to company and active
+
+   		$sql = "SELECT s.store_name, s.store_status FROM company c, store s WHERE c.company_id = $company_id AND s.store_id = $store_id AND c.company_id = s.company_id AND s.store_status = 'a'";
+   		$result = $this->_Get($sql);
+		if ($result['code'] == "0") {
+			$result['code'] = '5';
+			$result['denied_code'] = 'store_not_connected_or_exist';
+		}
+		return (object) $result;
+	}
+
+	private function contractSignValidate($company_id) {
+
+		$result = new StdClass();
+		// Check if store connected to company and active
+		$sql = "SELECT * FROM company_contract WHERE enabled = 'y' ORDER BY company_contract_id DESC LIMIT 1";
+
+		$resultContract = $this->_Get($sql);
+
+		$sql = "SELECT company_sign_id FROM company_sign WHERE company_id = " . $company_id . " AND company_contract_id = " . $resultContract['company_contract_id'];
+		$resultSign = $this->_Get($sql);
+		if ($resultSign['code'] == "1" ) {
+			$result->code = '1';
+
+		}
+		else {
+			$result->code = '1';
+			$result->denied_code = 'company_has_no_valid_signed_contract';
+		}
+
+		return  $result;
+	}
+
+
+}

@@ -1,0 +1,101 @@
+#FLAGGA 0
+#FORMAT PC8
+#SIETYP 4
+#PROGRAM "Turtle Pay Kundportal" 2021.1
+#GEN 20210826
+#FNAMN "Brol”ten AB"
+#ORGNR 556436-4742
+#KPTYP BAS95
+#KONTO 8000 "R„nta"
+#KONTO 1686 "Turtle Pay avr„kning"
+#KONTO 6050 "Transaktionsavgift"
+#KONTO 3010 "Ridl„ger, ridkurs 12% "
+#KONTO 2620 "Utg†ende moms 12 %"
+#KONTO 2330 "Bank"
+#VER T 31 20210703 "Turtle Pay Avr„kning"
+{
+#TRANS 8000 {} 12.00
+#TRANS 1686 {} -12.00
+}
+#VER T 32 20210708 "Turtle Pay Avr„kning"
+{
+#TRANS 1686 {} 13691.50
+#TRANS 6050 {} 208.50
+#TRANS 3010 {} -12410.71
+#TRANS 2620 {} -1489.29
+}
+#VER T 33 20210709 "Turtle Pay Avr„kning"
+{
+#TRANS 1686 {} -13579.00
+#TRANS 2330 {} 13579.00
+}
+#VER T 34 20210715 "Turtle Pay Avr„kning"
+{
+#TRANS 1686 {} 7387.50
+#TRANS 6050 {} 112.50
+#TRANS 3010 {} -6696.43
+#TRANS 2620 {} -803.57
+}
+#VER T 35 20210716 "Turtle Pay Avr„kning"
+{
+#TRANS 1686 {} -7387.50
+#TRANS 2330 {} 7387.50
+}
+#VER T 36 20210717 "Turtle Pay Avr„kning"
+{
+#TRANS 1686 {} 284.00
+#TRANS 6050 {} 216.00
+#TRANS 3010 {} -446.43
+#TRANS 2620 {} -53.57
+}
+#VER T 37 20210719 "Turtle Pay Avr„kning"
+{
+#TRANS 1686 {} -284.00
+#TRANS 2330 {} 284.00
+}
+#VER T 38 20210722 "Turtle Pay Avr„kning"
+{
+#TRANS 1686 {} 6599.50
+#TRANS 6050 {} 100.50
+#TRANS 3010 {} -5982.14
+#TRANS 2620 {} -717.86
+}
+#VER T 39 20210723 "Turtle Pay Avr„kning"
+{
+#TRANS 1686 {} -6599.50
+#TRANS 2330 {} 6599.50
+}
+#VER T 40 20210726 "Turtle Pay Avr„kning"
+{
+#TRANS 1686 {} 7092.00
+#TRANS 6050 {} 108.00
+#TRANS 3010 {} -6428.57
+#TRANS 2620 {} -771.43
+}
+#VER T 41 20210727 "Turtle Pay Avr„kning"
+{
+#TRANS 1686 {} -7092.00
+#TRANS 2330 {} 7092.00
+}
+#VER T 42 20210728 "Turtle Pay Avr„kning"
+{
+#TRANS 1686 {} 5504.50
+#TRANS 6050 {} 295.50
+#TRANS 3010 {} -5178.57
+#TRANS 2620 {} -621.43
+}
+#VER T 43 20210729 "Turtle Pay Avr„kning"
+{
+#TRANS 1686 {} 399.50
+#TRANS 6050 {} 100.50
+#TRANS 3010 {} -446.43
+#TRANS 2620 {} -53.57
+}
+#VER T 44 20210730 "Turtle Pay Avr„kning"
+{
+#TRANS 1686 {} 12811.00
+#TRANS 2330 {} 5904.00
+#TRANS 6050 {} 285.00
+#TRANS 3010 {} -16964.28
+#TRANS 2620 {} -2035.72
+}

@@ -1,0 +1,874 @@
+<?php
+/*
+    Class SettlementPeopleClass
+
+	Date: 2019-07-03
+
+	Handling settlement for a period on people.
+
+	Basic flow for actionPeopleBulk
+
+	
+
+*/
+/*
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+*/
+
+class SettlementPeopleClass extends ActionBase {
+
+	public function Run($data) {
+		$actionMethod = 'action' . $data->_action;
+		return $this->$actionMethod($data);
+	}
+
+	private function actionProcessNew($data) {
+
+		/*
+		{
+			"_group" : "SettlementPeople",
+			"_action" : "ProcessNew",
+			"_period" : "201909",
+			"_pre" : "no"
+		}
+		*/
+
+		$this->_Settings();
+
+		$dueDate = substr($data->_period, 0, 4) . '-' . substr($data->_period, 4, 2) . '-28';
+
+		$sql = "SELECT c.credit_id, c.people_id, f.duedate FROM credit c, first_invoice f ";
+		$sql .= "WHERE c.credit_status IN('a','p') AND f.duedate <= '$dueDate' AND c.credit_id = f.credit_id ";
+		$sql .= "ORDER BY c.credit_id ASC";
+		$peopleListPA = $this->_GetList($sql);
+
+		//die('');
+
+		$log = array();
+		
+		if (sizeof($peopleListPA) > 0) { 
+			for ($i = 0; $i < sizeof($peopleListPA); $i++) {
+				// if ($peopleListPA[$i]['credit_id'] == '12344414002') {
+					if ($data->_pre == 'no') {
+						$this->processNewCredit($peopleListPA[$i]['credit_id'], $peopleListPA[$i]['people_id'], $peopleListPA[$i]['duedate'], $data->_period);
+					}
+					//die('');
+				//}
+				$log[$i] = new stdClass();
+				$log[$i]->credit_id = $peopleListPA[$i]['credit_id'];
+				$log[$i]->people_id = $peopleListPA[$i]['people_id'];
+			}
+		}
+	
+		// return json_encode($log);
+		return true;
+	}
+
+	private function actionProcessOngoing($data) {
+
+		/*
+		{
+			"_group" : "SettlementPeople",
+			"_action" : "ProcessOngoing",
+			"_period" : "202011",
+			"_pre" : "no"
+		}
+		*/
+		// This is duppicated
+		$dateTo = substr_replace( $data->_period, '-', 4, 0 ) . '-' . '28';
+		$dateTo = date("Y-m-d", strtotime("+" . $dateTo . " + 5 days"));
+
+		$this->actionProcessNew($data);
+		//die('');
+		$this->processOverPayedCredits($dateTo);
+		//die('');
+		$this->_Settings();
+
+		$dueDate = substr($data->_period, 0, 4) . '-' . substr($data->_period, 4, 2) . '-28';
+
+		$sql = "SELECT DISTINCT people_id FROM booking WHERE prel = 'y' AND period = '$data->_period' ORDER BY people_id ASC";
+		$peopleListO = $this->_GetList($sql);
+
+		$log = array();
+
+		for ($i = 0; $i < sizeof($peopleListO); $i++) {
+			if ($data->_pre == 'no') {
+				//if ($peopleListO[$i]['people_id'] == '1624') { // 768
+					$this->processOngoingCredit($peopleListO[$i]['people_id'], $data->_period);
+				//}
+			}
+			$log[$i] = new stdClass();
+			$log[$i]->people_id = $peopleListO[$i]['people_id'];
+		}
+	
+		$reply = new stdClass();
+		$reply->code = '1';
+		$reply->counts = sizeof($log);
+		return json_encode($reply);
+
+	}
+
+	private function processNewCredit($creditId, $peopleId, $dueDate, $prePeriod) {
+
+
+		//------------------------------------------------------
+		//
+		// Set values
+		//
+		//------------------------------------------------------
+
+		//echo $peopleId . " : ";
+
+		
+		// --
+		// Load the credid
+		$sql = "SELECT credit_id,start_date,people_id,company_id,amount,start_fee,admin_fee,grace_days,interest_margin,monthly_no,monthly_index,credit_status ";
+		$sql .= " FROM credit WHERE credit_id = '$creditId'";
+		$Credit = $this->_Get($sql);
+
+		$Credit['duedate'] = $dueDate;
+		$Credit['pre-period'] = $prePeriod;
+
+		$Credit['untildate']  = substr_replace( $prePeriod, '-', 4, 0 ) . '-' . '28';
+		$Credit['untildate']  = date("Y-m-d", strtotime("+" . $Credit['untildate']  . " + 5 days"));
+
+		$Credit['balance'] = $this->creditBalance($creditId, $Credit['untildate']);
+		$Credit['balance-duedate'] = $this->creditBalance($creditId, $Credit['duedate']);
+		$Credit['min-balance'] = $this->minimumBalance( $Credit['amount'], $Credit['monthly_no'], 1);
+		$Credit['pre-booking-id'] = $this->getPreBookingId($peopleId, $prePeriod);
+
+		$Credit['interest'] = 0;
+		$Credit['open-credit'] = true;
+
+		
+		/*
+			This need to be implementet in the Oktober version
+			$graceDays = $credit['grace_days'];
+			$graceDate = date("Y-m-d", strtotime("+" . $Credit['start_date']  . " $graceDays +  days"));
+		*/ 
+
+		if ($Credit['balance-duedate'] <= 0 ) {
+		
+			// Credit payed in full before first duedate (closed the credit, no more action)
+			$param = array ();
+			$param['credit_status'] = 'c';
+			$this->_Update('credit', 'credit_id', $Credit['credit_id'], $param);
+			$Credit['open-credit'] = false;
+
+			return;
+			// If payed to much , handle
+		}
+	
+		else {
+			
+			$Credit['calc-interest'] = $this->Setting->base_interest + $Credit['interest_margin'];
+			// Calculate interest fee
+			$Credit['interest-date'] = date("Y-m-d", strtotime("+" . $Credit['duedate'] . " + 1 days"));
+			$Credit['interest'] = $this->firstInvoiceInterest($Credit['credit_id'], $Credit['interest-date'], $Credit['untildate'], $this->Setting->base_interest + $Credit['interest_margin']);
+			$Credit['balance'] += $Credit['interest'];
+		}
+		  
+		if ($Credit['credit_status'] == "p") {
+			if ($Credit['balance'] == 0) {
+				$param = array ();
+				$param['credit_status'] = 'r';
+				$this->_Update('credit', 'credit_id', $Credit['credit_id'], $param);
+				$openCredit = false;
+			}
+			else if ($Credit['balance'] < 0) {
+				// overpay
+			}
+		
+		} else if ($Credit['credit_status'] == "a") {
+			if ($Credit['balance'] == 0) {
+				$param = array ();
+				$param['credit_status'] = 'c';
+				$this->_Update('credit', 'credit_id', $Credit['credit_id'], $param);
+				$Credit['open-credit'] = false;
+			}
+			
+		}
+
+	 	if ($Credit['open-credit'] == true) {
+			// --
+			// Create a new pre setllment, date on the due date (else the 5+ days)
+			//
+			
+			if ($Credit['pre-booking-id'] == 0) {
+				$param = new stdClass();
+				$param->booking_text =  'Pre settlment';
+				$param->booking_type =  'p-settl';
+				$param->booking_date = $Credit['untildate'];
+				$param->prel = 'y';
+				$param->people_id = $Credit['people_id'];
+				$param->period = $prePeriod;
+
+				$result = $this->_Insert('booking', $param);
+				$Credit['pre-booking-id'] = $result['id'];
+			}
+
+			// Calculate split Interest
+			if ($Credit['interest'] > 4) {
+				$param = new stdClass();
+				$param->booking_id = $Credit['pre-booking-id'];
+				$param->trans_type = 'interest';
+				$param->account_no = '1380';
+				$param->credit_id = $Credit['credit_id'];
+				$param->people_id = $Credit['people_id'];
+				$param->amount = $Credit['interest'];
+				$param->prel = 'y';
+				$this->_Insert('btrans', $param);
+
+				$param = new stdClass();
+				$param->booking_id = $Credit['pre-booking-id'];
+				$param->trans_type = 'interest';
+				$param->account_no = '8300';
+				$param->credit_id = $Credit['credit_id'];
+				$param->people_id = $Credit['people_id'];
+				$param->amount = -$Credit['interest'];
+				$param->prel = 'y';
+				$this->_Insert('btrans', $param);
+			}
+			
+			if ($Credit['balance'] > $Credit['min-balance'] ) {
+				$Credit['amortise'] = $Credit['balance'] - $Credit['min-balance'];
+			}
+			else {
+				$Credit['amortise'] = '0';
+			}
+
+			$param = new stdClass();
+			$param->booking_id = $Credit['pre-booking-id'];
+			$param->trans_type = 'amortization';
+			$param->account_no = '1680';
+			$param->credit_id = $Credit['credit_id'];
+			$param->people_id = $Credit['people_id'];
+			$param->amount = $Credit['amortise'];
+			$param->prel = 'y';
+			$this->_Insert('btrans', $param);
+
+			$param = new stdClass();
+			$param->booking_id = $Credit['pre-booking-id'];
+			$param->trans_type = 'amortization';
+			$param->account_no = '1380';
+			$param->credit_id = $Credit['credit_id'];
+			$param->people_id = $Credit['people_id'];
+			$param->amount = -$Credit['amortise'];
+			$param->prel = 'y';
+			$this->_Insert('btrans', $param);
+			
+			// -- Set credit status = 0
+			$param = array ();
+			$param['credit_status'] = 'o';
+			$this->_Update('credit', 'credit_id', $Credit['credit_id'], $param);
+			$Credit['open-credit'] = false;
+			
+		}
+		
+	}
+
+	private function processOverPayedCredits($dateTo) {
+		// 2020-11-01
+
+		// echo $dateTo; die('');
+		$sql = "SELECT credit_id, people_id, credit_status ";
+		$sql .= " FROM credit WHERE credit_status IN  ('o') ";
+		$Credits = $this->_GetList($sql);
+
+		for ($i = 0; $i < sizeof($Credits); $i++ ) {
+			//if ($Credits[$i]['people_id'] == '1164') {
+				$Credits[$i]['balance'] = $this->creditBalance($Credits[$i]['credit_id'], $dateTo) ; // $Base->DateTo
+			//}
+		}		
+		
+		for ($i = 0; $i < sizeof($Credits); $i++ ) {
+			if ((float) $Credits[$i]['balance'] < 0)  {
+				// print_r($Credits[$i]) ;
+				// --
+				// -- If zero,  it vill close later
+				//
+				$param = new stdClass();
+				$param->_key = "test-key";
+				$param->_group = "Booking";
+				$param->_action = "CreditOverPayed";
+				$param->booking_date = $dateTo;
+				$param->people_id = $Credits[$i]['people_id'];
+				$param->credit_id = $Credits[$i]['credit_id'];
+				// need make it positiv
+				$param->amount = (float) $Credits[$i]['balance'] * -1;
+		
+				// echo json_encode($param); die('');
+		
+				$reply = $this->_RestApiCall(json_encode($param));
+
+				// print_r($reply);
+
+
+			}
+		}	
+
+		//die('');
+
+	}
+
+	private function processOngoingCredit($peopleId, $period) {
+		/*
+	
+		*/
+	
+		$Base = new stdClass();
+		$Base->PeopleId = $peopleId;
+		$Base->Period = $period;
+				
+		$Base->DateTo = substr_replace( $Base->Period, '-', 4, 0 ) . '-' . '28';
+		$Base->DateTo = date("Y-m-d", strtotime("+" . $Base->DateTo . " + 5 days"));
+		
+		//------------------------------------------------------------
+		//
+		// Load Pre Trans
+		//
+		//------------------------------------------------------------
+
+		$sql = "SELECT booking_id, prel FROM booking WHERE people_id = $Base->PeopleId AND period = '$Base->Period'";
+		$result = $this->_Get($sql);
+		if ($result['code'] == '1') {
+			if ($result['prel'] == 'y') {
+				//$Base->PreExist = true;
+				$Base->PreBookingId = $result['booking_id'];
+				$this->savePreBooking($Base->PreBookingId);
+			}
+			else {
+				// echo ('Prebooking missing: ' . $Base->PeopleId);
+				return false;
+			}
+		}
+    
+		// Balance
+		$Base->Balance1680 = $this->settlementBalance($peopleId, $Base->DateTo) ;
+		
+		//print_r($result);
+		//print_r($Base); die('');
+
+		//$Trans = array();
+		//$tI = -1;
+
+		// -------------------------------------------------------
+		//
+		// Check if people is possition, overdue, complete etc.
+		//
+		// -------------------------------------------------------
+
+		$Base->PeoplOverdue = false;
+		$Base->NoOfOverdue = 0;
+		$Base->PeopleOverPay = false;
+
+		// -- Check if people overdue before
+		$sql = "SELECT overdue FROM people WHERE people_id = $Base->PeopleId";
+		$result = $this->_Get($sql);
+		$Base->NoOfOverdue = $result['overdue'];
+
+		//print_r($Base); die('');
+
+		if ($Base->Balance1680 <= 0 && $Base->NoOfOverdue > 0 ) {
+			// -- Reset ovderdue
+			$param = array ();
+			$param['overdue'] = '0';
+			$this->_Update('people', 'people_id', $Base->PeopleId, $param);
+			$Base->NoOfOverdue = '0';
+		} 
+		else if ($Base->NoOfOverdue > 0) {
+			// -- Has overdue before and balance is eniofh
+			$Base->PeoplOverdue = true;
+		}
+		// -- Has new overdue
+		if ($Base->Balance1680 > 0 ) {
+			$Base->PeoplOverdue = true;
+		}
+		else if ($Base->Balance1680 < 0 ) {
+			$Base->PeopleOverPay = true;
+		}
+
+		//if ($Base->PeoplOverdue) {
+			//print_r($Base);
+		//}
+		//return true;
+		
+		//------------------------------------------------------------
+		//
+		// Load Pre Trans
+		//
+		//------------------------------------------------------------
+
+		$sql = "SELECT booking_id, prel FROM booking WHERE people_id = $Base->PeopleId AND period = '$Base->Period' AND prel = 'y'";
+		$result = $this->_Get($sql);
+		//print_r($result); die('');
+		if ($result['code'] == '1') {
+			if ($result['prel'] == 'y') {
+				//$Base->PreExist = true;
+				$Base->PreBookingId = $result['booking_id'];
+			}
+			else {
+				echo ('Prebooking missing: ' . $Base->PeopleId);
+				return false;
+			}
+		}
+		
+		//print_r($Base);
+		//die('');
+
+		//------------------------------------------------------------
+		//
+		// Load Credits
+		//
+		//------------------------------------------------------------
+		$sql = "SELECT credit_id, start_date,people_id,company_id,amount,start_fee,admin_fee,grace_days,interest_margin,monthly_no,monthly_index,credit_status ";
+		$sql .= " FROM credit WHERE people_id = $Base->PeopleId AND credit_status = 'o'";
+		$Credits = $this->_GetList($sql);
+
+		for ($i = 0; $i < sizeof($Credits); $i++ ) {
+			$Credits[$i]['balance'] = $this->creditBalance($Credits[$i]['credit_id'], $Base->DateTo) ;
+		}		
+		
+		for ($i = 0; $i < sizeof($Credits); $i++ ) {
+			if ((float) $Credits[$i]['balance'] < 0)  {
+				// print_r($Credits[$i]) ;
+			}
+		}	
+		
+		//print_r($Base);
+		// print_r($Credits); 
+		// die('');
+
+		//-----------------------------------------------------------
+		//
+		// Overpay (Pay to much on 1680)
+		if ($Base->PeopleOverPay == true) {
+
+			if (sizeof($Credits) == 1) {
+				//-- 
+				//-- One Credit
+				//-- 
+				$Credits[0]['BookOff1380'] = $Base->Balance1680 * -1;
+				if ($Credits[0]['BookOff1380'] > $Credits[0]['balance']) {
+					$Credits[0]['BookOff1380'] = $Credits[0]['balance'];
+				}
+				$sql = "SELECT btrans_id, amount, account_no FROM btrans ";
+				$sql .= " WHERE booking_id = $Base->PreBookingId AND trans_type = 'amortization' ";
+				$sql .= "ORDER BY account_no";
+				$Credits[0]['btrans'] = $this->_GetList($sql);
+
+				$param = array ();
+				$param['amount'] = $Credits[0]['btrans'][0]['amount'] - $Credits[0]['BookOff1380'];
+				$this->_Update('btrans', 'btrans_id', $Credits[0]['btrans'][0]['btrans_id'], $param);
+							
+				$param = array ();
+				$param['amount'] = $Credits[0]['btrans'][1]['amount'] + $Credits[0]['BookOff1380'];
+				$this->_Update('btrans', 'btrans_id', $Credits[0]['btrans'][1]['btrans_id'], $param);
+				
+			} else {
+				//--  
+				//-- More than credit to split to payment
+				//
+				$Base->SumBalance1380 = 0;
+				$Base->OverflowBalance = 0;
+				// -- Calculate the total on 1380
+				for ($i = 0; $i < sizeof($Credits); $i++ ) {
+					$Base->SumBalance1380 += $Credits[$i]['balance'];
+				} 
+
+				//
+				//echo $Base->SumBalance1380 . ' : ' . $Base->Balance1680 . ' : ';
+				//echo $Base->SumBalance1380 + $Base->Balance1680 ;
+
+				if ($Base->SumBalance1380 + $Base->Balance1680 <= 0) {
+					//--  
+					//-- 1680 can cover all costs for all credis
+					//
+					
+					
+
+					for ($i = 0; $i < sizeof($Credits); $i++ ) {
+						//--
+						//-- Get the pre-booking for the credits
+						//--
+						$sql = "SELECT btrans_id, amount, account_no FROM btrans ";
+						$sql .= " WHERE booking_id = $Base->PreBookingId AND trans_type = 'amortization' ";
+						$sql .= " AND credit_id = " . $Credits[$i]['credit_id'];
+						$sql .= " ORDER BY account_no";
+						$Credits[$i]['btrans'] = $this->_GetList($sql);
+						//print_r($Credits[$i]);
+						$amount = $Credits[$i]['btrans'][0]['amount'] - $Credits[$i]['balance'];
+						$param = array ();
+						$param['amount'] = $amount;
+						$res = $this->_Update('btrans', 'btrans_id', $Credits[$i]['btrans'][0]['btrans_id'], $param);
+						
+						//print_r($param);
+
+						$param = array ();
+						$param['amount'] = $amount * -1;
+						$res = $this->_Update('btrans', 'btrans_id', $Credits[$i]['btrans'][1]['btrans_id'], $param);
+						
+						//print_r($param);
+						//die('');
+					} 
+				}
+				
+				else {
+
+					//--
+					//-- Creata a percent key for each credit
+
+					
+
+					// Calculate the % on each credit
+					for ($i = 0; $i < sizeof($Credits); $i++ ) {
+						$Credits[$i]['part'] = $Credits[$i]['balance']*100/$Base->SumBalance1380;
+					} 
+					// Split the amount on credits based on %
+					for ($i = 0; $i < sizeof($Credits); $i++ ) {
+						$Credits[$i]['BookOff1380'] = round($Base->Balance1680 * $Credits[$i]['part'] / 100);
+						//--
+						//-- Get the pre-booking for the credits
+						//--
+						$sql = "SELECT btrans_id, amount, account_no FROM btrans ";
+						$sql .= " WHERE booking_id = $Base->PreBookingId AND trans_type = 'amortization' ";
+						$sql .= " AND credit_id = " . $Credits[$i]['credit_id'];
+						$sql .= " ORDER BY account_no";
+						$Credits[$i]['btrans'] = $this->_GetList($sql);
+					
+						//print_r($Credits[$i]);
+						$param = array ();
+						$param['amount'] = $Credits[$i]['btrans'][0]['amount'] + $Credits[$i]['BookOff1380'];
+						$this->_Update('btrans', 'btrans_id', $Credits[$i]['btrans'][0]['btrans_id'], $param);
+						//print_r($param);
+
+						$param = array ();
+						$param['amount'] = $Credits[$i]['btrans'][1]['amount'] - $Credits[$i]['BookOff1380'];
+						$this->_Update('btrans', 'btrans_id', $Credits[$i]['btrans'][1]['btrans_id'], $param);
+						//print_r($param);
+						// die('');
+					} 
+				}
+
+
+			}
+		}
+
+		else if ($Base->PeoplOverdue == true) {
+			//---------------------------------------
+			// 
+			// Overdues  handling
+			//
+			// Rules by number of overdue
+			// 
+			// 1 - Add Försenings avg. och dröjsmåls ränta
+			// 2 - Inkasso krav
+			// 3 - and more, försavg and dröjsmålsränta
+			//----------------------------------------
+
+			// Add NoOfOverdues by one
+			$Base->NoOfOverdue ++;
+			$param = array ();
+			$param['overdue'] = $Base->NoOfOverdue;
+			$this->_Update('people', 'people_id', $Base->PeopleId, $param);
+			
+			if ($Base->NoOfOverdue == 1) {	
+
+				if ($Base->Balance1680 > 99) {  // Change for 202001
+					$param = new stdClass();
+					$param->booking_id = $Base->PreBookingId;
+					$param->trans_type = 'reminder-fee';
+					$param->account_no = '3544';
+
+					$param->people_id = $Base->PeopleId;
+					$param->amount = -$this->Setting->reminder_fee;
+					$param->prel = 'y';
+					$this->_Insert('btrans', $param);
+	
+					$param = new stdClass();
+					$param->booking_id = $Base->PreBookingId;
+					$param->trans_type = 'reminder-fee';
+					$param->account_no = '1680';
+					$param->people_id = $Base->PeopleId;
+					$param->amount = $this->Setting->reminder_fee;
+					$param->prel = 'y';
+					$this->_Insert('btrans', $param);
+				}
+			}
+			else if ($Base->NoOfOverdue == 2 ) {
+					$param = new stdClass();
+					$param->booking_id = $Base->PreBookingId;
+					$param->trans_type = 'collection-fee';
+					$param->account_no = '3542';
+
+					$param->people_id = $Base->PeopleId;
+					$param->amount = -$this->Setting->collection_fee;
+					$param->prel = 'y';
+					$this->_Insert('btrans', $param);
+	
+					$param = new stdClass();
+					$param->booking_id = $Base->PreBookingId;
+					$param->trans_type = 'collection-fee';
+					$param->account_no = '1680';
+					$param->people_id = $Base->PeopleId;
+					$param->amount = $this->Setting->collection_fee;
+					$param->prel = 'y';
+					$this->_Insert('btrans', $param);
+			}
+			else {
+				// More than 2 overdues
+			}
+		}
+
+		// ---------------------------------------------------
+		// End Over due handling
+		//----------------------------------------------------
+			
+
+		// Update the Pre Booking
+	
+		$param = array ();
+		$param['booking_text'] = 'Settlement';
+		$param['prel'] = 'n';
+		$param['booking_type'] = 'm-settl';
+		$this->_Update('booking', 'booking_id', $Base->PreBookingId, $param);
+		$sql = "UPDATE btrans set prel='n' WHERE booking_id = $Base->PreBookingId";
+		$this->_Query($sql);
+		
+		// Check if any credits is comple
+
+		for ($i = 0; $i < sizeof($Credits); $i++ ) {
+			$Credits[$i]['balance'] = round($this->creditBalance($Credits[$i]['credit_id'],  $Base->DateTo));
+			if ($Credits[$i]['balance'] == 0) { 
+				$param = array ();
+				$param['credit_status'] = 'c';
+				//print_r($param);
+				$this->_Update('credit', 'credit_id', $Credits[$i]['credit_id'], $param);
+				$Credits[$i]['credit_status'] = "c";
+			}
+			else {
+				//if ($Credits[$i]['credit_status'] == 'o') { // Not needed, All should be 
+				$Credits[$i]['monthly_index']++;
+				$param = array ();
+				$param['last_period'] = $Base->Period;
+				$param['monthly_index'] = $Credits[$i]['monthly_index'];
+				$this->_Update('credit', 'credit_id', $Credits[$i]['credit_id'], $param);
+				//}
+			}
+		}
+		
+		//print_r($Base);
+	
+		return true;
+
+	}
+
+	private function minimumBalance($amount, $monthly_no, $monthly_index) {
+		//echo round(($amount / $monthly_no) * ($monthly_no - $monthly_index) );
+		$amortisePlan = $amount / $monthly_no;
+		$noOfMonth = $monthly_no - $monthly_index;
+		$minBalance = round($amortisePlan * $noOfMonth);
+		//echo $amortisePlan . ' : ' . $noOfMonth . ' : ' . $minBalance;
+		return $minBalance;
+	}
+
+	private function creditBalance($creditId, $untilDate) {
+		$sql = "SELECT SUM(t.amount) AS sum ";
+		$sql .= "FROM booking b, btrans t ";
+		$sql .= "WHERE t.account_no = '1380' AND b.booking_id = t.booking_id AND t.prel NOT IN ('x') AND ";
+		$sql .= "t.credit_id = '$creditId' AND booking_date <= '$untilDate' ";
+		$result = $this->_Get($sql);
+		if ($result['sum'] == null) {
+			$result['sum'] = "0";
+		}
+		
+		return $result['sum'];
+	}
+
+	private function getPreBookingId($peopleId, $period) {
+		// FIXED 2020-02-05
+		$sql = "SELECT booking_id FROM booking WHERE people_id = $peopleId AND period = '$period' AND booking_type = 'p-settl' AND prel='y'";
+		$result = $this->_Get($sql);
+		if ($result['code'] == '1') {
+			return  $result['booking_id'];
+		}
+		else {
+			return  '0';
+		}
+	}
+
+	private function firstInvoiceInterest($creditId, $fromDate, $toDate, $interestRate) {
+		$interestData = new StdClass();
+		$interestData->credit_id = $creditId;
+		$interestData->to_date = $toDate;
+		$interestData->interest =  $interestRate;
+		$interestData->from_date = $fromDate;
+		return $this->actionInterest($interestData);
+	}
+
+	private function actionInterest($data) {
+		/*
+			{
+				"_group" : "Settlement",
+				"_action" : "Interest",
+				"from_date" : "2019-03-01",
+				"to_date" : "2019-03-28",
+				"credit_id" : "1234441402",
+				"interest" : "14.5",
+				"_trace" : "yes"
+			}
+
+			from data interest is included, tom dat interest is included
+
+			The calculations id _from_date (not include _from_date)
+			_to_date include the to date.
+			*/
+
+			// print_r($data);
+			
+			$traceOn = false;
+			
+
+			/*
+				Balance the Start balance on Credit
+			*/
+
+			$sql = "SELECT SUM(t.amount) AS balance FROM btrans t, booking b ";
+			$sql .= "WHERE ";
+			$sql .= "b.booking_id = t.booking_id AND ";
+			$sql .= "t.account_no = '1380' AND ";
+			$sql .= "t.prel NOT IN ('x') AND ";
+			$sql .= "t.credit_id = $data->credit_id AND ";
+			$sql .= "b.booking_date < '$data->from_date'" ;
+			$res = $this->_Get($sql);
+
+			if (empty($res['balance'])) {
+				$balance = '0';
+			}
+			else {
+				$balance = $res['balance'];
+			}
+
+			/*
+				Changes on balance  on Credit
+			*/
+			$sql = "SELECT b.booking_date, SUM(t.amount) as balance FROM btrans t, booking b ";
+			$sql .= "WHERE ";
+			$sql .= "b.booking_id = t.booking_id AND ";
+			$sql .= "t.account_no = '1380' AND ";
+			$sql .= "t.prel NOT IN ('x') AND ";
+			$sql .= "t.credit_id = $data->credit_id AND ";
+			$sql .= "b.booking_date >= '$data->from_date' AND b.booking_date <= '$data->to_date' ";
+			//$sql .= "b.booking_date <= '$data->_to_date' ";
+			$sql .= "GROUP BY b.booking_date ";
+			$oChanges = $this->_GetList($sql);
+
+			$begin = new DateTime($data->from_date);
+			//$begin->modify('+1 day'); //
+			$end = new DateTime($data->to_date);
+			$end->modify('+1 day'); // need for the loop
+
+			$daterange = new DatePeriod($begin, new DateInterval('P1D'), $end);
+
+			$oInterest = array();
+			$iInterest = -1;
+			$totaInterest = 0;
+			foreach($daterange as $date) {
+				$oInterest[] = new StdClass();
+				$iInterest++;
+				$oInterest[$iInterest]->date = $date->format("Y-m-d");
+				if (sizeof($oChanges) > 0) {
+					for ($i=0; $i < sizeof($oChanges); $i++) {
+						if ($oInterest[$iInterest]->date == $oChanges[$i]['booking_date']) {
+							$balance = $balance + $oChanges[$i]['balance'];
+						}
+					}
+				}
+				
+				if ($balance > 0) {
+					$oInterest[$iInterest]->balance = $balance;
+					$oInterest[$iInterest]->interest = $balance * $data->interest / 100 / 360;
+					$totaInterest = (float)$totaInterest + (float)$oInterest[$iInterest]->interest;
+				}
+				
+			}
+
+			/*
+				For trace and debug
+			*/
+
+			if ($traceOn)
+			{
+				$trace = new StdClass();
+				$trace->creditId = $data->credit_id;
+				$trace->totalInterest = $totaInterest;
+				$trace->interest = $data->interest;
+				$trace->from_date = $data->from_date;
+				$trace->to_date = $data->to_date;
+
+				$trace->day = array();
+				for ($i = 0; $i < sizeof($oInterest); $i++ ) {
+					$day = new StdClass();
+
+					$day->data = $oInterest[$i]->date;
+					$day->interest = $oInterest[$i]->interest;
+					$day->balance = $oInterest[$i]->balance;
+					array_push($trace->day, $day);
+				}
+				echo json_encode($trace);
+				//print_r($trace);
+
+			}
+			//else {
+				return round($totaInterest);
+			//}
+
+	}
+
+	private function settlementBalance($peopleId, $untilDate) {
+		$sql = "SELECT SUM(t.amount) AS sum ";
+		$sql .= "FROM booking b, btrans t ";
+		$sql .= "WHERE b.booking_id = t.booking_id AND t.account_no = '1680' AND b.booking_date <= '$untilDate' AND t.prel NOT IN ('x') AND ";
+		$sql .= "t.people_id = '" . $peopleId . "'";
+
+		$result = $this->_Get($sql);
+		if ($result['sum'] == null) {
+			$result['sum'] = "0";
+		}
+		return $result['sum'];
+	}
+
+	private function savePreBooking($preBookingId) {
+		// -- Load pre Booking
+		
+		$sql = "SELECT pre_booking_id FROM pre_booking WHERE pre_booking_id = $preBookingId";
+		$check = (object) $this->_Get($sql);
+
+		if ($check->code == '1') {
+			$this->_Delete('pre_booking', 'pre_booking_id', $preBookingId);
+			$this->_Delete('pre_btrans', 'pre_booking_id', $preBookingId);
+		}
+		
+		$sql = "SELECT booking_text, booking_date, booking_type, prel, people_id, period FROM booking WHERE booking_id = $preBookingId";
+		$booking = (object) $this->_Get($sql);
+		unset($booking->code);
+		$booking->pre_booking_id = $preBookingId;
+		$this->_Insert('pre_booking', $booking);
+		
+		$sql = "SELECT btrans_id, booking_id, trans_type,account_no, amount, credit_id, people_id, prel ";
+		$sql .= "FROM btrans WHERE booking_id = $preBookingId";
+		$btransObj = $this->_GetList($sql);
+		
+		for ($i=0; $i<sizeof($btransObj); $i++) {
+			$btrans = (object) $btransObj[$i];
+			$btrans->pre_booking_id = $btrans->booking_id;
+			unset($btrans->booking_id);
+			$res = $this->_Insert('pre_btrans', $btrans);
+		}
+		
+	}
+
+
+}

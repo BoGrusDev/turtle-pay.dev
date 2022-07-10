@@ -1,0 +1,384 @@
+<?php
+/*
+    Class RefundClass
+
+	Date: 2018-10-07
+
+	Actions:
+		-
+	Private;
+		-
+
+	Call:
+	{
+	     "_group" : "Refund",
+	     "_action" : "start",
+	     "_credit_id" : "12344410265",
+		 "refund_amount" : "500",
+	 	 "signature" : "test-redund-sign",
+	     "ocspResponse" : "test-response-resp",
+		 "sp_id" : "1"
+	}
+
+	Option if BankId = "yes" sign fpr each request:
+		- _bankid_personal_id_number" : "195711040054"   // Sales person id
+		- _order_ref" : "8c621767-906a-46f1-a1e1-64cbfd2d4de6" // Order ref from Bakis Aut
+
+*/
+
+class RefundClass extends ActionBase {
+
+	public function Run($data) {
+
+		$actionMethod = 'action' . $data->_action;
+		echo $this->$actionMethod($data);
+
+	}
+
+   	private function actionStart($data){
+
+			// Load credits
+			$creditObj = (object )$this->_Get("SELECT * FROM credit WHERE credit_id = $data->_credit_id");
+
+			if ($creditObj->code == '0') {
+				$reply = new StdClass();
+				$reply->code = '0';
+				$reply->code = 'credit_not_exist';
+				return json_encode($reply);
+				die ('');
+			}
+
+			/*
+			if ($creditObj->credit_status == 'rx') {
+				$reply = new StdClass();
+				$reply->code = '0';
+				$reply->code = 'credit_is refunded';
+				return json_encode($reply);
+				die ('');
+			}
+			*/
+
+			// Check if event belong to a event
+			/*
+			$sql = "SELECT event_item_id FROM event_item_v4 WHERE credit_id = $data->_credit_id";
+			$checkEvent = $this->Get($sql);
+			
+			if ($checkEvent['code'] == '1') {
+				$reply = new StdClass();
+				$reply->code = '0';
+				$reply->code = 'credit_is_not_refundable';
+				return json_encode($reply);
+				die ('');
+			}
+			*/
+
+			if ($creditObj->credit_status != 'p') {
+				$reply = new StdClass();
+				$reply->code = '0';
+				$reply->code = 'credit_is_not_refundable';
+				return json_encode($reply);
+				die ('');
+			}
+
+			if ($creditObj->amount < $data->refund_amount) {
+				$reply = new StdClass();
+				$reply->code = '0';
+				$reply->code = 'refund_is_is_bigger_than_amount';
+				return json_encode($reply);
+				die ('');
+			}
+
+			if ($creditObj->amount == $data->refund_amount) {
+				$returnAll = true;
+			} else {
+				$returnAll = false;
+			}
+
+			// - Load credit
+			// - Update signaturs (seperate tables)
+			// - Make Booking trans (credit)
+			// - Create new first_invoce database
+
+			// Load Settings
+			$this->_Settings($creditObj->company_id, $creditObj->people_id);
+
+			$refundTotal = (float)$creditObj->amount - (float)$data->refund_amount;
+			$creditUpdateArray = array ();
+			$creditUpdateArray['from_refundable'] = 'y';
+			$creditUpdateArray['amount'] = $refundTotal;
+			$result = $this->_Update('credit', 'credit_id', $creditObj->credit_id, $creditUpdateArray);
+
+			$invoice_filename = $creditObj->credit_id . '-' . $this->_CreateGUID() . '.pdf';
+
+			// Write to Refund
+			$refundArray = array ();
+			$refundArray['credit_id'] = $creditObj->credit_id;
+			$refundArray['prev_amount'] = $creditObj->amount;
+			$refundArray['refund_amount'] = $data->refund_amount;
+			$refundArray['total'] = $refundTotal;
+			$refundArray['signature'] = $data->signature;
+			$refundArray['ocspResponse'] = $data->ocspResponse;
+			//$refundArray['invoice_filename'] = $invoice_filename;
+			$replyRefund = $this->_Insert('refund', $refundArray);
+			if($replyRefund['code'] == "1") {
+				$refundId = $replyRefund['id'];
+			}
+			else {
+				//$this->_Rollback()
+				$reply = new StdClass();
+				$reply->code = '4';
+				$reply->denied_code = 'refund_insert_fail';
+				return json_encode($reply);
+				die ('');
+			}
+			$transData = new StdClass();
+			$transData->refund_amount = $data->refund_amount;
+			$transData->credit_id = $creditObj->credit_id;
+			$transData->refund_id = $refundId;
+			$transData->invoice_filename = $invoice_filename;
+			$transData->vendor_fee = $creditObj->vendor_fee;
+			$transData->sales_person_rebate = $creditObj->sales_person_rebate;
+			$transData->sales_person_people_id = $creditObj->sales_person_people_id;
+			$transData->company_id = $creditObj->company_id;;
+			$transData->store_id = $creditObj->store_id;
+			$transData->cr_id = $creditObj->cr_id;
+			$transData->people_id = $creditObj->people_id;
+			$transData->trans_date = date("Y-m-d");
+			$transData->ocrno = $creditObj->first_invoice_ocrno;
+
+			$transData->receipt_number = $creditObj->receipt_number;
+			// Create transaction
+			//verId = $this->EntryCustomerCreditRefund($transData, "ref");
+
+			$invoiceObj = (object) $this->_Get("SELECT * FROM first_invoice WHERE credit_id = '" . $creditObj->credit_id . "'");
+			$invoiceUpdate = new StdClass();
+			$invoiceUpdate->prev_amount = $invoiceObj->credit_amount;
+			$invoiceUpdate->credit_amount = number_format($refundTotal, 2);
+			if ( (float) $refundTotal == (float)0) {
+				$invoiceUpdate->total = "0.00";
+				$invoiceUpdate->refund_all = "y";
+				// add for credit other fees
+				$transData->refund_all = "y";
+				$transData->start_fee = $creditObj->start_fee;
+				$transData->fee = $creditObj->fee;
+
+			} else {
+				$total = (float) $refundTotal + (float)$invoiceObj->fee + (float)$invoiceObj->start_fee;
+				$invoiceUpdate->refund_all = "n";
+				$invoiceUpdate->total = number_format($total, 2);
+				$transData->refund_all = "n";
+			}
+				// Create transaction
+
+
+			$verId = $this->EntryCustomerCreditRefund($transData, "ref");
+
+			$invoiceUpdate->returnInvoice = "y";
+			$invoiceUpdate->invoice_filename = $invoice_filename;
+			//$invoiceUpdate->monthly_payment = $this->_MonthlyPayment($refundTotal, $this->Setting->customerInterest, '12');
+
+			$monthlyPaymentTotal = $this->_MonthlyPayment2($refundTotal,
+														   $invoiceObj->fee ,
+														   $invoiceObj->start_fee,
+														   $this->Setting->customerInterest,
+														   $this->Setting->repayment_term,
+														   $this->Setting->monthly_invoice_fee,
+														   $this->Setting->administration_fee,
+														   $this->Setting->interest_grace_period
+													   );
+
+			$invoiceUpdate->monthly_payment_total = $monthlyPaymentTotal; // (float)$this->_MonthlyPayment2($refundTotal, $this->Setting->customerInterest, '12') + (float)$invoiceObj->fee;
+			$invoiceUpdate->refund_amount = number_format($data->refund_amount, 2);
+
+			$currentDate = date("Y-m-d");
+			$invoiceUpdate->date = $currentDate;
+
+			$result = $this->_Update('first_invoice', 'credit_id', $creditObj->credit_id, $invoiceUpdate);
+			// Put in a check
+
+			$reply = new StdClass();
+			$reply->code = '1'; // loan
+			$reply->invoice_filename = $invoice_filename;
+			//$reply->email = $peopleObj->email;
+
+			// Invoice data
+			$reply->invoice = (object) $this->_Get("SELECT * FROM first_invoice WHERE credit_id = '" . $creditObj->credit_id . "'");
+
+			// --
+			// -- Add on for Evebnts and full return
+			if ($returnAll) {
+				// -- Check if there is an event_item connected (no need, update if exist)
+				$paramUpdate = new stdClass();
+				$paramUpdate->event_item_status = 'r';
+				$resCheck = $this->_Update('event_item_v4', 'credit_id', $data->_credit_id, $paramUpdate);
+				// UPDATE event_item SET event_item_status = 'r' WHERE credit_id = 12344411568;
+
+				$paramUpdatestatus = new stdClass();
+				$paramUpdateStatus->credit_status = 'r';
+				$resUpdateStaus = $this->_Update('credit', 'credit_id', $data->_credit_id, $paramUpdateStatus);
+
+			}
+
+			return json_encode($reply);
+
+
+		}
+
+		private function EntryCustomerCreditRefund($data, $transType) {
+
+			/*
+
+				$data->refund_amount = "100";
+				$data->$credit_id =
+				$data->$refund_id =
+				$data->invoice_filename =
+				$data->vendor_fee = 1
+				$data->sales_person_rebate = 1
+				$data->sales_person_people_id
+				$data->company_id;
+				$data->store_id
+				$data->people_id;
+				$data->ocrno
+			*/
+
+			$booking = new StdClass();
+			$booking->booking_date = $data->trans_date;
+		   	$booking->booking_text = "Refund";
+		    $booking->booking_type = "refund";
+		    $booking->people_id = $data->people_id;
+		    $booking->company_id = $data->company_id;
+		    $booking->store_id = $data->store_id;
+			$booking->cr_id = $data->cr_id;
+		    $booking->sales_person_people_id = $data->sales_person_people_id;
+		    $booking->credit_id = $data->credit_id;
+		    $booking->invoice_filename = $data->invoice_filename;
+		    $booking->ocrno = $data->ocrno;
+			$booking->receipt_number = $data->receipt_number;
+			$booking->_trans = array();
+
+			// Start trans 1380 // Cusomer credit
+			$trans = new StdClass();
+			$trans->account_no = '1380';
+			$trans->amount = -$data->refund_amount;
+
+			$trans->people_id = $data->people_id;
+			$trans->company_id = $data->company_id;
+			$trans->credit_id = $data->credit_id;
+
+			$trans->trans_type = 'refund';
+			array_push($booking->_trans, $trans);
+			// Start trans 2981 // Vendors payable
+			$trans = new StdClass();
+			$trans->account_no = '2981';
+			$trans->amount = $data->refund_amount;
+
+			$trans->people_id = $data->people_id;
+			$trans->company_id = $data->company_id;
+			$trans->credit_id = $data->credit_id;
+
+			$trans->trans_type = 'refund';
+			array_push($booking->_trans, $trans);
+
+			// -- Start trans 2498 Personal rabat
+			$trans = new StdClass();
+			$trans->account_no = '2498';
+			$trans->amount = ($data->refund_amount * $data->sales_person_rebate / 100);
+
+			$trans->people_id = $data->people_id;
+			$trans->company_id = $data->company_id;
+			$trans->credit_id = $data->credit_id;
+
+			$trans->trans_type = 'sales-reb';
+			array_push($booking->_trans, $trans);
+			// -- Start trans 2891 Venders Payable
+			$trans = new StdClass();
+			$trans->account_no = '2981'; // Vendors fee
+			$trans->amount = -($data->refund_amount * $data->sales_person_rebate / 100);
+
+			$trans->people_id = $data->people_id;
+			$trans->company_id = $data->company_id;
+			$trans->credit_id = $data->credit_id;
+
+			$trans->trans_type = 'sales-reb';
+			array_push($booking->_trans, $trans);
+
+			// -- Start trans 3593 Venders fee
+			$trans = new StdClass();
+			$trans->account_no = '3593'; // Vendors fee
+			$trans->amount = ($data->refund_amount * $data->vendor_fee / 100);
+
+			$trans->people_id = $data->people_id;
+			$trans->company_id = $data->company_id;
+			$trans->credit_id = $data->credit_id;
+
+			$trans->trans_type = 'vendor-fee';
+			array_push($booking->_trans, $trans);
+			// Start trans 2891 // Vendors payable
+			$trans = new StdClass();
+			$trans->account_no = '2981';
+			$trans->amount = -($data->refund_amount * $data->vendor_fee / 100);
+
+			$trans->people_id = $data->people_id;
+			$trans->company_id = $data->company_id;
+			$trans->credit_id = $data->credit_id;
+
+			$trans->trans_type = 'vendor-fee';
+			array_push($booking->_trans, $trans);
+
+			if ($data->refund_all == "y") {
+				if ($data->start_fee > 0) {
+					// Uppläggning avgift
+					$trans = new StdClass();
+					$trans->account_no = '1380';
+					$trans->amount = -$data->start_fee;
+
+					$trans->people_id = $data->people_id;
+					$trans->company_id = $data->company_id;
+					$trans->credit_id = $data->credit_id;
+
+					$trans->trans_type = 'start_fee';
+					array_push($booking->_trans, $trans);
+					// Start trans 2981 // Vendors payable
+					$trans = new StdClass();
+					$trans->account_no = '3541';
+					$trans->amount = +$data->start_fee;
+
+					$trans->people_id = $data->people_id;
+					$trans->company_id = $data->company_id;
+					$trans->credit_id = $data->credit_id;
+
+					$trans->trans_type = 'start-fee';
+					array_push($booking->_trans, $trans);
+				}
+
+				// admin avf (avi avgit)
+				$trans = new StdClass();
+				$trans->account_no = '1380';
+				$trans->amount = -$data->fee;
+
+				$trans->people_id = $data->people_id;
+				$trans->company_id = $data->company_id;
+				$trans->credit_id = $data->credit_id;
+
+				$trans->trans_type = 'fee';
+				array_push($booking->_trans, $trans);
+				// Start trans 2981 // Vendors payable
+				$trans = new StdClass();
+				$trans->account_no = '3540';
+				$trans->amount = +$data->fee;
+
+				$trans->people_id = $data->people_id;
+				$trans->company_id = $data->company_id;
+				$trans->credit_id = $data->credit_id;
+
+				$trans->trans_type = 'fee';
+				array_push($booking->_trans, $trans);
+
+			}
+			$this->_Book($booking);
+		}
+
+
+
+
+	}

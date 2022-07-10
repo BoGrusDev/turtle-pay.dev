@@ -1,0 +1,108 @@
+<?php
+/*
+    CompanyRepotyClass
+
+	Date: 2021-03-18
+
+*/
+
+class CompanyReportClass extends ActionPublic {
+
+	public function Run($data) {
+		$peopleId = $this->_CheckToken($data->_token);
+		if ($peopleId) {
+			$data->_people_id = $peopleId;
+			$actionMethod = 'action' . $data->_action;
+			echo $this->$actionMethod($data);
+		} else {
+			$reply = new stdClass();
+			$reply->code = "9";
+			return json_encode($reply);
+		}
+	}
+
+	public function actionBookingOrder($data) {
+
+		/*
+		{
+	        "_group" : "CompanyReport",
+	        "_action" : "BookingOrder"
+			"_date_from" : "2020-09-01",
+			"_date_to" : "2020-09-16",
+			"_people_id" : "1"
+		}
+
+		"_token" : "5F34603A2363CF7945DB0FD1459A0454",
+
+		*/
+		$reply = new stdClass();
+
+		$param = new stdClass();
+		$param->_group = "CompanyReport";
+		$param->_action = "BookingOrder";
+		$param->_date_from = $data->_date_from;
+		$param->_date_to = $data->_date_to;
+		$param->_company_id = $data->_user_id;
+		$param->_people_id = $data->_people_id;
+		$result = $this->_RestApiCall(json_encode($param));
+
+		return $result;
+    }
+
+
+    public function actionBookingOrderPdf($data) {
+
+		/*
+		{
+	        "_group" : "CompanyReport",
+	        "_action" : "BookingOrderPdf"
+			"_date_from" : "2020-09-01",
+			"_date_to" : "2020-09-16",
+			"_people_id" : "1"
+		}
+
+		"_token" : "5F34603A2363CF7945DB0FD1459A0454",
+
+		*/
+		$reply = new stdClass();
+
+		$param = new stdClass();
+		$param->_group = "CompanyReport";
+		$param->_action = "BookingOrderPdf";
+		$param->_date_from = $data->_date_from;
+		$param->_date_to = $data->_date_to;
+		$param->_company_id = $data->_user_id;
+		$param->_people_id = $data->_people_id;
+		$result = $this->_RestApiCall(json_encode($param));
+
+		return $result;
+	}
+
+	public function actionSieExport($data) {
+
+		/*
+		{
+	        "_group" : "CompanyReport",
+	        "_action" : "SieExport"
+			"_date_from" : "2020-09-01",
+			"_date_to" : "2020-09-16",
+			"_people_id" : "1"
+		}
+
+		"_token" : "5F34603A2363CF7945DB0FD1459A0454",
+
+		*/
+		$reply = new stdClass();
+
+		$param = new stdClass();
+		$param->_group = "CompanyReport";
+		$param->_action = "SieExport";
+		//$param->_date_from = $data->_date_from;
+		$param->_date_to = $data->_date_to;
+		$param->_company_id = $data->_user_id;
+		$param->_people_id = $data->_people_id;
+		$result = $this->_RestApiCall(json_encode($param));
+
+		return $result;
+    }
+}

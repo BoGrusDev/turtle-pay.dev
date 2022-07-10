@@ -1,0 +1,34 @@
+<?php
+/*
+    UserClass
+
+	Date: 2019-04-29
+
+*/
+
+class PeopleClass extends ActionPublic {
+
+	public function Run($data) {
+		$peopleId = $this->_CheckToken($data->_token);
+		if ($peopleId) {
+			$data->_people_id = $peopleId;
+			$actionMethod = 'action' . $data->_action;
+			echo $this->$actionMethod($data);
+		} else {
+			$reply = new stdClass();
+			$reply->code = "9";
+			return json_encode($reply);
+		}
+	}
+
+	public function actionCheckpr($data) {
+		$result = $this->_RestApiCall(json_encode($data));
+		return $result;
+	}
+
+	private function actionCheckEventUser($data) {
+		$result = $this->_RestApiCall(json_encode($data));
+		return $result;
+	}
+
+}

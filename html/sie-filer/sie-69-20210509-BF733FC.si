@@ -1,0 +1,41 @@
+#FLAGGA 0
+#FORMAT PC8
+#SIETYP 4
+#PROGRAM "Turtle Pay Kundportal" 2021.1
+#GEN 20210527
+#FNAMN "Test Bolaget AB"
+#ORGNR 556000-0000
+#KPTYP BAS95
+#KONTO 3009 "Test"
+#KONTO 1610 "Turtle Pay avr„kning"
+#KONTO 4000 "Transaktionsavgift"
+#VER T 211 20210509 "Maxantal test"
+{
+#TRANS 1610 {} 100.00
+#TRANS 1610 {} -2.00
+#TRANS 4000 {} 2.00
+}
+#VER T 212 20210509 "Maxantal test"
+{
+#TRANS 1610 {} 400.00
+}
+#VER T 213 20210509 "Maxantal test"
+{
+#TRANS 1610 {} -150.00
+}
+#VER T 214 20210509 "Maxantal test"
+{
+#TRANS 1610 {} -100.00
+}
+#VER T 215 20210509 "Maxantal test"
+{
+#TRANS 1610 {} -150.00
+}
+#VER T 216 20210509 "Spar test"
+{
+#TRANS 1610 {} 200.00
+}
+#VER T 217 20210509 "Spar test"
+{
+#TRANS 1610 {} 600.00
+}

@@ -1,0 +1,166 @@
+<?php
+/*
+    Class ReportClass
+
+	Date: 2018-10-06
+
+	Actions:
+		- DailyTakings
+
+	Call:
+
+	{
+		"_group" : "Report",
+		"_action" : "DailyTakings",
+		"_date" : "2018-11-18",
+		"_store_id" : "9",
+		"_cr_id" : "1",
+		"_email" : "bo.grus@yahoo.com"
+	}
+	{
+		"_group" : "Report",
+		"_action" : "PaymentList",
+		"_date" : "2018-10-08"
+	}
+
+*/
+
+class ReportClass extends ActionBase {
+
+	public function Run($data) {
+
+		$actionMethod = 'action' . $data->_action;
+		echo $this->$actionMethod($data);;
+
+	}
+
+	private function actionDailyTakings($data) {
+
+
+		//$sql = "SELECT account_no, SUM(amount) AS sum_day FROM trans WHERE account_no = '1380'and trans_type = 'inv' AND ";
+		//$sql .= "store_id = $data->_store_id AND cr_id = $data->_cr_id AND trans_date = '$data->_date'";
+		//echo $sql;
+		$sql = "SELECT t.account_no, SUM(t.amount) AS sum_day ";
+		$sql .= "FROM btrans t, booking b ";
+		$sql .= "WHERE t.account_no = '1380' AND ";
+		$sql .= "t.trans_type = 'new-credit' AND ";
+		$sql .= "b.store_id = $data->_store_id AND b.cr_id = $data->_cr_id AND ";
+		$sql .= "b.booking_date = '$data->_date' AND t.prel = 'n' ";
+		$sql .= "AND b.booking_id = t.booking_id";
+
+		$result = $this->_Get($sql);
+		$sumInv = $result['sum_day']; // Invoice
+
+		//print_r($result);
+		//echo $sumInv; die('');
+
+		$sql = "SELECT t.account_no, SUM(t.amount) AS sum_day ";
+		$sql .= "FROM btrans t, booking b ";
+		$sql .= "WHERE t.account_no = '1380' AND ";
+		$sql .= "t.trans_type = 'refund' AND ";
+		$sql .= "b.store_id = $data->_store_id AND b.cr_id = $data->_cr_id AND t.prel = 'n' ";
+		$sql .= "b.booking_date = '$data->_date' ";
+		$sql .= "AND b.booking_id = t.booking_id";
+		/*
+		$sql = "SELECT account_no, SUM(amount) AS sum_day FROM trans WHERE account_no = '1380'and trans_type = 'ref' AND ";
+		$sql .= "store_id = $data->_store_id AND cr_id = $data->_cr_id AND trans_date = '$data->_date'";
+		*/
+		$result = $this->_Get($sql);
+		$sumRef = $result['sum_day'];
+
+		$sumTotal = (float) $sumInv + (float)  $sumRef;
+
+		$storeInfoObj = $this->storeInfoGet($data->_store_id);
+
+		$resultData = new StdClass();
+		$resultData->company_name = $storeInfoObj->company_name;
+		$resultData->store_name = $storeInfoObj->store_name;
+		$resultData->sumInv = number_format($sumInv, 2);
+		$resultData->sumRef = number_format($sumRef, 2);
+		$resultData->sumTotal = number_format($sumTotal, 2);
+
+		return json_encode($resultData);
+
+	}
+
+	// Used in the Control Panel
+	private function actionPaymentList($data) {
+
+		$sql = "SELECT t.company_id, c.company_name, c.bank_account, SUM(t.amount) AS to_pay FROM trans t, company c ";
+		$sql .= "WHERE t.account_no = '2981' AND t.trans_date = '$data->_date' AND t.company_id = c.company_id ";
+		$sql .= "GROUP BY t.company_id, c.company_name, c.bank_account";
+		$result = $this->_GetList($sql);
+		return json_encode($result);
+
+	}
+
+	private function storeInfoGet($store_id) {
+
+		$sql = "SELECT s.store_name, c.company_name FROM store s, company c WHERE s.store_id = $store_id AND s.company_id = c.company_id ";
+		$result = $this->_Get($sql);
+		return (object) $result;
+
+	}
+
+	private function actionBookingReportList($data) {
+
+		/*
+		$sql = "SELECT t.btrans_id, t.booking_id, b.booking_date, t.trans_type, b.receipt_number, ";
+		$sql .= "t.account_no, t.amount ";
+		$sql .= "FROM btrans t ";
+		$sql .= "LEFT JOIN booking b ON t.booking_id = b.booking_id ";
+		$sql .= "WHERE b.company_id =  $data->_company_id AND ";
+		$sql .= "t.account_no = '2981' AND ";
+		$sql .= "b.booking_date <= '$data->_to_date' AND b.booking_date >= '$data->_from_date' ";
+		$sql .= "ORDER BY t.btrans_id";
+		*/
+
+		$sql = "SELECT t.btrans_id, t.booking_id, b.booking_date, t.trans_type, b.receipt_number, ";
+		$sql .= "t.account_no, t.amount, p.first_name, p.last_name ";
+		$sql .= "FROM btrans t ";
+		$sql .= "LEFT JOIN booking b ON t.booking_id = b.booking_id ";
+		$sql .= "LEFT JOIN people p ON b.people_id = p.people_id ";
+		$sql .= "WHERE b.company_id =  $data->_company_id AND t.prel = 'n' AND ";
+		$sql .= "t.account_no = '2981' AND ";
+		$sql .= "b.booking_date <= '$data->_to_date' AND b.booking_date >= '$data->_from_date' ";
+		$sql .= "ORDER BY t.btrans_id";
+
+		//echo $sql; die('');
+		return json_encode($this->_GetList($sql));
+	}
+
+	private function actionBookingReportBalance($data) {
+		
+		
+		//$sql = "SELECT sum(t.amount) AS balance ";
+		//$sql .= "FROM booking b, btrans t ";
+		//$sql .= "WHERE t.account_no = '2981' AND b.booking_id = t.booking_id AND ";
+		//$sql .= "b.company_id = $data->_company_id AND t.prel = 'n' AND  ";
+		//$sql .= " b.booking_date < '$data->_from_date' ";
+		$sql = "SELECT sum(t.amount) AS balance ";
+		$sql .= "FROM booking b, btrans t ";
+		$sql .= "WHERE b.booking_id = t.booking_id AND t.account_no = '2981' AND b.booking_date < '$data->_from_date' AND t.prel = 'n' AND ";
+		$sql .= "t.company_id = $data->_company_id ";
+		$balanceObj = $this->_Get($sql);
+		if (empty($balanceObj['balance'])) {
+			$balanceObj['balance'] = '0';
+		}
+		return json_encode($balanceObj);
+	}
+
+	private function actionBookingReportCompany($data) {
+		$sql = "SELECT company_name, bank_account, email_report ";
+		$sql .= "FROM company ";
+		$sql .= "WHERE company_id = $data->_company_id ";
+		return json_encode($this->_Get($sql));
+	}
+
+
+
+}
+
+/*
+
+Reply:
+
+*/

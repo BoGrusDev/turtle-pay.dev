@@ -1,0 +1,35 @@
+<?php
+/*
+    Class SettingUpdateClass
+
+	Date: 2018-10-05
+
+	Call:
+	{
+		"_action" : "SettingUpdate",
+		"_bankid" : "no",
+		"_company_id" : "1"
+		"_people_id" : "1"
+	}
+
+	Reply:
+
+
+*/
+
+class SettingsUpdateClass extends ActionBase {
+
+	public function Run($data) {
+
+		echo $this->settingUpdate($data);
+
+	}
+
+	private function settingUpdatet($data) {
+
+		$this->_Update("setting", "setting_id", $data->_invoice_filename, $data);
+		//$result =  $this->_Update("settings", "_id", $data->_company_id, $data);
+
+	}
+
+}

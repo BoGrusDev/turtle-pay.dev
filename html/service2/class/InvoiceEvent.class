@@ -1,0 +1,215 @@
+<?php
+/*
+   InvoiceEventClass
+
+	Date: 2019-08-02
+
+*/
+
+class InvoiceEventClass extends ActionPublic {
+
+	public function Run($data) {
+		$peopleId = $this->_CheckToken($data->_token);
+		if ($peopleId) {
+			$data->_people_id = $peopleId;
+			$actionMethod = 'action' . $data->_action;
+			echo $this->$actionMethod($data);
+		} else {
+			$reply = new stdClass();
+			$reply->code = "9";
+			return json_encode($reply);
+		}
+	}
+
+	private function actionInvoiceEventStatusSet($data) {
+		$data->_company_id = $data->_user_id;
+		$result = $this->_RestApiCall(json_encode($data));
+		return $result;
+	}
+
+	public function actionCompanyStatus($data) {
+
+		$param = new stdClass();
+		$param->_group = "InvoiceEvent";
+		$param->_action = "CompanyStatus";
+		$param->_company_id = $data->_user_id;
+		$param->_people_id = $data->_people_id;
+		$result = $this->_RestApiCall(json_encode($param));
+
+		return $result;
+	}
+
+	public function actionEventList($data) {
+
+		$param = new stdClass();
+		$param->_group = "InvoiceEvent";
+		$param->_action = "EventList";
+		$param->_company_id = $data->_user_id;
+		$param->_people_id = $data->_people_id;
+		$result = $this->_RestApiCall(json_encode($param));
+
+		return $result;
+	}
+
+	public function actionInvoiceEventList($data) {
+
+		$param = new stdClass();
+		$param->_group = "InvoiceEvent";
+		$param->_action = "InvoiceEventList";
+		$param->_company_id = $data->_user_id;
+		$param->_people_id = $data->_people_id;
+		$result = $this->_RestApiCall(json_encode($param));
+
+		return $result;
+	}
+
+	public function actionInvoiceEventGet($data) {
+
+		$param = new stdClass();
+		$param->_group = "InvoiceEvent";
+		$param->_action = "InvoiceEventGet";
+		$param->_company_id = $data->_user_id;
+		$param->_invoice_event_id = $data->_invoice_event_id;
+		$param->_people_id = $data->_people_id;
+		$result = $this->_RestApiCall(json_encode($param));
+
+		return $result;
+	}
+
+	private function actionEventUpdate($data) {
+
+		//$param = new stdClass();
+		$data->_group = "InvoiceEvent";
+		$data->_action = "EventUpdate";
+		$data->_company_id = $data->_user_id;
+
+		$result = $this->_RestApiCall(json_encode($data));
+		return $result;
+	}
+
+	private function actionEventCreate($data) {
+	
+        $data->_company_id = $data->_user_id;
+		$data->_people_id = $data->_people_id;
+		$result = $this->_RestApiCall(json_encode($data));
+		return $result;
+	}
+
+	public function actionEventItemList($data) {
+
+		//$reply = new stdClass();
+		$param = new stdClass();
+		$param->_group = "InvoiceEvent";
+		$param->_action = "EventItemList";
+		$param->_company_id = $data->_user_id;
+        $param->_invoice_event_id = $data->_invoice_event_id;
+        $param->_people_id = $data->_people_id;
+		$result = $this->_RestApiCall(json_encode($param));
+
+		return $result;
+	}
+
+	private function actionItemGet($data) {
+		$param = new stdClass();
+		$param->_group = "InvoiceEvent";
+		$param->_action = "ItemGet";
+		$param->_company_id = $data->_user_id;
+        $param->_item_id = $data->_item_id;
+        $param->_people_id = $data->_people_id;
+		$result = $this->_RestApiCall(json_encode($param));
+
+		return $result;
+	}
+
+	private function actionItemRemove($data) {
+
+		$data->_company_id = $data->_user_id;
+		$data->_people_id = $data->_people_id;
+		$result = $this->_RestApiCall(json_encode($data));
+		return $result;
+
+		/*
+		$param = new stdClass();
+		$param->_group = "InvoiceEvent";
+		$param->_action = "ItemRemove";
+		$param->_company_id = $data->_user_id;
+        $param->_item_id = $data->_item_id;
+        $param->_people_id = $data->_people_id;
+		$result = $this->_RestApiCall(json_encode($param));
+		
+		return $result;
+		*/
+	}
+
+	private function actionStoreList($data) {
+
+		$param = new stdClass();
+		$param->_group = "InvoiceEvent";
+		$param->_action = "StoreList";
+        $param->_company_id = $data->_user_id;
+        $param->_people_id = $data->_people_id;
+		$result = $this->_RestApiCall(json_encode($param));
+
+		return $result;
+	}
+
+	public function actionCustomerList($data) {
+
+		
+		$param = new stdClass();
+		$param->_group = "InvoiceEvent";
+		$param->_action = "CustomerList";
+        $param->_company_id = $data->_user_id;
+        $param->_people_id = $data->_people_id;
+		$result = $this->_RestApiCall(json_encode($param));
+
+		return $result;
+	}
+
+	private function actionItemCreate($data) {
+	
+        $data->_company_id = $data->_user_id;
+		$data->_people_id = $data->_people_id;
+		$result = $this->_RestApiCall(json_encode($data));
+		return $result;
+	}
+
+	private function actionItemUpdate($data) {
+		$data->_company_id = $data->_user_id;
+		//$data->_people_id = $data->_people_id;
+		$result = $this->_RestApiCall(json_encode($data));
+		return $result;
+	}
+
+	private function actionUpdatingBulk($data) {
+		$data->_company_id = $data->_user_id;
+		$result = $this->_RestApiCall(json_encode($data));
+		return $result;
+	}
+
+	private function actionEventImportCutIn($data) {
+		$data->_company_id = $data->_user_id;
+		$result = $this->_RestApiCall(json_encode($data));
+		return $result;
+	}
+	
+	private function actionImportFromOld($data) {
+		$data->_company_id = $data->_user_id;
+		$result = $this->_RestApiCall(json_encode($data));
+		return $result;
+	}
+
+	private function actionGetMailCounter($data) {
+		$data->_company_id = $data->_user_id;
+		$result = $this->_RestApiCall(json_encode($data));
+		return $result;
+	}
+
+	private function actionTestEmail($data) {
+		$data->_company_id = $data->_user_id;
+		$result = $this->_RestApiCall(json_encode($data));
+		return $result;
+	}
+	
+	
+}

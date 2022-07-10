@@ -1,0 +1,2531 @@
+<?php
+/*
+   @[class]EventClass
+
+   @[desc]
+   * Handling api-calls from service2/class/Event.class
+   * Access the database
+   * Handling event, eventitem, panel, webform
+   @[end-desc]
+
+   @[update]2021-07-01
+
+   @[todo]
+   @[end-todo]
+    
+*/
+
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+
+class EventClass extends ActionPortal {
+
+	private $sort1;
+	private $sort2;
+	private $sort3;
+
+	public function Run($data) {
+		
+		/*
+			@[function]
+			$[type]global
+			@[desc]
+			* This is the Entry point for the class
+			* Check if the people call has the principal privilege
+			* If not privilege principal return code 8
+			@[end-desc]
+			@[update]2020-09-02
+			@[param] 
+			* All internal fuction return a JSON whith a echo.
+			@[end-param] 
+		*/
+
+		$actionMethod = 'action' . $data->_action;
+
+		$sql = "SELECT COUNT(*) principal FROM company_people ";
+		//$sql .= "WHERE people_id = $data->_people_id AND company_id = $data->_company_id AND priv IN ('pr', 'sp') ";
+		$sql .= "WHERE people_id = $data->_people_id AND company_id = $data->_company_id AND priv IN ('su','pr','ac', 'sp')";
+		$result = $this->_Get($sql);
+		if ($result['code'] == '1' && $result['principal'] == '1' ) {
+			echo $this->$actionMethod($data);
+		}
+		else {
+			$reply = new StdClass();
+			$reply->code = "8"; // not allowed
+			echo json_encode($reply);
+		}
+
+		// SELECT COUNT(*) principal FROM company_people WHERE people_id = 1 AND company_id = 1 AND priv = 'pr'
+
+	}
+
+	public function actionEventCollection($data) {
+
+		/*
+			@[function]EventCollection
+			$[type]global
+			@[desc]
+			* Load a event to the Webform
+			@[end-desc]
+
+			@[update]
+
+			@[param-json] 
+		
+			{
+				"_group" : "Event",
+				"_action" : "EventCollection",
+				"_company_id" : "69",
+				"_people_id" : "1",
+				"_event_id" : "386"
+			}
+			@[end-param-json] 
+		*/
+
+		$sql = "SELECT * FROM event_v4 ";
+		$sql .= "WHERE event_id=" . $data->_event_id;
+		$eventCollection = $this->_Get($sql);
+		
+		$sql = "SELECT has_spar, known_as, company_name, has_bo FROM company ";
+		$sql .= "WHERE company_id=" . $data->_company_id;
+		$res = $this->_Get($sql);
+
+		// --
+		// -- Get evenCreatetype
+		//
+		/*
+		if ($eventCollection['event_id'] == $eventCollection['base_event_id']) {
+			$eventCollection['_eventCreateType'] = "base";
+		}
+		else if ($eventCollection['inherit_event_id'] != '0') {
+			$eventCollection['_eventCreateType'] = "imported";
+		}
+		else {
+			$eventCollection['_eventCreateType'] = "grouped";
+		}
+		*/
+		// $eventCollection['eventCreateType'];
+		
+
+		$eventCollection['_has_spar'] = $res['has_spar'];
+		$eventCollection['_company_name'] = $res['company_name'];
+		$eventCollection['_known_as'] = $res['known_as'];
+		$eventCollection['_has_bo'] = $res['has_bo'];
+		$this->_Settings($data->_company_id);
+
+		$eventCollection['_first_Invoice_due_days'] = $this->Setting->first_Invoice_due_days;
+		$eventCollection['_first_invoice_fee'] = $this->Setting->first_invoice_fee;
+		$eventCollection['_monthly_invoice_fee'] = $this->Setting->monthly_invoice_fee;
+		$eventCollection['_customerInterest'] = $this->Setting->customerInterest;
+		$eventCollection['_effective_rate'] = $this->Setting->effective_rate;
+		$eventCollection['_repayment_term'] = $this->Setting->repayment_term;
+
+		// New line for the start-fee
+		$eventCollection['_first_invoice_start_fee']  = round($this->Setting->first_invoice_start_fee, 0);
+		$eventCollection['_administration_fee']	= round($this->Setting->administration_fee, 0);
+		$eventCollection['_credit_interest_grace_days'] =$this->Setting->credit_interest_grace_days;
+
+		$eventCollection['_status'] = new stdClass();
+		
+
+		$sql = "SELECT COUNT(p.event_participant_id) AS counter ";
+		$sql .= "FROM event_participant p, event_item_v4 i ";
+		$sql .= "WHERE i.event_id = $data->_event_id AND p.event_item_id = i.event_item_id ";
+		$resCount = $this->_Get($sql);
+
+		if ($resCount['counter'] > 0) {
+			$eventCollection['_status']->hasStarted = 'y';
+		}
+		else {
+			$eventCollection['_status']->hasStarted = 'n';
+		}
+		$eventCollection['_status']->counter = $resCount['counter'];
+		
+		$sql = "SELECT COUNT(inherit_event_id) AS counter ";
+		$sql .= "FROM event_v4 ";
+		$sql .= "WHERE inherit_event_id = $data->_event_id";
+		$resCountInherit = $this->_Get($sql);
+
+		if ($resCountInherit['counter'] > 0) {
+			$eventCollection['_status']->hasChildren  = 'y';
+		}
+		else {
+			$eventCollection['_status']->hasChildren  = 'n';
+		}
+	
+		if ($eventCollection['_has_bo'] == 'y') {
+			$sql = "SELECT company_account_id, account_no, account_name ";
+			$sql .= "FROM company_account ";
+			$sql .= "WHERE company_id = $data->_company_id AND company_account_status = 'a'";
+			$sql .= "ORDER BY account_no ";
+			$eventCollection['_accounts'] = $this->_GetList($sql);
+		}
+
+		// Grouped
+		if ($eventCollection['event_create_type'] == 'g') {
+			$sql = "SELECT participant_max, participant_limit_on ";
+			$sql .= "FROM event_v4 ";
+			$sql .= "WHERE event_id = " . $eventCollection['base_event_id'];
+			$resBase = $this->_Get($sql);
+			$eventCollection['_base_participant_max'] = $resBase['participant_max'];
+			$eventCollection['_base_participant_limit_on'] = $resBase['participant_limit_on'];
+		}
+
+		// -- Check if a base event and has a grouped event connected
+		$eventCollection['_has_grouped'] = 'n';
+		if ($eventCollection['event_create_type'] == 'b') {
+			$sql = "SELECT event_id FROM event_v4 ";
+			$sql .= "WHERE base_event_id = " . $eventCollection['base_event_id'];
+			$sql .= " AND base_event_id NOT IN (event_id)";
+			$sql .= " AND event_create_type = '" . $eventCollection['event_create_type'] . "'";
+			$resGroup = $this->_GetList($sql);
+			if (sizeof($resGroup) > 0) {
+				$eventCollection['_has_grouped'] = 'y';
+			}
+		}
+
+		// Update for Attachment
+		//if ($eventCollection['has_attach'] == 'y') {
+			$sql = "SELECT event_attach_id, filename, realname FROM event_attach WHERE event_id = $data->_event_id AND event_attach_status = 'a'";
+			$eventCollection['_attach_list'] = $this->_GetList($sql);
+		//}
+		
+		return json_encode($eventCollection);
+	}
+
+	public function actionEventCollectionSelection($data) {
+		/*
+			@[function]
+			@[desc]
+			* 
+			@[end-desc]
+			@[update]
+			@[param-json] 
+			@[end-param-json] 
+		*/
+		/*
+			Load Event, design and the Selection and options
+
+			{
+			"_group" : "Event",
+			"_action" : "WebformSelectionGet",
+			"_company_id" : "69",
+			"_people_id" : "1",
+			"_event_id" : "101"
+		}
+		*/
+
+		//if ($eventCollection['participant_on'] == 'y') {
+			$sql = "SELECT * FROM event_selection_setting WHERE event_id = " . $data->_event_id . " ORDER BY event_selection_setting_id";
+			$eventCollectionSelection = $this->_GetList($sql);
+			for ($i = 0; $i < sizeof($eventCollectionSelection); $i++) {
+				$sql = "SELECT * FROM event_option_setting WHERE event_selection_setting_id = " . $eventCollectionSelection[$i]['event_selection_setting_id'] .   " ORDER BY sortorder";
+				$eventCollectionSelection[$i]['option'] = $this->_GetList($sql);
+			}
+		//}
+		
+		return json_encode($eventCollectionSelection);
+	}
+
+	private function actionEventCollectionSelectionRemove($data) {
+
+		/*
+			Load Event, design and the Selection and options
+
+		{
+			"_group" : "Event",
+			"_action" : "EventCollectionSelectionRemove",
+			"_company_id" : "69",
+			"_people_id" : "1",
+			"_event_selection_setting_id" : "41"
+		}
+		*/
+		/*
+			@[function]
+			@[desc]
+			* 
+			@[end-desc]
+			@[update]
+			@[param-json] 
+			@[end-param-json] 
+		*/
+
+		$this->_Delete('event_option_setting', 'event_selection_setting_id', $data->_event_selection_setting_id);
+		$this->_Delete('event_selection_setting', 'event_selection_setting_id', $data->_event_selection_setting_id);
+
+		$reply = new Stdclass();
+		$reply->code = '1';
+		return json_encode($reply);
+
+	}
+
+	private function actionEventCollectionSelectionUpdate($data) {
+		/*
+			@[function]
+			@[desc]
+			* 
+			@[end-desc]
+			@[update]
+			@[param-json] 
+			@[end-param-json] 
+		*/
+		/*
+			Load Event, design and the Selection and options
+
+			{
+			"_group" : "Event",
+			"_action" : "WebformSelectionGet",
+			"_company_id" : "69",
+			"_people_id" : "1",
+			"_event_id" : "101",
+			"_event_selection_id" 
+			"_selection_name :
+			_options = CurrentOption;
+		}
+		*/
+		
+		// New box
+		if ($data->_event_selection_id == '0') {
+			$paramInsert = new stdClass();
+			
+			$paramInsert->event_id =  $data->_event_id;
+			$paramInsert->text = $data->_selection_name;
+			$paramInsert->required_on = $data->_required_on;
+			$paramInsert->calculate_on = 'y';
+			$paramInsert->sortorder = 1000;
+			$resInsert = $this->_Insert('event_selection_setting', $paramInsert);
+
+			// Set the group id 
+			$param = new stdClass();
+			$param->group_selection_setting_id = $resInsert['id'];
+			$resUpdate = $this->_Update('event_selection_setting', 'event_selection_setting_id', $resInsert['id'], $param);
+
+			$data->_event_selection_id = $resInsert['id'];
+			for ($i = 0; $i < sizeof($data->_options); $i++) {
+				unset($data->_options[$i]->event_option_setting_id);
+				$data->_options[$i]->event_selection_setting_id = $data->_event_selection_id;
+				$resInsert = $this->_Insert('event_option_setting', $data->_options[$i]);
+				// Set base
+				$paramUpdateInsert = new stdClass();
+				$paramUpdateInsert->base_event_option_setting_id = $resInsert['id'];
+				$result = $this->_Update("event_option_setting", "event_option_setting_id", $resInsert['id'], $paramUpdateInsert);
+			}
+		}
+		else {
+			$updateParam = new stdClass();
+			$updateParam->text = $data->_selection_name;
+			$updateParam->required_on = $data->_required_on;
+			$res = $this->_Update('event_selection_setting', 'event_selection_setting_id', $data->_event_selection_id, $updateParam);
+			
+			// Update Grouped if exist 2021-08-11
+			$sql = "UPDATE event_selection_setting SET text = '$data->_selection_name' ";
+			$sql .= "WHERE group_selection_setting_id = $data->_event_selection_id";
+			$res = $this->_Query($sql);
+			
+			for ($i = 0; $i < sizeof($data->_options); $i++) {
+				if ($data->_options[$i]->event_option_setting_id == '0') {
+					$resInsert = $this->_Insert('event_option_setting', $data->_options[$i]);
+					$paramUpdateInsert = new stdClass();
+					$paramUpdateInsert->base_event_option_setting_id = $resInsert['id'];
+					$result = $this->_Update("event_option_setting", "event_option_setting_id", $resInsert['id'], $paramUpdateInsert);
+				}
+				if ($data->_options[$i]->event_option_setting_id == '-1') {
+					// $data->_options[$i]->event_selection_setting_id = $data->_event_selection_id;
+				}
+				else {
+					if ( $data->_options[$i]->sortorder == '9999999') {
+						$result = $this->_Delete("event_option_setting", "event_option_setting_id", $data->_options[$i]->event_option_setting_id);
+					}
+					else {
+						$result = $this->_Update("event_option_setting", "event_option_setting_id", $data->_options[$i]->event_option_setting_id, $data->_options[$i]);
+						// 2021-12-08 - Copy and Max
+						if ($data->_options[$i]->max_on == 'y' && $data->_options[$i]->base_event_option_setting_id == '0') {
+							$paramUpdate = new stdClass();
+							$paramUpdate->base_event_option_setting_id = $data->_options[$i]->event_option_setting_id;
+							$this->_Update("event_option_setting", "event_option_setting_id", $data->_options[$i]->event_option_setting_id, $paramUpdate);
+						}
+					}
+				}
+			}
+		}
+	}
+
+	private function actionEventCollectionUpdate($data) {
+		/*
+			@[function]
+			@[desc]
+			* 
+			@[end-desc]
+			@[update]
+			@[param-json] 
+			@[end-param-json] 
+		*/
+		/*
+		[event_name] => Kassaköp
+		[event_url] => kassakop
+		[private_on] => n
+		[limited_time_on] => n
+		[start_date] => 
+		[end_date] => 
+		[company_id] => 69
+		[header_image_on] => y
+		[header_title] => Test Bolaget
+		[header_bcolor] => #eeeeee
+		[header_tcolor] => #444444
+		[header_image] => test-bolaget.jpg
+		[text_color] => #222222
+		[input_bcolor] => #ffffff
+		[input_color] => #222222
+		[background_color] => #ffffff
+		[personal_id_number_label] => Fakturamottagarens personnummer (12 teckem)
+		[email_label] => Fakturamottagarens e-postadress
+		[mobile_on] => y
+		[mobile_label] => Mobilenummer
+		[ref_label] => Er referens
+		[amount_label] => Köpebelopp (kronor)
+		[intro_title] => 
+		[intro_text] => Här beskriver du eventet...
+
+		Bekräfta därefter anmälan med ditt BankID.
+		[participant_on] => n
+		[participant_multi] => y
+		[participant_limit_on] => n
+		[participant_max] => 0
+		[participant_apply_limit_on] => n
+		[participant_title] => Deltagare
+		[participant_add_title] => 
+		[particpant_remove_title] => 0
+		[participant_first_name_label] => Förnamn
+		[participant_last_name_label] => Efternamn
+		[participant_personal_id_on] => n
+		[collect_spar_on] => n
+		[participant_personal_id_label] => Personnummer
+		[participant_address_on] => n
+		[participant_address_label] => Adress
+		[participant_postcode_label] => Postnr
+		[participant_city_label] => Ort
+		[participant_spec_on] => n
+		[other_info_on] => n
+		[other_info_label] => Övrig information
+		[option_grid] => 2
+		[your_ref_on] => n
+		[your_ref_label] => Er ref
+		[amount] => 
+		[ref] => 
+		[create_date] => 2020-02-10
+		[event_status] => p
+		[_event_id] => 115
+		[_group] => Event
+		[_action] => EventCollectionUpdate
+		[_token] => F005D1F3415AB13FE380EE8EE25A0616
+		[_user_id] => 69
+		[_people_id] => 1
+		[_company_id] => 69
+		*/
+
+		if ($data->limited_time_on ==  'n') {
+			unset($data->start_date);
+			unset($data->end_date);
+		}
+		if ($data->event_status == 'a') {
+			// Update the Date
+		}
+		else {
+			unset($data->create_date);
+		}
+		$result = $this->_Update("event_v4", "event_id", $data->_event_id, $data);		
+		
+		// Update participant_title
+		if ($data->event_create_type == 'b') {
+			$param = new stdClass();
+			$param->participant_title = $data->participant_title;
+			$res = $this->_Update("event_v4", "base_event_id", $data->_event_id, $param);
+		}
+		
+		// UpdateMax
+		if ($data->event_create_type == 'b') {
+			$sql = "UPDATE event_v4 SET ";
+			$sql .= "participant_limit_on='" . $data->participant_limit_on . "',";
+			$sql .= "participant_max='" . $data->participant_max . "' ";
+			$sql .= "WHERE base_event_id = $data->_event_id AND ";
+			$sql .= "event_create_type = 'g'"; 
+			$res2 = $this->_Query($sql);
+			$res2 = new stdClass();
+		}
+		
+		
+		return json_encode($result);
+	}
+
+	private function actionEventCopy($data) {
+		/*
+			@[function]
+			@[desc]
+			* 
+			@[end-desc]
+			@[update]
+			@[param-json] 
+			@[end-param-json] 
+		*/
+		/*
+		{
+            "_group" : "Event",
+            "_action" : "EventCopy",
+            "_company_id" : "69",
+			"_people_id" : "1",
+			"_copy_event_id" : "202",
+			"_event_name" : "Extra anmälan",
+			"_connect_on" : "y",
+			"_connect_item" : "y"
+        }
+		*/
+		$sql = "SELECT * ";
+		$sql .= "FROM event_v4 ";
+		$sql .= "WHERE event_id = $data->_copy_event_id  ";
+		
+		$event = $this->_Get($sql);
+		
+		unset($event['event_id']);
+		unset($event['code']);
+		unset($event['start_date']);
+		unset($event['end_date']);
+
+		// -- 
+		// -- Create the url
+		// --
+		$url =  strtolower($data->_event_name);
+		$url = trim($url);
+		$url = str_replace("å","a",$url);
+		$url = str_replace("Å","a",$url);
+		$url = str_replace("ä","a",$url);
+		$url = str_replace("Ä","a",$url);
+		$url = str_replace("ö","o",$url);
+		$url = str_replace("Ö","o",$url);
+		$url = str_replace(' ', '-', $url); 
+		$url = preg_replace('/[^A-Za-z0-9\-]/', '', $url); 
+		$url = str_replace('----', '-', $url); 
+		$url = str_replace('---', '-', $url); 
+		$url = str_replace('--', '-', $url);
+		$event['event_url'] = $url;
+		$event['event_name'] = $data->_event_name;
+		$event['create_date'] = Date('y-m-d');
+		$event['event_status'] = 'p';
+
+		// print_r($event); die('');
+
+		if ($data->_connect_on == 'y') {
+			$event['ref'] = $data->_event_name;
+		}
+		else {
+
+		}
+
+		$reply = $this->_Insert('event_v4', $event);
+		
+		return json_encode($reply);
+	}
+
+	private function actionEventCreate($data) {
+		/*
+			@[function]
+			@[desc]
+			* 
+			@[end-desc]
+			@[update]
+			@[param-json] 
+			@[end-param-json] 
+		*/
+		// 
+		// Create the event in v4
+		// 2020-01-20
+		//
+		/*
+		{
+            "_group" : "Event",
+            "_action" : "EventCreate",
+			"_company_id" : "69",
+			"event_name" : "Nytt resemål"; 
+			"_template_id" : "105",
+			"_people_id" : "1"
+		}
+        */
+
+		// -- 
+		// -- Create the url
+		// --
+		$url =  strtolower($data->event_name);
+		$url = trim($url);
+		$url = str_replace("å","a",$url);
+		$url = str_replace("Å","a",$url);
+		$url = str_replace("ä","a",$url);
+		$url = str_replace("Ä","a",$url);
+		$url = str_replace("ö","o",$url);
+		$url = str_replace("Ö","o",$url);
+		$url = str_replace(' ', '-', $url); 
+		$url = preg_replace('/[^A-Za-z0-9\-]/', '', $url); 
+		$url = str_replace('----', '-', $url); 
+		$url = str_replace('---', '-', $url); 
+		$url = str_replace('--', '-', $url); 
+		
+		$eventName = $data->event_name;
+		$eventName = trim($eventName);
+
+		$sql = "SELECT known_as, wa_logo, wa_url FROM company WHERE company_id = $data->_company_id";
+		$companyInfo = $this->_GET($sql);
+
+		$sql = "SELECT * FROM event_v4 WHERE event_id= $data->_template_id";
+		$template = $this->_GET($sql);
+
+		// --
+		// -- Remove cells
+		unset($template['event_id']);
+		unset($template['code']);
+		unset($template['start_date']);
+		unset($template['end_date']);
+
+		unset($template['parent_on']);
+		unset($template['child_on']); 
+		unset($template['base_event_id']);
+		unset($template['inherit_event_id']);
+		unset($template['inherit_mobile_on']);
+		unset($template['inherit_infobox_1_on']);
+		unset($template['inherit_infobox_2_on']);
+		unset($template['inherit_part_on']); 
+
+		$template['event_name'] = $eventName;
+		$template['event_url'] = $url;
+		$template['wa_url'] = $companyInfo['wa_url'];
+		$template['create_date'] = Date('Y-m-d');
+
+		// echo $template['create_date']; die('');
+
+		$template['event_status'] = 'p';
+		$template['header_title'] = $companyInfo['known_as'];
+
+	
+		$template['header_image_on'] = 'n';
+		$template['company_id'] = $data->_company_id;
+
+		$introText = $template['intro_text'];
+		$introText = str_replace("'", "", $introText);
+		$introText = str_replace('"', '', $introText);
+		$template['intro_text'] = $introText;
+	
+		$reply = $this->_Insert("event_v4", $template);
+
+		$param = new stdClass();	
+		$param->base_event_id = $reply['id'];
+		$res = $this->_Update('event_v4', 'event_id',$reply['id'], $param);
+		
+		$this->eventSelectionCopy($reply['id'], $data->_template_id);
+
+		return json_encode($reply);
+
+	}
+
+	private function actionEventInherit($data) {
+		/*
+			@[function]
+			@[desc]
+			* 
+			@[end-desc]
+			@[update]
+			@[param-json] 
+			@[end-param-json] 
+		
+			{
+				"_group" : "Event",
+				"_action" : "EventInherit",
+				"_company_id" : "69",
+				"_people_id" : "1",
+				"_source_event_id" : "214",
+				"_ref" : "Totalbetalning",
+				"_inherit_part" : "y"
+			}
+
+			ALTER TABLE `event_option_setting` ADD `base_event_option_setting_id` INT NOT NULL DEFAULT '0' AFTER `parent_event_option_setting_id`;
+
+			_inherit_part:
+				- y - continue
+				- n - new but connected
+				- c copy
+
+			## Rules
+			- inherit_part = y - > private_on = npubik is set to off (also needd in the Webform)
+			- All selections is copied with referns
+			
+			# Webform
+			- Inherit selections, if delete a selection a warning will show upp, that link will be removed
+			- Option in a selction cant be deletet, but all can be changed (view for base option)
+			- Notice, all participant inherit occur in the WebApp
+				- email is inherit if exits
+				- Mobile is inherit if it exist
+				- Selection if selection still is there (not removed)
+				- Infobox_1 and infobox_2 is not inherit ().
+
+			// -- BASE INTHERIT ID
+
+		*/
+
+		if($data->_inherit_part == 'y') {
+			$eventCreateType = "i"; // imported
+		}
+		else {
+			$eventCreateType = "g"; // imported
+		}
+
+		$sql = "SELECT * ";
+		$sql .= "FROM event_v4 ";
+		$sql .= "WHERE event_id = $data->_source_event_id  ";
+		$event = $this->_Get($sql);
+
+		unset($event['event_id']);
+		unset($event['code']);
+		unset($event['start_date']);
+		unset($event['end_date']);
+
+		if ($event['parent_on'] == 'n' && $event['child_on'] == 'n') {
+			// Create a base event. first inherit done
+			$param = new stdClass();
+			$param->parent_on = 'y';
+			$res = $this->_Update('event_v4', 'event_id', $data->_source_event_id, $param);
+		}
+		$event['event_create_type'] = $eventCreateType;
+		
+		$event['create_date'] = Date('y-m-d');
+		$event['event_status'] = 'p';
+		$event['child_on'] = 'y';
+		$event['parent_on'] = 'n';
+		$event['ref'] = $data->_ref;
+		if ($data->_inherit_part == 'y') {
+			$event['inherit_event_id'] = $data->_source_event_id;
+			$event['inherit_part_on'] = 'y';
+			$event['private_on'] = 'n';
+			// -- Setting inherit 
+			$event['webform_on'] = 'n';
+			$event['mobile_on'] = 'n';
+			$event['infobox_1_on'] = 'n';
+			$event['infobox_1_label'] = 'Infobox 1';
+			$event['infobox_2_on'] = 'n';
+			$event['infobox_2_label'] = 'Infobox 2';
+
+			if ($event['participant_address_on'] == 'y' || $event['parent_address_on'] == 'y') {
+				$event['parent_address_on'] = 'y';
+			}
+			if ($event['collect_spar_on'] == 'y' || $event['parent_collect_spar_on'] == 'y') {
+				$event['parent_collect_spar_on'] = 'y';
+			}
+			if ($event['date_of_birth_on'] == 'y' || $event['parent_date_of_birth_on'] == 'y') {
+				$event['parent_date_of_birth_on'] = 'y';
+			}
+
+			$event['event_name'] = $event['event_name'] . '-' . $data->_ref;
+			$event['create_date'] = Date('y-m-d');
+			$event['event_status'] = 'p';
+			$event['intro_text'] = str_replace('"','', $event['intro_text']);
+			
+			$event['date_of_birth_on'] = 'n';
+			$event['participant_address_on'] = 'n';
+			$event['note_on'] = 'n';
+			$event['note_label'] = 'Fritextfält';
+			$event['collect_spar_on'] = 'n';
+			$event['participant_personal_id_on'] = 'n';
+
+		}
+		else {
+			$event['inherit_event_id'] = '0';
+			$event['inherit_part_on'] = 'n';
+			$event['private_on'] = 'n';
+			$event['intro_text'] = str_replace('"','', $event['intro_text']);
+		}
+		
+		// -- 
+		// -- Create the url
+		// --
+		$url =  strtolower($data->_ref);
+		$url = trim($url);
+		$url = str_replace("å","a",$url);
+		$url = str_replace("Å","a",$url);
+		$url = str_replace("ä","a",$url);
+		$url = str_replace("Ä","a",$url);
+		$url = str_replace("ö","o",$url);
+		$url = str_replace("Ö","o",$url);
+		$url = str_replace(' ', '-', $url); 
+		$url = preg_replace('/[^A-Za-z0-9\-]/', '', $url); 
+		$url = str_replace('----', '-', $url); 
+		$url = str_replace('---', '-', $url); 
+		$url = str_replace('--', '-', $url);
+		$event['event_url'] .= '-' . $url;
+	
+		$replyEvent = $this->_Insert('event_v4', $event);
+	
+		$sql = "SELECT * FROM event_selection_setting WHERE event_id = $data->_source_event_id";
+		$selections = $this->_GetList($sql);
+		if (sizeof($selections) > 0) {
+			for ($i=0; $i<sizeof($selections); $i++) {
+				if ($data->_inherit_part == 'y' ) {
+					$selections[$i]['parent_event_selection_setting_id'] = $selections[$i]['event_selection_setting_id'];
+
+				}
+				else {
+					$selections[$i]['parent_event_selection_setting_id'] = '0';
+				}
+				$currentSelectionId = $selections[$i]['event_selection_setting_id'];
+				unset($selections[$i]['event_selection_setting_id']);
+				$selections[$i]['event_id'] = $replyEvent['id'];
+				$resSelection = $this->_Insert('event_selection_setting', $selections[$i]);
+				// Set the group id if inherit else the old will be keep and will be grouped with that
+				if ($data->_inherit_part == 'y' ) {
+					$param = new stdClass();	
+					$param->group_selection_setting_id = $resSelection['id'];
+					$res = $this->_Update('event_selection_setting', 'event_selection_setting_id',$resSelection['id'], $param);
+				}
+				//print_r($resSelection);
+				$sql = "SELECT * FROM event_option_setting WHERE event_selection_setting_id = " . $currentSelectionId;
+				$options = $this->_GetList($sql);
+				
+				if (sizeof($options) > 0) {
+					for ($j=0; $j<sizeof($options); $j++) {
+						$options[$j]['event_selection_setting_id'] = $resSelection['id'];
+						if ($data->_inherit_part == 'y' ) {
+							$options[$j]['parent_event_option_setting_id'] = $options[$j]['event_option_setting_id'];
+							//$options[$j]['base_event_option_setting_id'] = 'n';
+						}
+						else {
+							$options[$j]['parent_event_option_setting_id'] = '0';
+							if ($options[$j]['max_on'] == 'n') {
+								// $options[$j]['parent_event_option_setting_id'] = $options[$j]['event_option_setting_id'];
+								//$options[$j]['base_event_option_setting_id'] = 'n';
+							}
+						}
+						unset($options[$j]['event_option_setting_id']);
+						if ($eventCreateType == 'i') {
+							$options[$j]['base_event_option_setting_id'] = '0';
+						}
+						/*
+						else {
+							$event['base_event_option_setting_id'] = '0';
+						}
+						*/
+						$resOption = $this->_Insert('event_option_setting', $options[$j]);
+					}
+				}
+			}
+		}	
+		return json_encode($replyEvent);
+	}
+
+	private function actionEventItemList2($data) {
+		/*
+			@[function]
+			@[desc]
+			* 
+			@[end-desc]
+			@[update]
+			@[param-json] 
+			@[end-param-json] 
+		*/
+		/*
+		@[function]EventItemList2
+
+		@[desc]
+  		* Create the report with date form the Panel
+  		 @[end-desc]
+
+   		@[update]2020-09-02
+
+		@[todo]
+		* Filter
+		@[end-todo]
+
+		Deltagare,Anmälningsavgift,Belopp,Summa,Fakturamottagare,Trans.datum
+
+		$[param-json] 
+			{
+				"_group" : "Event",
+				"_action" : "EventItemList2",
+				"_company_id" : "13",
+				"_people_id" : "1",
+				"_event_id" : "263",
+				"_fields" : "part_name,d_date_of_birth,s_0,s_1,_part_sum",
+				"_sort" : "part_name",
+				"_sort_order" : "a",
+				"_header" : "Deltagare,Födelseår,Anmälning,Betalning,Summa",
+				"_part_sum" : "n",
+				"_abandoned" : "n"
+
+			}
+			$[end-param-json] 
+		
+		*/
+		
+		// -- Prepare
+		/*
+		$headerArray = explode(',', $data->_header);
+		$fieldsArray = explode(',', $data->_fields);
+
+		for ($i=0; $i < $fieldsArray.length; $i++) {
+			if $
+		}
+		*/
+
+		// $data->_participant_status = 'c';
+
+		$reply = new stdClass();
+
+		// Get the title from the base event
+		$sql = "SELECT participant_title ";
+		$sql .= "FROM event_v4 ";
+		$sql .= "WHERE event_id = $data->_event_id";
+		$reply->labels = $this->_Get($sql);
+
+		$sql = "SELECT event_id, participant_title, participant_address_on, collect_spar_on, email_label, mobile_on, mobile_label, note_on, note_label, date_of_birth_on, date_of_birth_label, infobox_1_on, infobox_1_label, infobox_2_on, infobox_2_label  ";
+		$sql .= "FROM event_v4 WHERE base_event_id = $data->_event_id"; // AND event_participant_status = '$data->_participant_status'";
+		$resEventIds = $this->_GetList($sql);
+		$eventIds = '';
+		for ($i=0; $i<sizeof($resEventIds); $i++) {
+			$eventIds .= $resEventIds[$i]['event_id'] . ',';
+		}
+		$eventIds = substr($eventIds, 0, -1);
+		
+		$reply->fields = $resEventIds;
+
+		$eventIdArr = array();
+		for ($i=0; $i<sizeof($reply->fields); $i++) {
+			//$eventIdarr[166] = 2;
+			$eventIdarr[$reply->fields[$i]['event_id']] = $i;
+		}
+		
+		// NY DEL 20210808
+		
+		$sql = "SELECT ess.group_selection_setting_id, ess.text, e.event_id, e.tdb_on FROM event_selection_setting ess, event_v4 e "; // BEW
+		$sql .= "WHERE e.base_event_id = $data->_event_id  AND e.event_id = ess.event_id ";
+		$sql .= "ORDER BY ess.group_selection_setting_id ";
+		$olabels = $this->_GetList($sql);
+
+		$reply->olabels = array();
+		$index = -1;
+		for ($i=0; $i<sizeof($olabels); $i++) {
+			$notExist = true;
+			if (sizeof($reply->olabels) > 0 ) {
+				for ($j=0; $j<sizeof($reply->olabels); $j++) {
+					if ($olabels[$i]['group_selection_setting_id'] == $reply->olabels[$j]['group_selection_setting_id']) {
+						$notExist = false;
+					}
+				}
+			}
+			if ($notExist) {
+				$index++;
+				array_push($reply->olabels, array());
+				$reply->olabels[$index]['group_selection_setting_id'] = $olabels[$i]['group_selection_setting_id'];
+				$reply->olabels[$index]['text'] = $olabels[$i]['text'];
+				$reply->olabels[$index]['event_id'] = $olabels[$i]['event_id'];
+				$reply->olabels[$index]['tdb_on'] = $olabels[$i]['tdb_on'];
+			}
+		}
+
+
+		/*
+		$sql = "SELECT ess.group_selection_setting_id, ess.text FROM event_selection_setting ess, event_v4 e ";
+		$sql .= "WHERE e.base_event_id = $data->_event_id  AND e.event_id = ess.event_id ";
+		//$sql .= "GROUP BY ess.group_selection_setting_id, ess.text ";
+		$sql .= "GROUP BY ess.group_selection_setting_id ";  // UPDATED 20210808, grupperade och ändrade namn
+		$reply->olabels = $this->_GetList($sql);
+		*/
+		//echo $sql;
+		//print_r($reply->olabels); 
+		//die('');
+
+		for ($i=0; $i<sizeof($reply->olabels); $i++) {
+			$sql = "SELECT event_selection_setting_id FROM event_selection_setting ";
+			$sql .= "WHERE group_selection_setting_id = " . $reply->olabels[$i]['group_selection_setting_id']; 
+			$replySelectionIds = $this->_GetList($sql);
+			$reply->olabels[$i]['selection_ids'] = '';
+			for ($j=0; $j < sizeof($replySelectionIds); $j++) {
+				$reply->olabels[$i]['selection_ids'] .= $replySelectionIds[$j]['event_selection_setting_id'] . ',';
+			}
+			$reply->olabels[$i]['selection_ids'] = substr($reply->olabels[$i]['selection_ids'], 0, -1);
+		}
+
+		// print_r($reply->olabels); die('');
+
+		for ($i=0; $i<sizeof($reply->olabels); $i++) {
+			$sql = "SELECT event_option_setting_id, text, sortorder ";
+			$sql .= "FROM event_option_setting ";
+			//$sql .= "WHERE event_selection_setting_id = " . $reply->olabels[$i]['event_selection_setting_id']; 
+			$sql .= "WHERE event_selection_setting_id IN (" . $reply->olabels[$i]['selection_ids'] . ")"; 
+			$sql .= " ORDER BY sortorder";
+			$reply->olabels[$i]['option'] = $this->_GetList($sql);      
+		}
+
+		$sql = "SELECT ";
+		$sql .= "p.base_participant_id, p.event_participant_id, i.event_id, CONCAT(p.last_name, ' ', p.first_name) AS participant_name, p.*,";
+		$sql .= "r.request_time, e.participant_address_on, e.collect_spar_on, e.date_of_birth_on, ";
+		$sql .= "i.people_name, i.email AS people_email, i.mobile AS people_mobile, i.referens, i.infobox_1, i.infobox_2 ";
+		$sql .= "FROM event_participant p, event_item_v4 i, invoice_request r, event_v4 e ";
+		$sql .= "WHERE ";
+		$sql .= "i.event_id IN  ($eventIds) AND ";
+		$sql .= "i.event_item_id = p.event_item_id AND "; 
+		$sql .= "i.event_item_status = 'c' AND ";
+		$sql .= "i.event_id = e.event_id AND ";
+		$sql .= "i.approved_code = r.approved_code AND ";
+		$sql .= "p.event_participant_status = '$data->_participant_status' ";
+		$sql .= "ORDER BY p.base_participant_id, p.event_participant_id ";
+		$reply->items = $this->_GetList($sql);
+		$items = $reply->items;
+
+		
+		//echo '<pre>';
+		//print_r($items);
+		//die('');
+		
+
+		if (sizeof($items) == 0) {
+			$reply = new stdClass();
+			$reply->code = '2';
+			$reply->denied_code = 'no-participants';
+			return json_encode($reply);
+			die('');
+		} 
+
+		$people = array();
+		$currentId = '0';
+		$index = -1;
+		for ($i=0; $i<sizeof($items); $i++) {
+			
+			/*
+			if ($i == 2) {
+				print_r($people);
+				die('');
+			}
+			print_r($items[$i]);
+			*/
+
+			if ($currentId != $items[$i]['base_participant_id']) {
+				// -- New participant
+				
+				// $partIndex = -1;
+				$people[] = array();
+				$index++;
+				$people[$index]['base_participant_id'] = $items[$i]['base_participant_id'];
+				
+				$people[$index]['part_name'] = $items[$i]['participant_name'];
+				
+				if ($currentId == '0') {
+					$people[$index]['participant_ids'] = '';
+				}
+				else {
+					$people[$index-1]['participant_ids'] = substr( $people[$index-1]['participant_ids'], 0, -1);
+					$people[$index]['participant_ids'] = '';
+				}
+				$currentId = $items[$i]['base_participant_id'];
+
+			}
+			// -- Create info from the invoice_event_item, that data kan be duplicated
+			// -- Need for het selections and options
+			$people[$index]['participant_ids'] .= $reply->items[$i]['event_participant_id'] . ',';
+
+
+			if ($items[$i]['participant_address_on'] == 'y') {
+				$people[$index]['d_address'] = $this->removeNull($reply->items[$i]['address']);
+				$people[$index]['d_postcode'] = $this->removeNull($reply->items[$i]['postcode']);
+				$people[$index]['d_city'] = $this->removeNull($reply->items[$i]['city']);
+				$people[$index]['d_mobile'] = $this->removeNull($reply->items[$i]['mobile']);
+				$people[$index]['d_email'] = $this->removeNull($reply->items[$i]['email']);
+			}
+
+			if ($items[$i]['collect_spar_on'] == 'y') {
+				$people[$index]['d_address'] = $this->removeNull($reply->items[$i]['address']);
+				$people[$index]['d_postcode'] = $this->removeNull($reply->items[$i]['postcode']);
+				$people[$index]['d_city'] = $this->removeNull($reply->items[$i]['city']);
+				$people[$index]['d_personno'] = $this->removeNull($reply->items[$i]['personal_id_number']);
+				$people[$index]['d_personno'] = $this->removeNull($reply->items[$i]['personal_id_number']);
+			}
+
+			if ($items[$i]['date_of_birth_on'] == 'y') {
+				$people[$index]['d_date_of_birth'] = $this->removeNull($reply->items[$i]['date_of_birth']);
+			}
+
+			// $partIndex++;
+
+			// set p index (depends on from what web form
+			$eventIndex = $eventIdarr[$items[$i]['event_id']];
+
+			$nameIndex = 'p_' . $eventIndex . '_note';
+			$people[$index][$nameIndex] = $items[$i]['note']; // $this->removeNull($reply->items[$i]['note']);
+			
+			$nameIndex = 'p_' . $eventIndex . '_people_name';
+			$people[$index][$nameIndex] = $items[$i]['people_name'];
+	
+			$nameIndex = 'p_' . $eventIndex . '_email';
+			$people[$index][$nameIndex] = $items[$i]['people_email'];
+	
+			$nameIndex = 'p_' . $eventIndex . '_mobile';
+			$people[$index][$nameIndex] = $items[$i]['people_mobile'];
+	
+			$nameIndex = 'p_' . $eventIndex . '_referens';
+			$people[$index][$nameIndex] = $items[$i]['referens'];
+		
+			$nameIndex = 'p_' . $eventIndex . '_infobox_1';
+			$people[$index][$nameIndex] = $items[$i]['infobox_1'];
+	
+			$nameIndex = 'p_' . $eventIndex . '_infobox_2';
+			$people[$index][$nameIndex] = $items[$i]['infobox_2'];
+		
+			$nameIndex = 'p_' . $eventIndex . '_trans_date';
+			if (strlen($items[$i]['request_time']) > 16){
+				$items[$i]['request_time'] = substr( $items[$i]['request_time'], 0, 16);
+			}
+			$people[$index][$nameIndex] = $items[$i]['request_time'];
+			
+		}
+		// Remove last comma in last people
+		$people[$index]['participant_ids'] = substr( $people[$index]['participant_ids'], 0, -1);
+		
+		// echo '<pre>';
+		// print_r($people);
+		// die('');
+
+		$fields = ' ' . $data->_fields; // , s_1, s_2
+		
+		if (sizeof($people) > 0) {
+			for ($i=0; $i<sizeof($people); $i++) {
+				for ($j=0; $j<sizeof($reply->olabels); $j++) {
+					$preFix = 's_' . $j;
+					if (strpos($fields, $preFix) > 0) {
+						$people[$i][$preFix] = '';
+					}
+					$preFix = 'v_' . $j;
+					if (strpos($fields, $preFix) > 0) {
+						$people[$i][$preFix] = 0;	
+					}
+				}
+				if (isset($data->_part_sum)) {
+					$people[$i]['_part_sum'] = 0;
+				}	
+			}
+		}
+
+		for ($i=0; $i<sizeof($people); $i++) {
+			$sql = "SELECT o.event_option_setting_id, o.value, ss.sortorder, os.text, ss.event_selection_setting_id ";
+			$sql .= "FROM event_option o,  ";
+			$sql .= "event_option_setting os,  ";
+			$sql .= "event_selection_setting ss, ";
+			$sql .= "event_participant p, ";
+			$sql .= "event_item_v4  i ";
+			$sql .= "WHERE o.event_option_setting_id = os.event_option_setting_id AND ";
+			$sql .= "o.event_participant_id IN (" . $people[$i]['participant_ids'] . ")";  
+			$sql .= "AND os.event_selection_setting_id = ss.event_selection_setting_id  ";
+			$sql .= "AND p.event_participant_id = o.event_participant_id ";
+			$sql .= "AND p.event_item_id = i.event_item_id  ";
+			$sql .= "AND i.event_item_status = 'c' ";
+			$sql .= "AND o.event_option_status = 'c' "; // 2021-10-03 'c', 'r'
+			$sql .= "ORDER BY ss.event_selection_setting_id ";
+			$options = $this->_GetList($sql);
+			
+			if (sizeof($options) > 0) {
+				for ($j=0; $j<sizeof($options); $j++) { 
+					for ($k=0; $k<sizeof($reply->olabels); $k++) {
+						if (strpos(' ' . $reply->olabels[$k]['selection_ids'], $options[$j]['event_selection_setting_id']) > 0) {
+							$preFix = 's_' . $k;
+							if (strpos($fields, $preFix) > 0) {	
+								$people[$i][$preFix] = $options[$j]['text'];
+							}
+							$preFix = 'v_' . $k;
+							if (strpos($fields, $preFix) > 0) {	
+								$people[$i][$preFix] = $options[$j]['value'];
+							}
+						}
+					} 
+					if (isset($data->_part_sum)) {
+						//$people[$i]['_part_sum'] += (int) $options[$j]['value'];
+						//if ((float)$options[$j]['value'] > 0) {
+							$people[$i]['_part_sum'] = $people[$i]['_part_sum'] + (float)$options[$j]['value'];
+						//}
+					}
+				}
+			}     
+		}
+		
+		// -- 
+		// -- Create the report
+		// --
+		
+		if (strlen($data->_fields) > 0) {
+			$fieldReport = explode(',', $data->_fields);
+		}
+		if(isset($data->_filter)) {
+			$filterReport = explode(',', $data->_filter);
+		}
+		//print_r($filterReport); die('');
+		$index = -1;
+		$report = array();
+		for ($i=0; $i<sizeof($people); $i++) {
+			$Ok = true;
+			if(isset($data->_filter)) {
+				if (sizeof($filterReport) == 1) {
+					if (isset($filter[0]['set]'])) {
+						die('set');
+					}
+					else {
+						if (strpos($people[$i]['s_0'], 'Lördag') === 0) {
+							// OK
+						}
+						else {
+							$Ok = false;
+						}
+					}
+				}
+			}
+			if ($Ok) {
+				$report[] = array();
+				$index++;
+				if (strlen($data->_fields) > 0) {
+					for ($j=0; $j<sizeof($fieldReport); $j++) {
+						$tag = trim($fieldReport[$j]); 
+						if (isset($people[$i][$tag])) {
+							$report[$index][$tag] = $people[$i][$tag];
+						}
+						else {
+							$report[$index][$tag] = '';
+						}
+					}
+					// Avräkning 
+					// if (isset($data->_abandoned) && $data->_abandoned == 'y') {
+						$report[$index]['_base_participant_id'] = $people[$i]['base_participant_id'];
+					// }
+
+				}
+			}	
+		}
+
+		// echo json_encode($report); 
+
+		// https://stackoverflow.com/questions/2699086/how-to-sort-multi-dimensional-array-by-value
+		$sortParamNumber = 1; // Fixed
+		$sortReport = explode(',', $data->_sort);
+		for ($i=0; $i<sizeof($sortReport); $i++) {
+			if ($i==0) {
+				$this->sort1 = trim($sortReport[$i]);
+				$sortParamNumber = 1;
+			}
+			/*
+				NOT INSALLED YET
+				else if ($i==1) {
+					$this->sort2 = trim($sortReport[$i]);
+					$sortParamNumber = 2;
+				}
+				else if ($i==2) {
+					$this->sort3 = trim($sortReport[$i]);
+					$sortParamNumber = 3;
+				}
+			*/
+		}
+
+		if ($data->_sort_order == 'a') {
+			$this->sort2 =  'part_name';
+			usort($report, function($a, $b) {
+				$sort1 = $this->sort1;
+				$sort2 = 'part_name'; // $this->sort2;
+				$retval = strtoupper($a[$sort1]) <=> strtoupper($b[$sort1]);
+				if ($retval == 0) {
+					$retval = strtoupper($a[$sort2]) <=> strtoupper($b[$sort2]);
+				}
+				return $retval;
+			});
+		}
+		else {
+			usort($report, function($a, $b) {
+				$sort1 = $this->sort1;
+				if(strtoupper($a[$sort1])==strtoupper($b[$sort1])) return 0;
+    			return strtoupper($a[$sort1]) < strtoupper($b[$sort1])?1:-1;
+			});
+		}
+		
+		//echo json_encode($report); 
+		//die('');
+
+		$header = explode(',', $data->_header);
+	
+		$reply = new stdClass();
+		$reply->header = $header;
+		$reply->report = $report;
+		return json_encode($reply);
+
+
+	}
+
+	private function actionEventItemListSettings($data) {
+		/*
+			@[function]
+			@[desc]
+			* 
+			@[end-desc]
+			@[update]
+			@[param-json] 
+			@[end-param-json] 
+		*/
+		
+		/*
+		{
+            "_group" : "Event",
+            "_action" : "EventItemList",
+            "_company_id" : "69",
+			"_people_id" : "1",
+			"_event_id" : "166"
+        }
+		*/
+
+        // --- Load Event
+		$reply = new stdClass();
+		
+		$sql = "SELECT participant_title ";
+		$sql .= "FROM event_v4 ";
+		$sql .= "WHERE event_id = $data->_event_id";
+		$reply->labels = $this->_Get($sql);
+
+		$sql = "SELECT event_selection_setting_id, text ";
+		$sql .= "FROM event_selection_setting WHERE event_id = $data->_event_id ";
+		//$sql .= "ORDER BY sortorder";
+		$sql .= "ORDER BY event_selection_setting_id";
+
+		$reply->olabels = $this->_GetList($sql);
+
+		for ($i=0; $i<sizeof($reply->olabels); $i++) {
+			$sql = "SELECT event_option_setting_id, text, sortorder ";
+            $sql .= "FROM event_option_setting ";
+            $sql .= "WHERE  event_selection_setting_id = " . $reply->olabels[$i]['event_selection_setting_id']; 
+			$sql .= " ORDER BY sortorder";
+
+			// SELECT event_option_setting_id, text, sortorder FROM event_option_setting WHERE event_selection_setting_id = 177 ORDER BY sortorder
+
+            $reply->olabels[$i]['option'] = $this->_GetList($sql);          
+		}
+
+		return json_encode($reply);		
+		//print_r($reply); die('');
+	}
+
+	private function actionEventItemLoad($data) {
+		// Obsolete
+		/*
+			@[function]
+			@[desc]
+			* 
+			@[end-desc]
+			@[update]
+			@[param-json] 
+			@[end-param-json] 
+		*/
+		if ($data->_company_id == '78') {
+			$data->_webform_id = '6';
+		}
+
+        $list = new stdclass();
+      
+
+        $sql = "SELECT i.* FROM event_item i, credit c WHERE event_id =  $data->_event_id  AND i.approved_code = c.approved_code AND event_item_status = 'c'";
+		
+
+        $result = $this->_GetList($sql);
+        
+		$counter = -1;
+		$part = array();
+        for ($i=0; $i<sizeof($result); $i++) {
+            $sql = "SELECT event_participant_id, first_name, last_name FROM event_participant WHERE event_item_id = " . $result[$i]['event_item_id'];
+            $items  = $this->_GetList($sql);
+           
+            if (sizeof($items) > 0 ) {
+                for ($j=0; $j<sizeof($items); $j++) {
+               
+					$counter++;
+					$part[$items[$j]['event_participant_id']] = $items[$j]['last_name'] . ', ' . $items[$j]['first_name'];
+                }
+            }
+        }
+
+		//asort($part); 
+		natcasesort($part);
+		
+		$list = new stdClass();
+		$list->part = array();
+		$list->option1 = array();
+		$counter = -1;
+
+		foreach ($part as $key => $value) {
+			$counter++;
+			$list->part[$counter] = $value;
+
+			$sql = "SELECT event_option_id, webform_option_id, value FROM event_option WHERE event_participant_id = " . $key;  
+			//$sql = "SELECT event_option_id, webform_option_id, value FROM event_option WHERE event_participant_id = " . $key . " ORDER BY sortorder"; 
+			$options = $this->_GetList($sql);
+			$list->option1[$counter] = $this->getOptionText($options[0]['webform_option_id']);
+			if ($data->_company_id == '75') {
+				$list->option2[$counter] = $this->getOptionText($options[1]['webform_option_id']);
+				$list->option3[$counter] = $this->getOptionText($options[2]['webform_option_id']);
+				$list->option4[$counter] = $this->getOptionText($options[3]['webform_option_id']);
+				if ($data->_event_id == '9') {
+					$list->option5[$counter] = $this->getOptionText($options[4]['webform_option_id']);
+					$list->option6[$counter] = $this->getOptionText($options[5]['webform_option_id']);
+				}
+			}
+			$sql = "SELECT e.your_ref, e.mobile, e.other_info FROM event_participant p, event_item e WHERE event_participant_id = $key AND e.event_item_id = p.event_item_id";     
+			$res = $this->_Get($sql);
+			$list->your_ref[$counter] = $res['your_ref'];
+			$list->mobile[$counter] = $res['mobile'];
+			$list->other_info[$counter] = $res['other_info'];
+		}
+
+        return json_encode($list);
+    }
+
+	private function actionEventItemPanel($data) {
+		/*
+			@[function]EventItemPanel
+			@[desc]
+			Load all data for the Panel
+			* - Events based on  base-event
+			* - Seletcions
+			* - Options
+			@[end-desc]
+			@[update]2020-09-02
+			@8param-function]$data
+			@[param-json] 
+			{
+				"_group" : "Event",
+				"_action" : "EventItemPanel",
+				"_company_id" : "13",
+				"_people_id" : "1",
+				"_event_id" : "166"
+			}
+			@[end-param-json] 
+		*/
+		
+		/*
+		$data->_mobile_on = 'y';
+		$data->_infobox_1_on = 'y';
+		$data->_infobox_2_on = 'y';
+		
+		SELECT ess.group_selection_setting_id, ess.text, e.event_id, e.tdb_on 
+		FROM event_selection_setting ess, event_v4 e 
+		WHERE e.base_event_id = 400 AND e.event_id = ess.event_id 
+		ORDER BY ess.group_selection_setting_id
+		
+		SELECT DISTINICT ess.group_selection_setting_id
+		FROM event_selection_setting ess, event_v4 e 
+		WHERE e.base_event_id = 400 AND e.event_id = ess.event_id 
+		ORDER BY ess.group_selection_setting_id
+
+		*/
+
+		$reply = new stdClass();
+
+		// Get the title from the base event
+		$sql = "SELECT participant_title ";
+		$sql .= "FROM event_v4 ";
+		$sql .= "WHERE event_id = $data->_event_id";
+		$reply->labels = $this->_Get($sql);
+
+		// $sql = "SELECT event_id FROM event_v4 WHERE base_event_id = $data->_event_id";
+		$sql = "SELECT event_name, ref, event_id, participant_title, participant_address_on, collect_spar_on, email_label, tdb_on, "; // NEW
+		$sql .= "mobile_on, mobile_label, note_on,note_label, date_of_birth_on, date_of_birth_label,"; 
+		$sql .= "infobox_1_on, infobox_1_label, infobox_2_on, infobox_2_label,ref_label ";  
+		$sql .= "FROM event_v4 ";
+		$sql .= "WHERE base_event_id = $data->_event_id AND event_status='p'";
+		$resEventIds = $this->_GetList($sql);
+		$eventIds = '';
+		for ($i=0; $i<sizeof($resEventIds); $i++) {
+			$eventIds .= $resEventIds[$i]['event_id'] . ',';
+		}
+		$eventIds = substr($eventIds, 0, -1);
+		
+
+
+		$reply->fields = $resEventIds;
+
+
+		// NY DEL 20210808
+
+		$sql = "SELECT ess.group_selection_setting_id, ess.text, e.event_id, e.tdb_on FROM event_selection_setting ess, event_v4 e "; // BEW
+		$sql .= "WHERE e.base_event_id = $data->_event_id  AND e.event_id = ess.event_id ";
+		$sql .= "ORDER BY ess.group_selection_setting_id ";
+		$olabels = $this->_GetList($sql);
+
+		$reply->olabels = array();
+		$index = -1;
+		for ($i=0; $i<sizeof($olabels); $i++) {
+			$notExist = true;
+			if (sizeof($reply->olabels) > 0 ) {
+				for ($j=0; $j<sizeof($reply->olabels); $j++) {
+					if ($olabels[$i]['group_selection_setting_id'] == $reply->olabels[$j]['group_selection_setting_id']) {
+						$notExist = false;
+					}
+				}
+			}
+			if ($notExist) {
+				$index++;
+				array_push($reply->olabels, array());
+				$reply->olabels[$index]['group_selection_setting_id'] = $olabels[$i]['group_selection_setting_id'];
+				$reply->olabels[$index]['text'] = $olabels[$i]['text'];
+				$reply->olabels[$index]['event_id'] = $olabels[$i]['event_id'];
+				$reply->olabels[$index]['tdb_on'] = $olabels[$i]['tdb_on'];
+			}
+		}
+		
+		/*
+		print_r($reply->olabels); die('');
+		*/
+		/*
+		$sql = "SELECT ess.group_selection_setting_id, ess.text, e.event_id, e.tdb_on FROM event_selection_setting ess, event_v4 e "; // BEW
+		$sql .= "WHERE e.base_event_id = $data->_event_id  AND e.event_id = ess.event_id ";
+		$sql .= "ORDER BY ess.group_selection_setting_id ";
+		//$sql .= "GROUP BY ess.group_selection_setting_id, ess.text ";
+		$reply->olabels = $this->_GetList($sql);
+		*/
+
+		$removeOlabels = array();
+		for ($i=0; $i<sizeof($reply->olabels); $i++) {
+			if ($reply->olabels[$i]['tdb_on'] == 'y' && $reply->olabels[$i]['event_id'] == $data->_event_id) { 
+				// skip base event selections (labels) for panel TDB
+				//array_push($removeOlabels, $i);
+				$reply->olabels[$i]['show'] = 'n';
+				//unset($olabels[$i];
+			}
+			else {
+				$reply->olabels[$i]['show'] = 'y'; // NEW
+				$sql = "SELECT event_selection_setting_id FROM event_selection_setting ";
+				$sql .= "WHERE group_selection_setting_id = " . $reply->olabels[$i]['group_selection_setting_id']; 
+				$replySelectionIds = $this->_GetList($sql);
+				$reply->olabels[$i]['selection_ids'] = '';
+				for ($j=0; $j < sizeof($replySelectionIds); $j++) {
+					$reply->olabels[$i]['selection_ids'] .= $replySelectionIds[$j]['event_selection_setting_id'] . ',';
+				}
+				$reply->olabels[$i]['selection_ids'] = substr($reply->olabels[$i]['selection_ids'], 0, -1);
+			}
+		}
+		
+		/*
+		if (sizeof($removeOlabels) > 0) {
+			for ($i = 0; $i < sizeof($removeOlabels); $i++) {
+			//for ($i = sizeof($removeOlabels) -1; $i >= 0; $i--) {
+				unset($reply->olabels[$removeOlabels[$i]]);
+			}
+			$reply->olabels = array_values($reply->olabels);
+		}
+		*/
+
+		return json_encode($reply);
+	}
+
+	private function actionEventItemPanelReportList($data) {
+		/*
+		@[function]EventItemPanelReportList
+		@[desc]
+		* List all report for a event
+	
+		@[end-desc]
+		@[update]2020-09-03
+		@8param-function]$data
+		@[param-json] 
+		{
+			"_group" : "Event",
+			"_action" : "EventItemPanelReportList",
+			"_company_id" : "13",
+			"_people_id" : "1",
+			"_event_id" : "166"
+		}
+		@[end-param-json] 
+	 	*/
+		
+		$reply = new stdClass();
+
+		// Get the title from the base event
+		$sql = "SELECT panel_report_id, report_name ";
+		$sql .= "FROM panel_report ";
+		$sql .= "WHERE event_id = $data->_event_id AND cancel_on = 'n' ";
+		$sql .= "ORDER BY report_name";
+		$result = $this->_GetList($sql);
+		// print_r($result);
+		return json_encode($result);
+	}
+
+	private function actionEventItemPanelReportLoad($data) {
+		/*
+			@[function]EventItemPanelReportLoad
+			@[desc]
+			* Load a rpanel report
+		
+			@[end-desc]
+			@[update]2020-09-03
+			@8param-function]$data
+			@[param-json] 
+			{
+				"_group" : "Event",
+				"_action" : "EventItemPanelReportLoad",
+				"_company_id" : "13",
+				"_people_id" : "1",
+				"_panel_report_id" : "1"
+			}
+			@[end-param-json] 
+		*/
+		
+		$reply = new stdClass();
+
+		// Get the title from the base event
+		$sql = "SELECT * ";
+		$sql .= "FROM panel_report ";
+		$sql .= "WHERE panel_report_id = $data->_panel_report_id";
+		$result = $this->_Get($sql);
+		return json_encode($result);
+	}
+
+	private function actionEventItemPanelReportUpdate($data) {
+		/*
+			@[function]EventItemPanelReportUpdate
+			@[desc]
+			* Create or Update a panel report
+		    * If _panel_report_id is zero (0) than a new is created
+			@[end-desc]
+			@[update]2020-09-03
+			@8param-function]$data
+			@[param-json] 
+			{
+				"_group" : "Event",
+				"_action" : "EventItemPanelReportLoad",
+				"_company_id" : "13",
+				"_people_id" : "1",
+				"_panel_report_id" : "1"
+			}
+			@[end-param-json] 
+		*/
+		if ($data->_panel_report_id == '0') {
+			$reply = $this->_Insert("panel_report", $data);
+		}
+		else {
+			$reply = $this->_Update("panel_report", "panel_report_id", $data->_panel_report_id, $data);
+		}
+		return json_encode($reply);
+	}
+
+	private function actionEventList($data) {
+		/*
+			Called from: 
+				* Pages/event/event-main.js.inc/function eventListCreate()
+		{
+            "_group" : "Event",
+            "_action" : "EventList",
+            "_company_id" : "13",
+            "_people_id" : "1"
+    	}
+		*/
+		$sql = "SELECT event_id, event_name, create_date, event_status, participant_on, ref, parent_on, child_on, base_event_id, inherit_event_id ";
+		$sql .= ",tdb_on "; // 20210813
+		$sql .= "FROM event_v4 ";
+		$sql .= "WHERE company_id = $data->_company_id  AND event_status IN ('p','c') ";
+		$sql .= "ORDER BY base_event_id, event_id, inherit_event_id ";
+		$result = $this->_GetList($sql);
+
+		if (sizeof($result) > 0) {
+			for ($i=0; $i<sizeof($result); $i++) {
+				if ($result[$i]['event_id'] == $result[$i]['base_event_id']) {
+					// If deltagare på, beräkna antal i alla kopplade event
+					if ($result[$i]['participant_on'] == 'y') {
+						// -- Get all events that is include
+						$sql = "SELECT event_id ";
+						$sql .= " FROM event_v4 WHERE base_event_id =  " . $result[$i]['event_id'];
+						$resEventIds = $this->_GetList($sql);
+				
+						$eventIds = '';
+						for ($j=0; $j<sizeof($resEventIds); $j++) {
+							$eventIds .= $resEventIds[$j]['event_id'] . ',';
+						}
+						$eventIds = substr($eventIds, 0, -1);
+						
+						// Get all unique participant (event_participant_id = base_participant_id)
+						$sql = "SELECT COUNT(p.base_participant_id) AS counter ";
+						$sql .= "FROM event_participant p, event_item_v4 i, invoice_request r, event_v4 e  ";
+						$sql .= "WHERE  ";
+						$sql .= "i.event_id IN ($eventIds) AND ";
+						$sql .= "i.event_item_id = p.event_item_id AND  ";
+						$sql .= "i.event_item_status = 'c' AND  ";
+						$sql .= "i.event_id = e.event_id AND ";
+						$sql .= "i.approved_code = r.approved_code AND ";
+						$sql .= "event_participant_status = 'c' AND ";
+						$sql .= "p.event_participant_id = p.base_participant_id";
+
+						$resCounter = $this->_Get($sql);
+
+						if (isset($resCounter['counter'])) {
+							$counter = $resCounter['counter'];
+						}
+						else {
+							$counter = '0';
+						}
+						$result[$i]['counter'] = $counter;	
+					}
+					else {
+						$result[$i]['counter'] = '';
+					}
+				}
+				else {
+					$result[$i]['counter'] = '';
+				}
+			}
+		}
+
+		return json_encode($result);
+
+	}
+
+	private function actionEventItemReport($data) {
+		/*
+			@[function]
+			@[desc]
+			* 
+			@[end-desc]
+			@[update]
+			@[param-json] 
+			@[end-param-json] 
+		*/
+		/*
+			{
+				"_group" : "Event",
+				"_action" : "EventItemReport",
+				"_company_id" : "13",
+				"_people_id" : "1",
+				"_event_id" : "166",
+				"_field_part" : "p.last_name,p.first_name",
+				"_sort" : ""
+			}
+		*/
+
+		$data->_prarticipant_status = 'c';
+
+		$sql = "SELECT event_id, participant_title, participant_address_on, collect_spar_on, email_label, mobile_on, mobile_label, note_on, note_label, date_of_birth_on, date_of_birth_label, infobox_1_on, infobox_1_label, infobox_2_on, infobox_2_label  ";
+		$sql .= "FROM event_v4 ";
+		$sql .= "WHERE base_event_id = $data->_event_id AND participant_status = '$data->_participant_status = 'c'";
+		$resEventIds = $this->_GetList($sql);
+		return json_encode($resEventIds);
+		die('');
+
+		$sql = "SELECT ";
+		// $sql .= "p.*, i.*";
+		// $sql .= $data->_field_part; 
+		$sql .= "p.base_participant_id";
+		$sql .= " FROM event_item_v4 i, event_v4 e, event_participant p ";
+		$sql .= "WHERE "; 
+		$sql .= "i.event_id = $data->_event_id AND ";
+		$sql .= "e.event_id = i.event_id AND ";
+		$sql .= "p.event_item_id = i.event_item_id ";
+
+		// $sql .= "AND ";
+		// $sql .= "p.base_participant_id = 71";
+		// echo $sql; die('');
+		$sql .= " ORDER BY p.base_participant_id";
+		$list = $this->_GetList($sql);
+
+		return json_encode($list);
+	}
+
+	private function actionEventStatusSet($data) {
+		/*
+			@[function]
+			@[desc]
+			* 
+			@[end-desc]
+			@[update]
+			@[param-json] 
+			@[end-param-json] 
+		*/
+		/*
+		2020-03-09
+		{
+            "_group" : "Event",
+            "_action" : "EventStatusSet",
+            "_company_id" : "69",
+			"_people_id" : "1",
+			"_event_id" : "",
+			"event_status" : ""
+        }
+		*/
+		if ($data->_parent_on == 'y') {
+			$result = $this->_Update("event_v4", "base_event_id", $data->_event_id, $data);
+		}
+		else {
+			$result = $this->_Update("event_v4", "event_id", $data->_event_id, $data);
+		}
+		return json_encode($data);
+	}
+
+	private function actionEventTemplateList($data) {
+		/*
+			@[function]
+			@[desc]
+			* 
+			@[end-desc]
+			@[update]
+			@[param-json] 
+			@[end-param-json] 
+		*/
+		/*
+
+		Get the Event that has company_id 3 that is a Template and all 
+		event that is connected to the company
+
+		{
+            "_group" : "Event",
+            "_action" : "EventTemplateList",
+            "_company_id" : "69",
+            "_people_id" : "1"
+        }
+		*/
+		// SELECT * FROM bet_event_group WHERE company_id = 13 ORDER BY create_date
+	
+		$sql = "SELECT event_id AS value, event_name AS text ";
+		$sql .= "FROM event_v4 ";
+		$sql .= "WHERE company_id = $data->_company_id || company_id = 0 && tdb_on = 'n' ";
+		$sql .= "ORDER BY company_id, event_name";
+
+		$result = $this->_GetList($sql);
+
+		return json_encode($result);
+
+	}
+
+	private function getOptionText($id) {
+		/*
+			@[function]
+			@[desc]
+			* 
+			@[end-desc]
+			@[update]
+			@[param] 
+			@[end-param] 
+		*/
+		$sql = "SELECT text FROM webform_option WHERE webform_option_id = $id";
+		$reply = $this->_Get($sql);
+		$text = $reply['text'];
+		/*
+		if (strpos($text, '(') > 0 ) {
+			$text = substr($text, 0, strpos($text, '(') - 1);
+		}
+		*/
+		return $text;
+	}
+
+	private function removeNull($data) {
+		/*
+			@[function]
+			$[type]local
+			@[desc]
+			* 
+			@[end-desc]
+			@[update]
+			@[param] 
+			@[end-param] 
+		*/
+		if ($data== null) {
+			return '';
+		}
+		else {
+			return $data;
+		}
+	}
+
+	private function actionParticipantDetails($data) {
+		
+		/*
+		{
+			"_group" : "Event",
+			"_action" : "ParticipantAbandonedDetail",
+			"_company_id" : "69",
+			"_people_id" : "1",
+			"_participant_id" : "1058"
+		}
+
+		SELECT ep.event_participant_id, ep.event_item_id, eo.event_option_id, eo.value, ess.text, eos.text as option_text, ess.event_id, 
+		eo.event_option_status,eo.org_value, ep.note 
+		FROM event_option eo, event_option_setting eos, event_selection_setting ess, event_participant ep, event_item_v4 e 
+		WHERE ep.base_participant_id = 13060 AND 
+		eo.event_option_setting_id = eos.event_option_setting_id AND 
+		e.event_item_status = 'c' AND e.event_item_id = ep.event_item_id AND 
+		eos.event_selection_setting_id = ess.event_selection_setting_id AND 
+		ep.event_participant_id = eo.event_participant_id 
+
+
+		SELECT ep.event_participant_id, ep.event_item_id, eo.event_option_id, eo.value, ess.text, eos.text as option_text, ess.event_id, 
+		eo.event_option_status,eo.org_value, ep.note 
+		FROM event_option eo, event_option_setting eos, event_selection_setting ess, event_participant ep, event_item_v4 e 
+		WHERE ep.base_participant_id = 13060 AND 
+		ep.event_participant_id = eo.event_participant_id 
+		
+		eo.event_option_setting_id = eos.event_option_setting_id AND 
+		e.event_item_status = 'c' AND e.event_item_id = ep.event_item_id AND 
+		eos.event_selection_setting_id = ess.event_selection_setting_id AND 
+		ep.event_participant_id = eo.event_participant_id 
+
+
+
+		*/
+		// $data->_tdb_on = 'y';
+		if ($data->_tdb_on == 'n') {
+
+			$sql = "SELECT ep.event_participant_id, ep.event_item_id, eo.event_option_id, eo.value, ess.text, eos.text as option_text, ess.event_id, ";
+			$sql .= "eo.event_option_status,eo.org_value, ep.note "; // 2021-11-07
+			$sql .= "FROM event_option eo, event_option_setting eos, event_selection_setting ess, event_participant ep, event_item_v4 e "; 
+			$sql .= "WHERE ep.base_participant_id = $data->_participant_id AND ";
+			$sql .= "eo.event_option_setting_id = eos.event_option_setting_id AND "; 
+			$sql .= "e.event_item_status = 'c' AND e.event_item_id = ep.event_item_id AND ";
+			$sql .= "eos.event_selection_setting_id = ess.event_selection_setting_id AND ";
+			$sql .= "ep.event_participant_id = eo.event_participant_id ";		
+			$result = $this->_GetList($sql);
+			for ($i=0; $i<sizeof($result); $i++) {
+				if (!is_numeric($result[$i]['org_value'])) {
+					// if ($result[$i]['org_value'] === NULL) {
+					$result[$i]['org_value'] =  $result[$i]['value'];
+				}
+			}
+			$sql = "SELECT first_name, last_name FROM event_participant WHERE event_participant_id = $data->_participant_id";
+			$reply = $this->_Get($sql);
+			$reply['option'] = $result;
+		}
+		else {
+			$sql = "SELECT first_name, last_name, note FROM event_participant WHERE event_participant_id = $data->_participant_id";
+			$reply = $this->_Get($sql);
+			$sql = "SELECT *, value_text AS option_text ";
+			$sql .= "FROM event_option WHERE event_participant_id = $data->_participant_id";
+			$reply['option'] = $this->_GetList($sql);
+		}
+		return json_encode($reply);
+		/*
+			"event_participant_id": 13058,
+		"event_item_id": 12385,
+			"event_option_id": 52117,
+			"value": 300,
+		"text": "2 - Individuell Start i Lagklass L\u00e4tt B:1 B\u00f6rjes i Tingsryd",
+			"option_text": "Anm\u00e4ld 2 - Individuell Start i Lagklass L\u00e4tt B:1 B\u00f6rjes i Tingsryd",
+		"event_id": 662,
+			"event_option_status": "c",
+			"org_value": 300,
+		"note": "Kilgarvin High Flyer"
+
+			"event_option_id": 52112,
+			"event_participant_id": 13057,
+		"event_option_setting_id": 5684,
+			"value": 300,
+			"value_text" as option_text : "1 - F\u00f6rklass L\u00e4tt B:1 Tre H\u00e4star i Kung\u00e4lv",
+			"org_value": null,
+			"event_option_status": "c"
+		*/
+
+	}
+
+	private function actionParticipantDetailsPerform($data) {
+		/*
+			{
+				"_group" : "Event",
+				"_action" : "ParticipantDetailsPerform",
+				"_company_id" : "69",
+				"_people_id" : "1",
+				"_on_cancel" : "y",
+				"_all_cancel" : "n",
+				"_list_cancel_ids" : "1841"
+				"_on_uncancel" : "",
+				"_all_uncancel" : "",
+				"_list_uncancel_ids" : "",
+				"_participant_id" : "";
+			}
+
+			{
+				"_group" : "Event",
+				"_action" : "ParticipantDetailsPerform",
+				"_company_id" : "69",
+				"_people_id" : "1",
+				"_on_cancel" : "y",
+				"_all_cancel" : "n",
+				"_list_cancel_ids" : "1910,1911,1912,1913,1914,1915"
+				"_on_uncancel" : "",
+				"_all_uncancel" : "",
+				"_list_uncancel_ids" : "",
+				"_participant_id" : "1093".
+				"_on_ab" : "y",
+				"_ab_ids" : "1910,1911,1915",
+				"_ab_values" :"0,0,0",
+				"_ab_cvalues" :	"5700,300,500"
+			}
+
+
+		*/
+
+		// print_r($data); die('');
+
+		$param = new stdClass();
+		$param->people_id = $data->_people_id;
+		$param->on_cancel = $data->_on_cancel;
+		$param->list_cancel_ids = $data->_list_cancel_ids;
+		$param->on_uncancel = $data->_on_uncancel;
+		$param->list_uncancel_ids = $data->_list_uncancel_ids;
+		$param->participant_id = $data->_participant_id;
+		$param->on_ab = $data->_on_ab;
+		$param->ab_ids = $data->_ab_ids;
+		$param->ab_values = $data->_ab_values;
+		$param->ab_cvalues = $data->_ab_cvalues;
+		$resInsert = $this->_Insert('participant_update_log', $param);
+		
+
+		if ($data->_on_cancel == 'y') {
+			$listCancelIds = explode(',', $data->_list_cancel_ids);
+			
+			for ($i=0; $i<sizeof($listCancelIds); $i++) {
+				$paramUpdate = new stdClass();
+				$paramUpdate->event_option_status = 'r';
+				$replyUpdate = $this->_Update('event_option', 'event_option_id', $listCancelIds[$i], $paramUpdate); 
+			}
+		}
+
+		if ($data->_on_uncancel == 'y') {
+			$listUncancelIds = explode(',', $data->_list_uncancel_ids);
+			
+			for ($i=0; $i<sizeof($listUncancelIds); $i++) {
+				$paramUpdate = new stdClass();
+				$paramUpdate->event_option_status = 'c';
+				$replyUpdate = $this->_Update('event_option', 'event_option_id', $listUncancelIds[$i], $paramUpdate); 
+			}
+		}
+
+		// Get base id
+		$sql = "SELECT base_participant_id ";
+		$sql .= "FROM event_participant p ";
+		$sql .= "WHERE event_participant_id = $data->_participant_id";
+		$resBase = $this->_Get($sql);
+
+		$baseEventId = $resBase['base_participant_id'];
+	
+		$sql = "SELECT p.event_participant_id, o.event_option_status, o.event_option_setting_id ";
+		//$sql .= "SELECT o.* ";
+		$sql .= "FROM event_option o, event_participant p, event_item_v4 e ";
+		$sql .= "WHERE p.base_participant_id = $baseEventId AND ";
+		$sql .= "o.event_participant_id = p.event_participant_id AND ";
+		$sql .= "p.event_item_id = e.event_item_id AND ";
+		// $sql .= "o.event_option_status = 'c' AND ";
+		$sql .= "e.event_item_status = 'c'"; 
+
+		
+		$resCounter = $this->_GetList($sql);
+
+		$reBookedCounter = 0;
+		for ($k=0; $k < sizeof($resCounter); $k++) {
+			if ($resCounter[$k]['event_option_status'] == 'c' && $resCounter[$k]['event_option_setting_id'] == '0') { 
+				// $allOff = false;
+				$reBookedCounter++;
+			}
+			else if ($resCounter[$k]['event_option_status'] == 'r') {
+				$reBookedCounter++;
+			}
+		}
+
+		if ($reBookedCounter == sizeof($resCounter)) {
+			$newStatus = 'r';
+		}
+		else {
+			$newStatus = 'c';
+		}
+
+		for ($k=0; $k < sizeof($resCounter); $k++) {
+			$paramUpdate = new stdClass();
+			$paramUpdate->event_participant_status = $newStatus;
+			$resUpdate = $this->_Update('event_participant', 'event_participant_id', $resCounter[$k]['event_participant_id'], $paramUpdate);
+		} 
+		
+		$reply = new stdClass();
+		$reply->text =$resUpdate['code'];
+		$reply->code = '1';
+		$reply->counter = sizeof($resCounter);
+
+
+		if (strlen($data->_ab_ids) > 0 ) {
+			if ($this->participantAbondoned($data)) { 
+				// Kreditering the vaule in the option
+				if ($data->_on_ab == 'y') {
+					$total = 0;
+					$listAbIds = explode(',', $data->_ab_ids);
+					$listAbValues = explode(',', $data->_ab_values); // Current value
+					$listAbCvalues = explode(',', $data->_ab_cvalues); // Credit value
+					for ($i=0; $i<sizeof($listAbIds); $i++) {
+						$paramUpdate = new stdClass();
+						$paramUpdate->value = $listAbValues[$i];
+						$replyUpdate = $this->_Update('event_option', 'event_option_id', $listAbIds[$i], $paramUpdate); 		
+					}
+				}
+			}
+			else {
+				// Credit limit is extended
+				$reply->code = '3';
+			}
+		}
+		
+		$reply->text2 = $resUpdate['code'];
+		return json_encode($reply); 
+		
+	}
+
+	private function participantAbondoned($data) {
+		// -- Check who have done the paynets
+		/*
+
+			Parameters:
+			$abValues - Change values // Vurrent values
+			$abCvalues - Change values 
+		*/
+
+		// print_r($data); die('');
+
+		$abIds = explode(',', $data->_ab_ids);
+		$abCvalues = explode(',', $data->_ab_cvalues);
+		
+		$total = 0;
+		for ($i=0; $i<sizeof($abCvalues); $i++) {
+			$total = $total + $abCvalues[$i]; 
+		}
+
+		$creditCheck = json_decode($this->_CompanyCreditLimitCheck($data->_company_id, $total));
+
+		if ($creditCheck->code == '1') {
+			// OK 
+		}
+		else {
+			return false;
+		}
+
+		// Get store id
+		$sql = "SELECT wa_store_id FROM company WHERE company_id = $data->_company_id";
+		$resStore = $this->_Get($sql);
+
+		// $booking[] = new stdClass();
+		$mailList = [];
+		$index = -1;
+		if (sizeof($abIds) > 0) {
+			for ($i=0; $i<sizeof($abIds); $i++) {
+				$sql = "SELECT i.people_id, i.people_name, e.base_event_id, i.event_item_id, i.credit_id ";
+				$sql .= "FROM event_option o, event_item_v4 i, event_participant p, event_v4 e ";
+				$sql .= "WHERE ";
+				$sql .= "o.event_option_id = " . $abIds[$i] . " AND e.event_id = i.event_id AND ";
+				$sql .= "o.event_participant_id = p.event_participant_id AND i.event_item_id = p.event_item_id";				
+			
+				$resPeople = $this->_Get($sql);
+
+				$creditIsClosed = false;
+				$allTo1380 = false;
+
+				// Check  the Credit is closed
+				$sql = "SELECT credit_status FROM credit WHERE credit_id = " . $resPeople['credit_id'];
+				$resCredit = $this->_Get($sql);
+				if ($resCredit['credit_status'] == 'c') {
+					$creditIsClosed = true;
+				}
+				else { 
+					// Check balance on credit
+					$sql= "SELECT SUM(amount) AS balance FROM btrans ";
+					$sql .= " WHERE account_no = '1380' AND prel IN ('n') AND credit_id = " .  $resPeople['credit_id'];
+					$resBalance1380 = $this->_Get($sql);
+					
+					if ((float) $resBalance1380['balance'] >= (float) $abCvalues[$i]) {
+						$allTo1380 = true;
+					}
+					else {
+						$to1380 = (float) $abCvalues[$i] - (float) $resBalance1380['balance'];
+						// $to1680 =  (float) $abCvalues[$i] - $to1380;
+
+						//echo $resBalance1380['balance'] . ' : ' . $abCvalues[$i] . ' : ' . $to1380 . ' : ' . $to1680;
+						//die('');
+					}
+				}
+
+				$booking = new stdClass();
+
+				$booking->people_id = $resPeople['people_id'];
+				$booking->booking_date = date("Y-m-d"); // today
+				$booking->booking_text = 'Credit';
+				$booking->booking_type = 'pcreding';
+				$booking->company_id = $data->_company_id;
+				$booking->receipt_number = $resPeople['base_event_id'];
+				$booking->sales_person_people_id = $data->_people_id;
+				$booking->store_id = $resStore['wa_store_id'];
+				$booking->_amount = $abCvalues[$i];
+				$booking->credit_id = $resPeople['credit_id'];
+				$booking->cr_id = '1';
+		
+				$booking->_trans = [];
+
+				if ($creditIsClosed) {
+					$booking->_trans[] = new stdClass();
+					$booking->_trans[0]->trans_type  = 'pcredit';
+					$booking->_trans[0]->account_no = '1380'; 
+					$booking->_trans[0]->amount = -$booking->_amount;
+					$booking->_trans[0]->people_id = $booking->people_id;
+					$booking->_trans[0]->company_id = $booking->company_id;
+					$booking->_trans[0]->credit_id = $resPeople['credit_id'];
+
+					$booking->_trans[] = new stdClass();
+					$booking->_trans[1]->trans_type  = 'pcredit';
+					$booking->_trans[1]->account_no = '2981'; 
+					$booking->_trans[1]->amount = $booking->_amount;
+					$booking->_trans[1]->people_id = $booking->people_id;
+					$booking->_trans[1]->company_id = $booking->company_id;
+					$booking->_trans[1]->credit_id = $resPeople['credit_id'];
+
+					$booking->_trans[] = new stdClass();
+					$booking->_trans[2]->trans_type  = 'intern';
+					$booking->_trans[2]->account_no = '1380'; 
+					$booking->_trans[2]->amount = $booking->_amount; // new
+					$booking->_trans[2]->people_id = $booking->people_id;
+					// -- $booking->_trans[2]->company_id = $booking->company_id;
+					$booking->_trans[2]->credit_id = $resPeople['credit_id'];
+
+					$booking->_trans[3] = new stdClass();
+					$booking->_trans[3]->trans_type  = 'intern';
+					$booking->_trans[3]->account_no = '1680'; 
+					$booking->_trans[3]->amount = -$booking->_amount; // new
+					$booking->_trans[3]->people_id = $booking->people_id;
+				
+					$booking->_trans[3]->credit_id = $resPeople['credit_id'];
+
+					// print_r($booking);
+				}
+				else 
+				if ($allTo1380) {
+					$booking->_trans[] = new stdClass();
+					$booking->_trans[0]->trans_type  = 'pcredit';
+					$booking->_trans[0]->account_no = '1380'; 
+					$booking->_trans[0]->amount = -$booking->_amount;
+					$booking->_trans[0]->people_id = $booking->people_id;
+					$booking->_trans[0]->company_id = $booking->company_id;
+					$booking->_trans[0]->credit_id = $resPeople['credit_id'];
+
+					$booking->_trans[] = new stdClass();
+					$booking->_trans[1]->trans_type  = 'pcredit';
+					$booking->_trans[1]->account_no = '2981'; 
+					$booking->_trans[1]->amount = $booking->_amount;
+					$booking->_trans[1]->people_id = $booking->people_id;
+					$booking->_trans[1]->company_id = $booking->company_id;
+					$booking->_trans[1]->credit_id = $resPeople['credit_id'];
+				}
+				
+				else {
+					$booking->_trans[] = new stdClass();
+					$booking->_trans[0]->trans_type  = 'pcredit';
+					$booking->_trans[0]->account_no = '1380'; 
+					$booking->_trans[0]->amount = -$booking->_amount;
+					$booking->_trans[0]->people_id = $booking->people_id;
+					$booking->_trans[0]->company_id = $booking->company_id;
+					$booking->_trans[0]->credit_id = $resPeople['credit_id'];
+
+					$booking->_trans[] = new stdClass();
+					$booking->_trans[1]->trans_type  = 'pcredit';
+					$booking->_trans[1]->account_no = '2981'; 
+					$booking->_trans[1]->amount = $booking->_amount;
+					$booking->_trans[1]->people_id = $booking->people_id;
+					$booking->_trans[1]->company_id = $booking->company_id;
+					$booking->_trans[1]->credit_id = $resPeople['credit_id'];
+
+					$booking->_trans[] = new stdClass();
+					$booking->_trans[2]->trans_type  = 'intern';
+					$booking->_trans[2]->account_no = '1380'; 
+					$booking->_trans[2]->amount = $to1380; // new
+					$booking->_trans[2]->people_id = $booking->people_id;
+					// -- $booking->_trans[2]->company_id = $booking->company_id;
+					$booking->_trans[2]->credit_id = $resPeople['credit_id'];
+
+					$booking->_trans[3] = new stdClass();
+					$booking->_trans[3]->trans_type  = 'intern';
+					$booking->_trans[3]->account_no = '1680'; 
+					$booking->_trans[3]->amount = -$to1380; // new
+					$booking->_trans[3]->people_id = $booking->people_id;
+					$booking->_trans[3]->credit_id = $resPeople['credit_id'];
+
+					// print_r($booking);
+				}
+
+				// print_r($booking); 
+				$replyBooking = $this->_bookNew($booking);
+				
+
+
+				$mailExist = false;
+				if (sizeof($mailList) > 0) {
+					for ($j=0; $j<sizeof($mailList); $j++) {
+						if ($mailList[$j] == $resPeople['people_id']) {
+							$mailExist = true;
+						}
+					}
+				}
+
+				/*
+				$mailExist = false;
+				if (sizeof($mailList) > 0) {
+					for ($j=0; $i<sizeof($mailList); $j++) {
+						if ($mailList[$j] == $resPeople['people_id']) {
+							$mailExist = true;
+						}
+					}
+				}
+				*/
+				if ($mailExist == false) {
+					array_push($mailList,$resPeople['people_id']);
+				}
+
+				//$param = new stdClass();
+				//$param->_people_id = $resPeople['people_id'];
+				//$param->_company_id = $data->_company_id;
+				// Mail avisering
+				// $this->actionMailNotification($param);
+			}
+		}
+		
+		// print_r($mailList);
+		/*
+		if (sizeof($mailList) > 0) {
+			for ($j=0; $j<sizeof($mailList); $j++) {
+				$param = new stdClass();
+				$param->_people_id = $mailList[$j];
+				$param->_company_id = $data->_company_id;
+				$this->actionMailNotification($param);
+				//print_r($param);
+				//die('');
+			}
+		}
+		*/
+
+		if (sizeof($mailList) > 0) {
+			for ($j=0; $j<sizeof($mailList); $j++) {
+				$param = new stdClass();
+				$param->_people_id = $mailList[$j];
+				$param->_company_id = $data->_company_id;
+				$this->actionMailNotification($param);
+				//print_r($param);
+				//die('');
+			}
+		}
+
+
+		return true;
+	}
+
+	private function actionMailNotification($data) {
+
+		/*
+			{
+				"_group" : "Event",
+				"_action" : "MailNotification",
+				"_company_id" : "69",
+				"_people_id" : "1"
+			}
+		*/
+		
+
+
+		$peopleId = $data->_people_id;
+		$companyId = $data->_company_id;
+
+		$sql = "SELECT CONCAT(first_name, ' ', last_name) AS people_name, email ";
+		$sql .= "FROM people ";
+		$sql .= "WHERE people_id = " .  $peopleId ;
+		$people = $this->_Get($sql);
+
+		$sql = "SELECT company_name, known_as, email ";
+		$sql .= "FROM company ";
+		$sql .= "WHERE company_id = " .  $companyId;
+		$company = $this->_Get($sql);
+		
+
+		$subject = 'Kreditering från ' . $company['known_as'];
+
+		// $body = 'Avsändare: ' . $company->known_as;
+		// 	$mail->addReplyTo('info@turtle-pay.com');
+
+		$body = 'Hej,';
+		$body .= '<br><br>';
+		$body .= 'Vi har krediterat dig idag. ';
+
+		$body .= 'Om du fått ett tillgodohavande efter krediteringen och önskar få det utbetalat till dig behöver du logga in på ';
+		$body .= '<a href="https://www.turtle-pay.com/logga-in">www.turtle-pay.com/logga-in</a>'; 
+		$body .= ' med ditt BankID och ange dina bankuppgifter.';
+		$body .= '<br><br>'; 
+		$body .= 'När du är inloggad ser du även alla transaktioner och ditt saldo.';
+		$body .= '<br><br>';
+		$body .= 'Mejla därefter till info@turtle-pay.com och meddela att du vill få tillgodohavandet utbetalat, så ordnar Turtle Pay en banköverföring till dig.';
+		$body .= '<br><br>';
+		$body .= 'Har du fakturor kvar att betala kan du även dra av det krediterade beloppet mot fakturabeloppet och bara betala mellanskillnaden.';
+		$body .= '<br><br>';
+		$body .= 'Med vänlig hälsning,';
+		$body .= '<br><br>';
+		
+		$body .= $company['known_as'];
+
+		
+		$htmlBody = '';
+		$htmlBody .= '<div style="width:780px; margin: 10px auto 0; font-family: Helvetica,Arial,sans-serif, Verdana; padding:6px">';
+		$htmlBody .= '<p>' . $body . '</p>';
+				
+		$htmlBody .= '</div>';
+
+		//echo $htmlBody;
+		//return 'OK';
+		// die('');
+		//return;
+		
+		require_once 'PHPMailerAutoload.php';
+		
+		$mail = new PHPMailer;
+		$mail->isSMTP();
+		
+		$mail->Host = 'smtp.gmail.com';
+		$mail->SMTPAuth = true;
+		$mail->Username = 'info.turtlepay@gmail.com';
+		$mail->Password = 'SegTp_2019';
+
+		$mail->CharSet = 'UTF-8';
+		$mail->From = $company['email']; // 'info@turtle-pay.com';
+		$mail->FromName = $company['known_as'];;
+		
+		$email = $people['email'];
+		$mail->addAddress($people['email']);
+		// $mail->addBCC('bo.grus@yahoo.com');
+		$mail->addBCC('bo.grusell@turtle-pay.com');
+		$mail->addReplyTo($company['email']);
+	
+		$mail->isHTML(true);
+		$mail->Subject = $subject;
+		//$mailInvoice->Body = $this->htmlInvoice . '<div style="width:100%; padding:20px 0 10px 0; text-align:center"><a href="' . DOCVIEW . 'o/' . $this->orderid . '.html"' . '" style="font-size:20px; font-weight:bold; color: green">Skriv ut</a>';
+		$mail->Body = $htmlBody;
+
+		if(!$mail->send()) {
+			//echo $mail->ErrorInfo;
+			return false;
+		} else {
+	
+			return true;
+		}
+	}
+
+	function decimalAdd($a,$b, $numDecimals=2) {
+		$intSum=(int)str_replace(".","",$a)+(int)str_replace(".","",$b);
+		$paddedIntSum=str_pad(abs($intSum),$numDecimals,0,STR_PAD_LEFT);
+		$result=($intSum<0?"-":"").($intSum<100&&$intSum>-100?"0":"").substr_replace($paddedIntSum,".",-$numDecimals,0);
+		return $result;
+	}
+
+	function actionCheckLimit($data) {
+		/*
+			{
+				"_group" : "Event",
+				"_action" : "CheckLimit",
+				"_company_id" : "69"
+			}
+		*/
+		return $this->_CompanyCreditLimitCheck($data->_company_id, '0');
+	}
+
+	private function eventSelectionCopy($toEventId, $fromEventId) {
+	
+		//	private function actionEventSelectionCopy($data) {
+		// $toEventId = $data->toEventId;
+		// $fromEventId = $data->fromEventId;
+
+		$sql = "SELECT event_selection_setting_id, text, sortorder FROM event_selection_setting WHERE event_id = $fromEventId";
+		$selections = $this->_GetList($sql);
+		if (sizeof($selections) > 0) {
+			for ($i=0; $i<sizeof($selections); $i++) {
+				$paramSelection = new stdClass();
+				$paramSelection->event_id = $toEventId;
+				$paramSelection->text =  $selections[$i]['text'];
+				$paramSelection->sortorder =  $selections[$i]['sortorder'];
+				$resSelection = $this->_Insert('event_selection_setting', $paramSelection);
+				$fromSelectionId = $selections[$i]['event_selection_setting_id'];
+				$currentSelectionId = $resSelection['id'];
+
+				$param = new stdClass();
+				$param->group_selection_setting_id = $currentSelectionId;
+				$this->_Update('event_selection_setting', 'event_selection_setting_id', $currentSelectionId, $param);
+
+				$sql = "SELECT text, value, sortorder, max_on, max_number FROM event_option_setting WHERE event_selection_setting_id = " . $fromSelectionId;
+				$options = $this->_GetList($sql);
+				
+				if (sizeof($options) > 0) {
+					for ($j=0; $j<sizeof($options); $j++) {
+						$paramOption = new stdClass();
+						$paramOption->event_selection_setting_id = $currentSelectionId;
+						$paramOption->text = $options[$j]['text'];
+						$paramOption->value = $options[$j]['value'];
+						$paramOption->sortorder = $options[$j]['sortorder'];
+						$paramOption->max_on = $options[$j]['max_on'];
+						$paramOption->max_number = $options[$j]['max_number'];
+						$resOption = $this->_Insert('event_option_setting', $paramOption);
+						
+						// 2021-12-08 - Copy and Max
+						$paramUpdateInsert = new stdClass();
+						$paramUpdateInsert->base_event_option_setting_id = $resOption['id'];
+						$this->_Update("event_option_setting", "event_option_setting_id", $resOption['id'], $paramUpdateInsert);
+				
+
+
+					}
+				}
+			}
+		}
+
+		
+
+	}
+
+	public function actionEventAttachAdd($data) {
+		// Insert Attachent 
+		// Used by: pages/event-webform.js.inc
+		/*
+			{
+				"_group" : "Event",
+				"_action" : "EventAttachAdd",
+				"_people_id" : "1",
+				"_company_id" : "69",
+				"event_id" : "419",
+				"filename" : "69-419-min-test-file.png",
+				"realname" : "Min Test File.png
+			}
+		*/
+		$reply = $this->_Insert('event_attach', $data);
+
+		$sql = "SELECT event_attach_id, filename, realname FROM event_attach WHERE event_id = $data->event_id AND event_attach_status = 'a'";
+		$reply['_attach_list'] = $this->_GetList($sql);
+
+		return json_encode($reply);
+	}
+	public function actionEventAttachRemove($data) {
+		// Mark attachemt as Removed status to r
+		// Used by: pages/event-webform.js.inc
+		/*
+			{
+				"_group" : "Event",
+				"_action" : "EventAttachRemove",
+				"event_attach_id" : "4"
+			}
+		*/
+		$param = new stdClass();
+		$param->event_attach_status = 'r';
+		$reply = $this->_Update('event_attach', 'event_attach_id', $data->event_attach_id, $param);
+		$sql = "SELECT event_attach_id, filename, realname FROM event_attach WHERE event_id = $data->event_id AND event_attach_status = 'a'";
+		$reply['_attach_list'] = $this->_GetList($sql);
+		return json_encode($reply);
+	}
+
+	public function actionEventGetTdbLast($data) {
+		$param = new stdClass();
+		$sql = "SELECT tdb_last, tdb_closed FROM event_v4 WHERE event_id = $data->_event_id ";
+		$reply = $this->_Get($sql);
+		return json_encode($reply);
+	}
+
+}
+
+

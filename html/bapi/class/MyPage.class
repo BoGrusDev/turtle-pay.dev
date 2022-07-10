@@ -1,0 +1,93 @@
+<?php
+/*
+    Class MyPageClass
+
+	Date: 2018-10-06
+
+	Actions:
+		- Get
+		- Update
+
+	Call:
+		{
+		"_group" : "MyPage",
+		"_action" : "Get",
+		"_bankid" : "no",
+		"_people_id" : "4"
+	}
+
+	{
+		"_group" : "MyPage",
+		"_action" : "Update",
+		"_bankid" : "yes",
+		"_people_id" : "119",
+		"mobile": "0729427977",
+	 	"email": "stellan@yahoo.com"
+	}
+
+*/
+
+class MyPageClass extends ActionBase {
+
+	public function Run($data) {
+
+		$actionMethod = 'action' . $data->_action;
+		echo $this->$actionMethod($data);
+
+	}
+
+	private function actionGet($data) {
+
+		$sql = "SELECT personal_id_number, CONCAT(first_name, ' ', last_name) AS name, address, CONCAT(postcode, ' ' , city) AS postaddress, mobile, email, people_status ";
+		$sql .= "FROM people WHERE people_id = $data->_people_id";
+		$result = $this->_Get($sql);
+
+		// Calculate People Bonus
+		//$resultatBonus = $this->_Get('SELECT SUM(amount) AS bonus FROM trans WHERE account_no = "2380" AND people_id = ' . $data->_people_id);
+		//$resultatBonus = $this->_Get('SELECT SUM(amount) AS bonus FROM trans WHERE account_no = "2380" AND people_id = ' . $data->_people_id)
+
+		$sql = "SELECT SUM(t.amount) AS bonus FROM btrans t, booking b ";
+		$sql .= "WHERE t.account_no = '2498' AND b.sales_person_people_id = $data->_people_id AND b.booking_id = t.booking_id";
+
+		$resultatBonus = $this->_Get($sql);
+		if ($resultatBonus['bonus'] == null) {
+			$result['bonus'] = '0';
+		} else {
+			$result['bonus'] = "" . -$resultatBonus['bonus'] . "";
+		}
+
+		return json_encode($result);
+
+	}
+
+	private function actionUpdate($data) {
+
+		$result = $this->_Update("people", "people_id", $data->_people_id, $data);
+		return json_encode($result);
+
+	}
+
+}
+
+/*
+	Reply:
+
+	Get:
+	{
+	    "personal_id_number": "196204021155",
+	    "name": "Stellan Arne Forsberg",
+	    "address": "GYLLENSTIERNSGATAN 15 LGH 1306",
+	    "postaddress": "11526 STOCKHOLM",
+	    "mobile": "0707639766",
+	    "email": "Stellan.forsberg@mondayrelations.se",
+	    "is_sp": "y",
+	    "people_status": "a",
+	    "code": "1",
+	    "bonus": "73.95"
+	}
+
+	{
+    	"code": "1"
+	}
+
+*/

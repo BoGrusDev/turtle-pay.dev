@@ -1,0 +1,251 @@
+<?php
+/*
+    Class CheckClass
+
+	Date: 2018-10-06
+
+	Actions:
+		- StatusCheck
+		- StoreStatusCheck
+
+	Call:
+	{
+		"_group" : "Check",
+		"_action" : "PeopleSignIn",
+		"_personal_id_number" : "195711040054"
+	}
+
+
+	{
+		"_group" : "Check",
+		"_action" : "PeopleStoreStatus",
+		"_people_id" : "1"
+	}
+
+
+*/
+
+class CheckClass extends ActionBase {
+
+	public function Run($data) {
+		$actionMethod = 'action' . $data->_action;
+		echo $this->$actionMethod($data);
+	}
+
+	// ej kopplad
+	private function actionCompanyActive($data) {
+
+		$sql = "SELECT cp.company_id, co.company_name, cp.priv ";
+		$sql .= "FROM company_people cp, company co ";
+		$sql .= "WHERE cp.priv IN ('sp','pr','su') AND ";
+		$sql .= "cp.people_id = $data->_people_id AND cp.company_id = co.company_id AND company_status = 'a'";
+		$result = $this->_GetList($sql);
+		if (sizeof($result) == 1) {
+			$sql = "SELECT store_name, store_id FROM store  WHERE company_id = " . $data->_company_id;
+			$this->_GetList($sql);
+			return json_encode($this->_GetList($sql));
+		}
+	}
+
+	private function actionPeopleCompanyList($data) {
+		/*
+		{
+			"_group" : "Check",
+			"_action" : "PeopleCompanyList",
+			"_people_id" : "24"
+		}
+		*/
+		// List all my companyes
+		$sql = "SELECT cp.company_id, co.company_name, cp.priv ";
+		$sql .= "FROM company_people cp, company co ";
+		$sql .= "WHERE cp.priv IN ('sp','pr','su') AND ";
+		$sql .= "cp.people_id = $data->_people_id AND cp.company_id = co.company_id AND company_status = 'a'";
+
+		$result = $this->_GetList($sql);
+
+
+		return json_encode($this->_GetList($sql));
+	}
+
+	private function actionPeopleCompanyStatus($data) {
+		/*
+		{
+			"_group" : "Check",
+			"_action" : "PeopleCompanyStatus",
+			"_people_id" : "24",
+			"_company_id" : "1",
+		}
+		*/
+
+		$sql = "SELECT cp.company_id, co.company_name, cp.priv ";
+		$sql .= "FROM company_people cp, company co ";
+		$sql .= "WHERE cp.priv IN ('sp','pr','su') AND ";
+		$sql .= "cp.company_id = $data->_company_id AND ";
+    	$sql .= "cp.people_id = $data->_people_id AND cp.company_id = co.company_id AND company_status = 'a'";
+
+		$result = $this->_Get($sql);
+
+		if ($result['code'] == "1") {
+			$result['contract_blocked'] = "n";
+			// get latest company contract
+			$sql = "SELECT * FROM company_contract WHERE enabled = 'y' ORDER BY company_contract_id DESC LIMIT 1";
+
+			$resultContract = $this->_Get($sql);
+
+			$sql = "SELECT count(company_sign_id) AS no_of_contract FROM company_sign WHERE company_id = " . $data->_company_id;
+			$resultCount = $this->_Get($sql);
+
+			if ($resultCount['no_of_contract'] == '0') {
+				$result['contract_blocked'] = "y";
+				$result['contract_no'] = $resultContract['contract_no'];
+				$result['company_contract_id'] = $resultContract['company_contract_id'];
+				$result['up_to_date'] = "n";
+			}
+
+			else{
+				$today = date("Y-m-d");
+
+				$sql = "SELECT company_sign_id FROM company_sign WHERE company_id = " . $data->_company_id . " AND company_contract_id = " . $resultContract['company_contract_id'];
+				$resultSign = $this->_Get($sql);
+				if ($resultSign['code'] == "1" ) {
+					$result['up_to_date'] = "y";
+				}
+				else {
+					$result['up_to_date'] = "n";
+					$result['contract_no'] = $resultContract['contract_no'];
+					$result['company_contract_id'] = $resultContract['company_contract_id'];
+					if ($today > $resultContract['duedate']) {
+						$result['contract_blocked'] = "y";
+					}
+				}
+			}
+		}
+
+
+		return json_encode($result);
+
+
+	}
+
+	private function actionPeopleStoreStatus($data) {
+
+		/*
+			// MyGape and VieController
+		{
+			"_group" : "Check",
+			"_action" : "PeopleStoreStatus",
+			"_people_id" : "24"
+		}
+		*/
+
+		/*
+		$sql = "SELECT cp.company_id, s.store_name, s.store_id FROM company co, store s, company_people cp WHERE ";
+		$sql .= "cp.priv IN ('sp','pr') AND cp.people_id = '$data->_people_id' AND ";
+		$sql .= "cp.company_id = co.company_id AND co.company_id = s.company_id AND s.store_status = 'a' ";
+		$sql .= "ORDER BY s.store_name";
+		*/
+		$sql = "SELECT cp.company_id, co.known_as, co.company_name, s.store_name , s.store_id, cp.priv FROM company co, store s, company_people cp WHERE ";
+		$sql .= "cp.priv IN ('sp','pr','su') AND cp.people_id = '$data->_people_id' AND ";
+		$sql .= "cp.company_id = co.company_id AND co.company_id = s.company_id AND s.store_status = 'a' AND ";
+		$sql .= "co.company_id = cp.company_id ";
+		$sql .= "ORDER BY co.company_name, s.store_name";
+		return json_encode($this->_GetList($sql));
+	}
+
+	private function actionStoresInCompany($data) {
+
+		$sql = "SELECT store_name, store_id FROM store  WHERE company_id = $data->_company_id";
+		return json_encode($this->_GetList($sql));
+	}
+
+	private function actionPeopleSignIn($data) {
+
+		// Check and load if the people apc_exists
+		$sql = "SELECT people_id, personal_id_number, mobile, email ";
+		$sql .= "FROM people WHERE personal_id_number = '" . $data->_personal_id_number . "'";
+		$result = $this->_Get($sql);
+
+		//Check valid sign (exist in 2 place (Security class))
+		if ($result['code'] == "1" ) {
+			// Gel Latest version of Turtle User terms
+			$sql = "SELECT * FROM people_contract WHERE enabled = 'y' ORDER BY people_contract_id DESC LIMIT 1";
+			$resultContract = $this->_Get($sql);
+			$sql = "SELECT people_sign_id FROM people_sign WHERE people_id = " . $result['people_id'] . " AND people_contract_id = " . $resultContract['people_contract_id'];
+
+			$resultSign = $this->_Get($sql);
+			if ($resultSign['code'] == "1" ) {
+				$result['up_to_date'] = "y";
+			}
+			else {
+				$result['up_to_date'] = "n";
+				$result['contract_no'] = $resultContract['contract_no'];
+				$result['people_contract_id'] = $resultContract['people_contract_id'];
+			}
+		} else {
+			// Only load the last contract
+			$sql = "SELECT * FROM people_contract WHERE enabled = 'y' ORDER BY people_contract_id DESC LIMIT 1";
+			$resultContract = $this->_Get($sql);
+			$result['contract_no'] = $resultContract['contract_no'];
+			$result['people_contract_id'] = $resultContract['people_contract_id'];
+		}
+
+		return json_encode($result);
+	}
+
+	private function actionCompanyIsSign($data) {
+
+	}
+
+	private function actionDoubleInvoice($data) {
+
+		/*
+			// MyGape and VieController
+		{
+			"_group" : "Check",
+			"_action" : "DoubleInvoice",
+			"_personal_id_number" : "195711040054",
+			"_receipt_number" : "Test overdue 0",
+			"_amount" : "500",
+			"_days" : "25",
+			"_company_id" : "2"
+		}
+		*/
+
+		// --
+		// Set days before that not allowed same invoice
+		//
+		$datePeriod = date("Y-m-d");
+		$datePeriod  = date("Y-m-d", strtotime("+" . $datePeriod  . " - $data->_days days"));
+
+		$sql = "SELECT COUNT(*) AS exist FROM credit ";
+		$sql .= "WHERE personal_id_number = '$data->_personal_id_number' AND receipt_number = '$data->_receipt_number' AND ";
+		$sql .= " amount = '$data->_amount' AND start_date > '$datePeriod' AND company_id = $data->_company_id";
+		return json_encode($this->_Get($sql));
+	}
+
+	private function actionWaCheck($data) {
+
+		/*
+			// MyGape and VieController
+		{
+			"_group" : "Check",
+			"_action" : "WaCheck",
+			"_personal_id_number" : "195711040054"
+		
+		}
+		*/
+
+		// --
+		//Check info about customer
+		//
+		
+
+		$sql = "SELECT people_status, overdue FROM people ";
+		$sql .= "WHERE personal_id_number = '$data->_personal_id_number'";
+		return json_encode($this->_Get($sql));
+	}
+
+
+}
+
+

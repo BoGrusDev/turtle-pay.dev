@@ -1,0 +1,43 @@
+<?php
+/*
+    PeopleClass
+
+	Date: 2019-04-29
+
+*/
+
+class WebAppClass extends ActionPortal {
+
+	public function Run($data) {
+		$actionMethod = 'action' . $data->_action;
+		echo $this->$actionMethod($data);
+
+	}
+
+	private function actionCheckCompanyUrl($data) {
+
+        /*
+        
+        Check if a company has invoice service, and is activie, on the URL
+        - Used in index.php kundportal, för att hantera web-app
+        - Return 
+            - company_id
+            - wa_store_id
+            - wa_sp_id
+            - wa_logo
+
+		{
+	        "_group" : "WebApp",
+	        "_action" : "CheckCompanyUrl",
+	        "_wa_url" : "test-bolaget"
+		}
+		*/
+
+		$sql = "SELECT company_id, wa_store_id, wa_sp_id, wa_logo FROM company ";
+        $sql .= "WHERE wa_url = '$data->_wa_url' AND has_invoice_service = 'y' AND company_status = 'a'";
+		$result = $this->_Get($sql);
+		return json_encode($result);
+
+	}
+
+}

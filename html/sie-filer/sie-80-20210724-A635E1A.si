@@ -1,0 +1,77 @@
+#FLAGGA 0
+#FORMAT PC8
+#SIETYP 4
+#PROGRAM "Turtle Pay Kundportal" 2021.1
+#GEN 20211110
+#FNAMN "Skyrup Country Club AB"
+#ORGNR 556926-1539
+#KPTYP BAS95
+#KONTO 1684 "Turtle Pay avr„kning"
+#KONTO 1930 "Bank"
+#KONTO 6575 "Transaktionsavgift"
+#KONTO 8400 "R„nta"
+#KONTO 3004 "L„ger"
+#KONTO 3005 "T„vling"
+#KONTO 2630 "Utg†ende moms 6 %"
+#VER T 104 20210701 "Turtle Pay Avr„kning"
+{
+#TRANS 1684 {} -6398.00
+#TRANS 1930 {} 6398.00
+}
+#VER T 105 20210703 "Turtle Pay Avr„kning"
+{
+#TRANS 1684 {} -113.00
+#TRANS 6575 {} 102.00
+#TRANS 8400 {} 11.00
+#TRANS 3004 {} 0.00
+}
+#VER T 106 20210705 "Turtle Pay Avr„kning"
+{
+#TRANS 1684 {} 5706.00
+#TRANS 6575 {} 204.00
+#TRANS 3005 {} 839.62
+#TRANS 3004 {} -6415.09
+#TRANS 2630 {} -334.53
+}
+#VER T 107 20210706 "Turtle Pay Avr„kning"
+{
+#TRANS 1684 {} -5593.00
+#TRANS 1930 {} 5593.00
+}
+#VER T 108 20210707 "Turtle Pay Avr„kning"
+{
+#TRANS 1684 {} -7202.00
+#TRANS 6575 {} 102.00
+#TRANS 3004 {} 6698.11
+#TRANS 2630 {} 401.89
+}
+#VER T 109 20210711 "Turtle Pay Avr„kning"
+{
+#TRANS 1684 {} -7800.00
+#TRANS 3004 {} 7358.49
+#TRANS 2630 {} 441.51
+}
+#VER T 110 20210713 "Turtle Pay Avr„kning"
+{
+#TRANS 1684 {} -480.00
+#TRANS 3005 {} 452.83
+#TRANS 2630 {} 27.17
+}
+#VER T 111 20210714 "Turtle Pay Avr„kning"
+{
+#TRANS 1684 {} -7300.00
+#TRANS 3004 {} 6886.79
+#TRANS 2630 {} 413.21
+}
+#VER T 112 20210715 "Turtle Pay Avr„kning"
+{
+#TRANS 1684 {} -7300.00
+#TRANS 3004 {} 6886.79
+#TRANS 2630 {} 413.21
+}
+#VER T 113 20210724 "Turtle Pay Avr„kning"
+{
+#TRANS 1684 {} -370.00
+#TRANS 3005 {} 349.06
+#TRANS 2630 {} 20.94
+}

@@ -1,0 +1,109 @@
+<?php
+/*
+    Class CreditClass
+
+	Date: 2019-04-05
+
+	Call:
+	{
+		"_group" : "Credit",
+		"_action" : "List",
+		"_credit_status" : "a",
+		"_date_to" : "2019-09"
+		"_current" : "yes";
+	}
+
+	Run this update full payed in current period
+	{
+		"_group" : "SettlementClose",
+		"_action" : "PeopleCloseBulk",
+		"_period" : "201911",
+		"_pre" : "no"
+	}
+
+	Run this to close return
+	{
+		"_group" : "SettlementClose",
+		"_action" : "ReturnCloseBulk",
+		"_pre" : "no"
+	}
+
+*/
+
+class CreditClass extends ActionBase {
+
+	public function Run($data) {
+		$actionMethod = 'action' . $data->_action;
+		echo $this->$actionMethod($data);
+	}
+
+	private function actionList($data) {
+
+		$data->_date_to = '2020-04-28';
+
+		$sql = "SELECT c.credit_id, c.start_date, fi.duedate, CONCAT(p.last_name, ', ', p.first_name) AS people_name, c.people_id, p.personal_id_number, ";
+		$sql .= "k.company_name, c.credit_status, c.amount, sum(t.amount) as dept ";
+		$sql .= "FROM credit c, people p, company k,  btrans t, first_invoice fi ";
+		$sql .= "WHERE ";
+		if ($data->_credit_status == '0') {
+			$sql .= "c.credit_status IN ('p','a','o')  AND ";
+		}
+		else {
+			$sql .= "c.credit_status = '$data->_credit_status' AND ";
+		}
+		$sql .= "c.people_id = p.people_id AND ";
+		$sql .= "c.company_id = k.company_id AND ";
+		$sql .= "t.credit_id = c.credit_id AND ";
+		$sql .= "c.invoice_id = fi.invoice_id AND ";
+		$sql .= "t.account_no ='1380' ";
+		if ($data->_credit_status == 'p' || $data->_credit_status == 'a') {
+			if ($data->_current == 'yes' ) {
+				$sql .= "AND fi.duedate <= '$data->_date_to'";
+			}
+			else {
+				$sql .= "AND fi.duedate > '$data->_date_to'";
+			}
+		}
+		$sql .= "GROUP BY ";
+		$sql .= "c.credit_id, c.start_date, people_name, c.people_id, p.personal_id_number, k.company_name, c.credit_status, c.amount";
+		//echo $sql; die('');
+		return json_encode($this->_GetList($sql));
+	}
+
+
+
+	public function actionTransList($data) {
+			/*
+				{
+					"_group" : "Credit",
+					"_action" : "TransList",
+					"_credit_id" : "12344410452"
+
+				}
+			*/
+		// Should be moved to Config and Settings
+		//$this->FirstInvoiceUrl = 'https://turtle-pay/f-invoice/';
+
+		$sql = "SELECT t.btrans_id, t.booking_id, b.booking_date, t.trans_type, t.amount ";
+		$sql .= "FROM btrans t, booking b ";
+		$sql .= "WHERE t.credit_id =  $data->_credit_id AND ";
+	 	$sql .= "t.booking_id = b.booking_id AND t.account_no = '1380' ";
+		$sql .= "ORDER BY b.booking_date";
+		$list = $this->_GetList($sql);
+		$balance1380 = 0;
+
+		//echo $sql; die('');
+
+		for ($i = 0; $i < sizeof($list); $i++) {
+			//$list[$i]['amount_1380'] = $list[$i]['amount'];
+			$balance1380 += $list[$i]['amount'];
+			$list[$i]['balance_1380'] = number_format($balance1380, 2);
+			//$total += $list[$i]['amount'];
+			//$list[$i]['total'] = number_format($total, 2);
+		}
+
+		return json_encode($list);
+
+	}
+
+}

@@ -1,0 +1,91 @@
+<?php
+/*
+    Class SecurityClass
+
+	Date: 2018-10-06
+
+	Actions:
+		- SignIn
+		- SignUp
+	Private;
+		- peopleCompanyConnect
+
+	Call:
+
+
+	{
+		"_group" : "Security",
+	    "_action" : "SignUp",
+	    "_bankid" : "yes",
+	    "_bankid_type" : "auth",
+	    "_bankid_personal_id_number" : "195711040054",
+	    "_order_ref" : "c05f9e05-b8ff-4006-bd8b-5f6b4a5638f2",
+	    "personal_id_number" : "195711040054",
+	    "email" : "bo.grusell@yahoo.com",
+	    "mobile" : "0729427977",
+	    "signature" : "s4010123092138012830214747127",
+	    "ocspResponse" : "o93479347937493479234"
+	}
+
+*/
+
+class SecurityClass extends ActionOpen {
+
+	public function Run($data) {
+
+		$actionMethod = 'action' . $data->_action;
+		echo $this->$actionMethod($data);
+
+	}
+
+	private function actionSignIn($data) {
+		$result = $this->_BankIDAuthCollect($data);
+        if ($result->code == "1") {
+			$data->token = $this->_CreateToken();;
+			$json =  json_encode($data);
+			$result = $this->_RestApiCall($json);
+			return $result;
+		} else {
+			return json_encode($result);
+		}
+
+	}
+
+	private function actionSignUp($data) {
+
+		$json =  json_encode($data);
+		$result = $this->_RestApiCall($json);
+		return $result;
+
+	}
+
+	private function actionGetPriv($data) {
+		$json =  json_encode($data);
+		$result = $this->_RestApiCall($json);
+		return $result;
+	}
+
+	private function actionSignContract($data) {
+		$json =  json_encode($data);
+		$result = $this->_RestApiCall($json);
+		return $result;
+	}
+
+}
+
+/*
+
+Result:
+
+SignIn:
+
+{
+    "people_id": "1",
+    "name": "Bo Erik Grusell",
+    "personal_id_number": "195711040054",
+    "is_sp": "y",
+    "is_principal": "n",
+    "people_status": "a",
+    "code": "1"
+}
+*/

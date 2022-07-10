@@ -1,0 +1,51 @@
+<?php
+/* 
+updated: 2021-09-09 -  Ayyachment
+*/
+class EmailClass extends ActionBase {
+
+	public function Run($data) {
+
+		$actionMethod = 'action' . $data->_action;
+		echo $this->$actionMethod($data);
+
+	}
+
+	private function actionFirstInvoice($data) {
+
+		// $invoiceObj = $this->_Get("SELECT * FROM first_invoice WHERE invoice_filename='" . $data->_invoice_filename . "'");
+
+		// Updated for Noti invocie 20200913 / 20201012
+		$sql = "SELECT f.*, co.noti_invoice_on, co.noti_invoice_email ";
+		$sql .= "FROM first_invoice f, credit c, company co ";
+		$sql .= "WHERE invoice_filename='" . $data->_invoice_filename . " '";
+		$sql .= "AND f.credit_id = c.credit_id AND c.company_id = co.company_id";
+		$invoiceObj = $this->_Get($sql);
+
+		// Check if has attachment
+		$sql = "SELECT e.event_id, e.has_attach ";
+		$sql .= "FROM first_invoice fi, event_item_v4 ei, event_v4 e ";
+		$sql .= "WHERE invoice_filename='$data->_invoice_filename' AND fi.credit_id = ei.credit_id AND ei.event_id = e.event_id ";
+		$resEventCheck = $this->_Get($sql);
+		if ($invoiceObj['code'] == "1")	{
+			if ($resEventCheck['code'] == '1' && $resEventCheck['has_attach'] == 'y') {
+				$sql = "SELECT filename, realname FROM event_attach WHERE event_attach_status = 'a' AND event_id = " . $resEventCheck['event_id'];
+				$invoiceObj['attach_list'] = $this->_GetList($sql);
+				$invoiceObj['has_attach'] = 'y';
+			}
+			else {
+				$invoiceObj['has_attach'] = 'n';
+			}
+			if ($data->email != $invoiceObj['email']) {
+				$this->_Query("UPDATE people SET email = '$data->email' WHERE people_id = " . $invoiceObj['people_id'] );
+			}
+			$this->_Query("UPDATE first_invoice SET email = '$data->email', email_sent = 'y' WHERE invoice_filename='" . $data->_invoice_filename . "'");
+			$invoiceObj['email'] = $data->email;
+			return json_encode($invoiceObj);
+		} else {
+
+			return '{"code":"noinve"}'; // No Invoice eist
+		}
+
+	}
+}

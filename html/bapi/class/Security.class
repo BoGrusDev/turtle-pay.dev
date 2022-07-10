@@ -1,0 +1,221 @@
+<?php
+/*
+    Class SecurityClass
+
+	Date: 2018-10-06
+
+	Actions:
+		- SignIn
+		- SignUp
+	Private;
+		- peopleCompanyConnect
+
+	Call:
+
+	{
+		"_group" : "Security",
+	    "_action" : "SignUp",
+	    "_bankid_personal_id_number" : "195711040054",
+	    "_order_ref" : "c05f9e05-b8ff-4006-bd8b-5f6b4a5638f2",
+	    "personal_id_number" : "195711040054",
+	    "email" : "bo.grusell@yahoo.com",
+	    "mobile" : "0729427977",
+	    "signature" : "s4010123092138012830214747127",
+	    "ocspResponse" : "o93479347937493479234"
+	}
+
+*/
+
+class SecurityClass extends ActionBase {
+
+	public function Run($data) {
+
+		$actionMethod = 'action' . $data->_action;
+		echo $this->$actionMethod($data);
+
+	}
+
+	private function actionSignIn($data) {
+
+		/*
+		{
+			"_group" : "Security",
+		    "_action" : "SignIn",
+		    "_personal_id_number" : "195711040054"
+		}
+		*/
+
+		$result = $this->peopleGet($data->_personal_id_number);
+
+		if ($result['code'] == "1") {
+			$this->peopleCompanyConnect($data->_personal_id_number, $result['people_id']);
+			$result['token'] = $this->tokenCreate();
+			// Calculate People Bonus
+			/* FIXA -- Ändra till Nya Bookning
+
+			$resultatBonus = $this->_Get('SELECT SUM(amount) AS bonus FROM trans WHERE account_no = "2380" AND people_id = ' . $result['people_id']);
+			// Calculate Bonus
+			if ($resultatBonus['bonus'] == null) {
+				$result['bonus'] = '0';
+			} else {
+				$result['bonus'] = "" . -$resultatBonus['bonus'] . "";
+			}
+			*/
+			$result['bonus'] = '0';
+			return json_encode($result);
+
+		} else {
+			// Customer not exist in Turtle Pay
+			return '{"code":"0"}'; // false
+		}
+
+	}
+
+	private function actionSignUp($data) {
+
+		/*
+		{
+			"_group" : "Security",
+		    "_action" : "SignUp",
+		    "personal_id_number" : "195711040054",
+		    "email" : "bo.grusell@yahoo.com",
+		    "mobile" : "0729427977",
+		    "_signature" : "s4010123092138012830214747127",
+		    "_ocspResponse" : "o93479347937493479234",
+		    "_people_contract_id" : "2"
+		}
+		*/
+
+		// Load Settings
+		//$this->_Settings();
+
+		$sql = "SELECT people_id FROM people WHERE personal_id_number = '" . $data->personal_id_number . "'";
+		$result = $this->_Get($sql);
+
+		if ($result['code'] == '0') {
+			// IdentityCheck
+			$peopleObj = $this->_Spar($data->personal_id_number);
+			if($peopleObj->status == "0") {
+				return '{"code":"0", "denied_code":"person_not_exist"}';
+			} else {
+				// Load from UC Identity and save it Turtle Pay and Reload
+				//$personObj->people->credit_limit = $this->Setting->creditLimit;
+				$peopleObj->people->mobile = $data->mobile;
+				$peopleObj->people->email = $data->email;
+
+				$resultInsert = $this->_Insert('people', $peopleObj->people);
+				if ($resultInsert['code'] == "1") {
+					$peopleId = $resultInsert['id'];
+				} else {
+					return '{"code":"0", "denied_code":"people_cant_be_saved"}';
+				}
+			}
+		}
+		else if ($result['code'] == '1') {
+			$peopleId = $result['people_id'];
+			$sql = "UPDATE people SET mobile = '$data->mobile', email = '$data->email'";
+			$sql .= "WHERE people_id = " . $peopleId;
+			$resultUpdate = $this->_Query($sql);
+			if ($resultUpdate['code'] == '0') {
+				return '{"code":"0", "denied_code":"people_cant_be_signin"}';
+			}
+		} else {
+			return '{"code":"0", "denied_code":"people_cant_be_signin"}';
+		}
+
+		// Update contract sign
+		$param = new StdClass();
+		$param->people_id = $peopleId;
+		$param->personal_id_number = $data->personal_id_number;
+		$param->signature = $data->_signature;
+		$param->ocspResponse = $data->_ocspResponse;
+		$param->people_contract_id = $data->_people_contract_id;
+		$resultJson = $this->actionSignContract($param);
+
+		return $resultJson;
+	}
+
+	private function actionGetPriv($data) {
+
+		/*
+		{
+			"_group" : "Security",
+		    "_action" : "GetPriv",
+		    "_company_id" : "5",
+			"_people_id" : "24"
+		}
+		*/
+
+		$sql = "SELECT priv FROM company_people WHERE company_id = $data->_company_id AND people_id = $data->_people_id ";
+		return json_encode($this->_Get($sql));
+	}
+
+	private function actionSignContract($data) {
+
+		/*
+		{
+			"_group" : "Security",
+			"_action" : "SignContract",
+			"people_id" : "1",
+			"personal_id_number" : "195711040054",
+			"people_contract_id" : "2",
+			"signature" : "s4010123092138012830214747127",
+		    "ocspResponse" : "o93479347937493479234"
+		}
+		*/
+		$result = $this->_Insert('people_sign', $data);
+		if ($result['code'] == "1" ) {
+			$result = $this->peopleGet($data->personal_id_number);
+		}
+		else {
+			$result['code'] = '0';
+			//$result['denied_code'] = 'could_not_sign_contract';
+		}
+		return json_encode($result);
+	}
+
+	private function peopleCompanyConnect($personalIdNumber, $peopleId) {
+		// Set personal id to the company_people list
+		$sql = "UPDATE company_people SET people_id = $peopleId WHERE personal_id_number = '$personalIdNumber'";
+		$this->_Query($sql);
+	}
+
+	private function tokenCreate() {
+		return $this->_CreateGUID();
+	}
+
+	private function checkValidSign($peopleId) {
+
+		// Gel Latest version of Turtle User terms
+		$sql = "SELECT * FROM people_contract WHERE enabled = 'y' ORDER BY people_contract_id DESC LIMIT 1";
+		$resultContract = $this->_Get($sql);
+		$sql = "SELECT people_sign_id FROM people_sign WHERE people_id = " . $peopleId . " AND people_contract_id = " . $resultContract['people_contract_id'];
+
+		$resultSign = $this->_Get($sql);
+		if ($resultSign['code'] == "1" ) {
+
+			return true;
+		}
+		else {
+			return false;
+
+		}
+	}
+
+	private function peopleGet($personalIdNumber) {
+		$sql = "SELECT p.people_id, CONCAT(p.first_name, ' ' , p.last_name) AS name, p.personal_id_number, p.email, p.mobile,";
+		$sql .= "p.address, p.postcode, p.city, p.people_status ";
+		$sql .= "FROM people p ";
+		$sql .= "WHERE p.personal_id_number = '$personalIdNumber'";
+		$result = $this->_Get($sql);
+
+		if ($result['code'] == "1") {
+			$this->peopleCompanyConnect($personalIdNumber, $result['people_id']);
+			$result['token'] = $this->tokenCreate();
+			//$result['company_id'] = '0';
+			//$result['store_id'] = '0';
+			return $result;
+		}
+	}
+
+}

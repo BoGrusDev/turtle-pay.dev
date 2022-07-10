@@ -1,0 +1,75 @@
+<?php
+/*
+    Class CheckClass
+
+	Date: 2018-10-06
+
+	capi
+
+	Actions:
+		- StatusCheck
+		- StoreStatusCheck
+
+	Call:
+
+
+*/
+
+Class CheckClass extends ActionOpen {
+
+	public function Run($data) {
+
+		$actionMethod = 'action' . $data->_action;
+		echo $this->$actionMethod($data);
+
+	}
+	
+
+	private function actionPeopleCompanyStatus($data) {
+		$json =  json_encode($data);
+		$result = $this->_RestApiCall($json);
+		return $result;
+	}
+
+	private function actionPeopleCompanyList($data) {
+		$json =  json_encode($data);
+		$result = $this->_RestApiCall($json);
+		return $result;
+	}
+
+	private function actionPeopleStoreStatus($data) {
+		$json =  json_encode($data);
+		$result = $this->_RestApiCall($json);
+		return $result;
+	}
+
+	private function actionStoresInCompany($data) {
+		$json =  json_encode($data);
+		$result = $this->_RestApiCall($json);
+		return $result;
+	}
+
+	private function actionPeopleSignIn($data) {
+		$json =  json_encode($data);
+		$result = $this->_RestApiCall($json);
+		return $result;
+	}
+
+	private function actionPrincipalStatus($data) {
+		$json =  json_encode($data);
+		$result = $this->_RestApiCall($json);
+		return $result;
+	}
+
+	private function actionDoubleInvoice($data) {
+		$json =  json_encode($data);
+		$result = $this->_RestApiCall($json);
+		return $result;
+	}
+
+	private function actionWaCheck($data) {
+		$json =  json_encode($data);
+		$result = $this->_RestApiCall($json);
+		return $result;
+	}
+}

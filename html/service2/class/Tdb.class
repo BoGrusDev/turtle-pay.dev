@@ -1,0 +1,51 @@
+<?php
+/*
+    UserClass
+
+	Date: 2019-04-29
+
+*/
+
+class TdbClass extends ActionPublic {
+
+	public function Run($data) {
+		$peopleId = $this->_CheckToken($data->_token);
+		if ($peopleId) {
+			$data->_people_id = $peopleId;
+			$actionMethod = 'action' . $data->_action;
+			echo $this->$actionMethod($data);
+		} else {
+			$reply = new stdClass();
+			$reply->code = "9";
+			return json_encode($reply);
+		}
+	}
+
+
+    private function actionPeopleImport($data) {
+
+        	/*
+		{{
+            "_group" : "Tdb",
+            "_action" : "PeopleImport",
+            "_company_id" : "69",
+            "_event_id" : "541",
+            "_people_id" : "1"
+
+		}
+
+		*/
+        /*
+		$reply = new stdClass();
+		$param = new stdClass();
+		$param->_group = "Tdb";
+		$param->_action = "PeopleImport";
+		$data->_people_id = $data->_people_id;
+        */
+        $data->_company_id = $data->_user_id;
+		$result = $this->_RestApiCall(json_encode($data));
+
+		return $result;
+    }
+
+}

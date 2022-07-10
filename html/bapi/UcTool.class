@@ -1,0 +1,413 @@
+<?php
+/*
+    Class UcClass
+
+	
+
+	Call:
+		{
+		"_group" : "MyPage",
+		"_action" : "Get",
+		"_bankid" : "no",
+		"_people_id" : "4"
+	}
+
+	{
+		"_group" : "MyPage",
+		"_action" : "Update",
+		"_bankid" : "yes",
+		"_people_id" : "119",
+		"mobile": "0729427977",
+	 	"email": "stellan@yahoo.com"
+	}
+
+*/
+
+class UcToolClass  extends ActionBase {
+
+
+	function getFromUC($personalIdNumber, $peopleId) {
+	/*
+		This service is called fom capi och InvoiceRequest.class
+		  - Parameter is a Swedish persolan number, in the format yyyymmddxxxx
+		  - The persoon need to exist int the Turtle Pay people db-table
+		  - The call is in the seqvens of first check person in the bapi InvoiceRequest or add in with the Spar if not exits
+			and the send back to App, to ask if person accept that Turtle Pay take a UC.
+
+		*/
+
+		if (!isset($personalIdNumber) || strlen($personalIdNumber) != 12) {
+			$reply = new stdClass();
+            $reply->code = '0';
+            $reply->message = "personal_id_number_wrong_format";
+			return $reply;
+		}
+
+		// Cut the centurty prefix (UC work with 10 digits)
+		$ucPersonalIdNumber = substr($personalIdNumber, 2, 10);
+	
+		$ucUser = 'KQLH8';
+    	$ucPassword = 'T0';
+		
+        $soapUrl = "https://www1.uc.se/UCSoapWeb/services/ucOrders2";
+        $xml_post_string  = '<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ucor="http://www.uc.se/schemas/ucOrderRequest/">';
+        $xml_post_string .= '<soapenv:Header/>';
+        $xml_post_string .= '<soapenv:Body>';
+        $xml_post_string .= '<ucor:individualReport ucor:product="r31" ucor:version="?">';
+        $xml_post_string .= '<ucor:customer>';
+        $xml_post_string .= '<ucor:userId>' . $ucUser . '</ucor:userId>';
+        $xml_post_string .= '<ucor:password>' . $ucPassword . '</ucor:password> ';
+        $xml_post_string .= '</ucor:customer>';
+        $xml_post_string .= '<ucor:individualReportQuery ucor:xmlReply="1" ucor:htmlReply="0" ucor:reviewReply="0" ucor:pdfReply="0" ucor:extendedDetails="0" ucor:lang="swe">';
+        $xml_post_string .= '<ucor:object>' . $ucPersonalIdNumber . '</ucor:object>';
+        $xml_post_string .= '</ucor:individualReportQuery>';
+        $xml_post_string .= '</ucor:individualReport>';
+        $xml_post_string .= '</soapenv:Body>';
+        $xml_post_string .= '</soapenv:Envelope>';
+
+        $headers = array(
+            "Content-type: text/xml;charset=\"utf-8\"",
+            "Accept: text/xml",
+            "Cache-Control: no-cache",
+            "Pragma: no-cache",
+            "Content-length: ".strlen($xml_post_string),
+        );
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 1);
+        curl_setopt($ch, CURLOPT_URL, $soapUrl);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $xml_post_string); // the SOAP request
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+		$response = curl_exec($ch);
+		if(curl_errno($ch)){
+			echo 'Request Error:' . curl_error($ch) . ' : ' . $data->personal_id_number . ' ';
+			return false;
+		}
+		curl_close($ch);
+        $doc = new DOMDocument;
+        $doc->loadXML($response);
+		
+		$dt = new DateTime();
+		$ucData = new stdClass();
+		$ucData->people_id = $peopleId;
+		$ucData->uc_date = $dt->format('Y-m-d');
+		$reply = $this->_Insert('uc',$ucData);
+		$ucId = $reply['id'];
+		
+		$this->item = array();
+        $index = -0;
+        $groups = $doc->getElementsByTagNameNS('http://www.uc.se/schemas/ucOrderReply/', 'group');
+		
+        foreach ($groups as $group) {
+            $rows = $group->getElementsByTagNameNS('http://www.uc.se/schemas/ucOrderReply/', 'term');
+            foreach ($rows as $row) {
+				$ucItem = new stdClass();
+				$ucItem->uc_id = $ucId;
+				$ucItem->uc_item = $row->getAttribute('ns2:id');
+				$ucItem->value = $row->nodeValue;
+				$this->_Insert('uc_item',$ucItem);
+            }
+        }   
+        /*
+		$param = new stdClass();
+		$param->has_uc_check = 'y';
+		$param->uc_date = $dt->format('Y-m-d');
+		$this->_Update('people', 'people_id', $peopleObj['people_id'], $param);
+        */
+		$reply = new stdClass();
+		$reply->code = '1';
+		return $reply;
+
+	}
+
+
+	function getFromUCProd($personalIdNumber, $peopleId) {
+		/*
+			This service is called fom capi och InvoiceRequest.class
+			  - Parameter is a Swedish persolan number, in the format yyyymmddxxxx
+			  - The persoon need to exist int the Turtle Pay people db-table
+			  - The call is in the seqvens of first check person in the bapi InvoiceRequest or add in with the Spar if not exits
+				and the send back to App, to ask if person accept that Turtle Pay take a UC.
+	
+			*/
+	
+			if (!isset($personalIdNumber) || strlen($personalIdNumber) != 12) {
+				$reply = new stdClass();
+				$reply->code = '0';
+				$reply->message = "personal_id_number_wrong_format";
+				return $reply;
+			}
+	
+			// Cut the centurty prefix (UC work with 10 digits)
+			$ucPersonalIdNumber = substr($personalIdNumber, 2, 10);
+		
+			//echo $ucPersonalIdNumber; die('');
+
+			$ucUser = 'KQLH8';
+			$ucPassword = 'X0';
+			
+			$soapUrl = "https://www.uc.se/UCSoapWeb/services/ucOrders2";
+			$xml_post_string  = '<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ucor="http://www.uc.se/schemas/ucOrderRequest/">';
+			$xml_post_string .= '<soapenv:Header/>';
+			$xml_post_string .= '<soapenv:Body>';
+			$xml_post_string .= '<ucor:individualReport ucor:product="r31" ucor:version="?">';
+			$xml_post_string .= '<ucor:customer>';
+			$xml_post_string .= '<ucor:userId>' . $ucUser . '</ucor:userId>';
+			$xml_post_string .= '<ucor:password>' . $ucPassword . '</ucor:password> ';
+			$xml_post_string .= '</ucor:customer>';
+			$xml_post_string .= '<ucor:individualReportQuery ucor:xmlReply="1" ucor:htmlReply="0" ucor:reviewReply="0" ucor:pdfReply="0" ucor:extendedDetails="0" ucor:lang="swe">';
+			$xml_post_string .= '<ucor:object>' . $ucPersonalIdNumber . '</ucor:object>';
+			$xml_post_string .= '</ucor:individualReportQuery>';
+			$xml_post_string .= '</ucor:individualReport>';
+			$xml_post_string .= '</soapenv:Body>';
+			$xml_post_string .= '</soapenv:Envelope>';
+	
+			$headers = array(
+				"Content-type: text/xml;charset=\"utf-8\"",
+				"Accept: text/xml",
+				"Cache-Control: no-cache",
+				"Pragma: no-cache",
+				"Content-length: ".strlen($xml_post_string),
+			);
+	
+			$ch = curl_init();
+			curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 1);
+			curl_setopt($ch, CURLOPT_URL, $soapUrl);
+			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+			curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+			curl_setopt($ch, CURLOPT_POST, true);
+			curl_setopt($ch, CURLOPT_POSTFIELDS, $xml_post_string); // the SOAP request
+			curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+			$response = curl_exec($ch);
+			if(curl_errno($ch)){
+				echo 'Request Error:' . curl_error($ch) . ' : ' . $data->personal_id_number . ' ';
+				return false;
+			}
+			curl_close($ch);
+			$doc = new DOMDocument;
+			$doc->loadXML($response);
+			
+			$dt = new DateTime();
+			$ucData = new stdClass();
+			$ucData->people_id = $peopleId;
+			$ucData->uc_date = $dt->format('Y-m-d');
+			$reply = $this->_Insert('uc',$ucData);
+			$ucId = $reply['id'];
+			
+			$this->item = array();
+			$index = -0;
+			$groups = $doc->getElementsByTagNameNS('http://www.uc.se/schemas/ucOrderReply/', 'group');
+			
+			foreach ($groups as $group) {
+				$rows = $group->getElementsByTagNameNS('http://www.uc.se/schemas/ucOrderReply/', 'term');
+				foreach ($rows as $row) {
+					$ucItem = new stdClass();
+					$ucItem->uc_id = $ucId;
+					$ucItem->uc_item = $row->getAttribute('ns2:id');
+					$ucItem->value = $row->nodeValue;
+					$this->_Insert('uc_item',$ucItem);
+				}
+			}   
+			/*
+			$param = new stdClass();
+			$param->has_uc_check = 'y';
+			$param->uc_date = $dt->format('Y-m-d');
+			$this->_Update('people', 'people_id', $peopleObj['people_id'], $param);
+			*/
+			$reply = new stdClass();
+			$reply->code = '1';
+			return $reply;
+	
+		}
+	
+
+	public function checkPeople($peopleId) {
+		/*
+		{
+			"_group" : "Uc",
+			"_action" : "Check",
+			"_people_id" : "9802"
+		}
+		*/
+		 
+		$reply = new stdClass();
+		$reply->people_id_number = ''; // W08002
+		$reply->name = ''; // W08003
+		$reply->income = '0'; // W49592
+		$reply->marks = '0'; // W61109
+		$reply->mark_date = ''; // W61507
+		$reply->dept_amount = '0'; // W61206
+		$reply->trustee = "n";
+		$reply->mark_type = "";
+		$reply->status = "process";
+        
+        // --
+        // -- Get the last UC on the pople
+        $sql = "SELECT uc_id FROM uc ";
+		$sql .= "WHERE people_id = $peopleId ";
+		$sql .= "ORDER BY uc_id DESC";
+        $res = $this->_Get($sql);
+
+        if ($res['code'] == '1') {
+            $ucId = $res['uc_id'];
+        }
+        
+
+        $sql = "SELECT uc_item_id, uc_item, value FROM uc_item ";
+		$sql .= "WHERE uc_id = $ucId ";
+		$sql .= "ORDER BY uc_item_id";
+		//echo $sql; die('');
+		$result = $this->_GetList($sql);
+        
+		$incomeSet = false;
+		for ($i = 0; $i < sizeof($result); $i++) {
+			$terms = $result[$i]['uc_item'];
+			
+			switch ($terms) {
+				case 'W08002' :
+					$reply->people_id_number = $result[$i]['value'];
+					break;
+				case 'W08003' :
+				$reply->name = $result[$i]['value'];
+					break;
+				case 'W49592' :
+					if ($incomeSet == false) {
+						$reply->income = $result[$i]['value'];
+						$incomeSet = true;
+					}
+					break;
+				case 'W61109' : 
+					$reply->marks = $result[$i]['value'];
+					break;
+				case 'W61507' :
+					$reply->mark_date = $result[$i]['value'];
+					break;
+				case 'W61503' :
+					$reply->dept_amount = $result[$i]['value'];
+					break;
+				case "W08018" :
+					if ($result[$i]['value'] == 'J') {
+						$reply->trustee = 'j';
+						$reply->status = "denied";
+					}
+					else {
+						$reply->trustee = 'n';
+					}
+					break;
+				case "W61506" :
+					$reply->mark_type = $result[$i]['value'];
+					$reply->mark_text = $result[$i]['value'];
+					break;
+			}
+		}
+		
+		if ($reply->status == "process") {
+			if ($reply->income <= '25000') {
+				$reply->status = "denied";
+			}
+
+			if ($reply->income > '25000' && $reply->income <'70000') {
+				$reply->limit = '3000';
+				$reply->status = "confirmed";
+			}
+			else if ($reply->income < '100000') {
+				$reply->limit = '10000';
+				$reply->status = "confirmed";
+			}
+			else if ($reply->income < '150000') {
+				$reply->limit = '20000';
+				$reply->status = "confirmed";
+			}
+			else if ($reply->income < '250000') {
+				$reply->limit = '50000';
+				$reply->status = "confirmed";
+			}
+			else if ($reply->income < '400000') {
+				$reply->limit = '70000';
+				$reply->status = "confirmed";
+			}
+			else if ($reply->income < '600000') {
+				$reply->limit = '100000';
+				$reply->status = "confirmed";
+			}
+			else if ($reply->income  < '800000') {
+				$reply->limit = '150000';
+				$reply->status = "confirmed";
+			}
+			else {
+				$reply->limit = '200000';
+				$reply->status = "confirmed";
+			} 
+		}
+
+        print_r($reply); 
+
+        die('');
+
+		return $reply;
+	}
+
+	/*
+	public function calculateCreditLimit($income) {
+
+		$creditMatrix = array(
+			'25000'=>0, 
+			'70000'=>3000,
+			'100000'=>10000,
+			'150000'=>20000,
+			'250000'=>50000,
+			'400000'=>70000,
+			'600000'=>100000,
+			'800000'=>150000
+		);
+		
+		print_r()
+
+
+		if ($reply->status == "process") {
+			if ($reply->income <= '25000') {
+				$reply->status = "denied";
+			}
+
+			if ($reply->income > '25000' && $reply->income <'70000') {
+				$reply->limit = '3000';
+				$reply->status = "confirmed";
+			}
+			else if ($reply->income < '100000') {
+				$reply->limit = '10000';
+				$reply->status = "confirmed";
+			}
+			else if ($reply->income < '150000') {
+				$reply->limit = '20000';
+				$reply->status = "confirmed";
+			}
+			else if ($reply->income < '250000') {
+				$reply->limit = '50000';
+				$reply->status = "confirmed";
+			}
+			else if ($reply->income < '400000') {
+				$reply->limit = '70000';
+				$reply->status = "confirmed";
+			}
+			else if ($reply->income < '600000') {
+				$reply->limit = '100000';
+				$reply->status = "confirmed";
+			}
+			else if ($reply->income  < '800000') {
+				$reply->limit = '150000';
+				$reply->status = "confirmed";
+			}
+			else {
+				$reply->limit = '200000';
+				$reply->status = "confirmed";
+			} 
+		}
+
+	}
+
+	*/
+	
+}

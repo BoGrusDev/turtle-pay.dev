@@ -1,0 +1,41 @@
+<?php
+/*
+  
+*/
+
+class EventClearClass extends ActionPublic {
+
+	public function Run($data) {
+		
+		$peopleId = $this->_CheckToken($data->_token);
+		if ($peopleId) {
+			$data->_people_id = $peopleId;
+			$actionMethod = 'action' . $data->_action;
+			echo $this->$actionMethod($data);
+		} else {
+			$reply = new stdClass();
+			$reply->code = "9";
+			return json_encode($reply);
+		}
+	}
+	
+    private function actionParticipantClear($data) {
+		/*
+			{
+				"_group" : "EventClear",
+				"_action" : "ParticipantClear",
+				"_company_id" : "69",
+				"_people_id" : "1",
+				"_event_id" : "398"
+			}
+		*/
+		$param = new stdClass();
+		$param->_group = "EventClear";
+		$param->_action = "ParticipantClear";
+		$param->_company_id = $data->_user_id;
+		$param->_event_id = $data->_event_id;
+		$param->_people_id = $data->_people_id;
+		$result = $this->_RestApiCall(json_encode($param));
+		return $result;
+    }
+}

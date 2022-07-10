@@ -1,0 +1,53 @@
+#FLAGGA 0
+#FORMAT PC8
+#SIETYP 4
+#PROGRAM "Turtle Pay Kundportal" 2021.1
+#GEN 20220524
+#FNAMN "T„by Tennisklubb"
+#ORGNR 816000-1809
+#KPTYP BAS95
+#KONTO 1930 "Bank"
+#KONTO 1511 "Turtle Pay avr„kning"
+#KONTO 8400 "R„nta"
+#KONTO 3035 "Vuxentr„ning"
+#KONTO 6540 "Transaktionsavgift"
+#KONTO 3015 "Juniortr„ning 1h"
+#VER B 1364 20220401 "Turtle Pay avr„kning"
+{
+#TRANS 1930 {} 3162.00
+#TRANS 1511 {} -3162.00
+}
+#VER B 1365 20220402 "R„nta"
+{
+#TRANS 1511 {} -1.00
+#TRANS 8400 {} 1.00
+}
+#VER B 1366 20220403 "Vuxentr„ning VT-2022"
+{
+#TRANS 3035 {} 3800.00
+#TRANS 1511 {} -3800.00
+}
+#VER B 1367 20220405 "Vuxentr„ning VT-2022"
+{
+#TRANS 3035 {} 600.00
+#TRANS 1511 {} -600.00
+}
+#VER B 1368 20220417 "Vuxentr„ning VT-2022"
+{
+#TRANS 3035 {} -3800.00
+#TRANS 1511 {} 3800.00
+#TRANS 1511 {} -38.00
+#TRANS 6540 {} 38.00
+}
+#VER B 1369 20220420 "Juniortr„ning 1h/vecka VT-22"
+{
+#TRANS 3015 {} -3025.00
+#TRANS 1511 {} 3025.00
+#TRANS 1511 {} -30.25
+#TRANS 6540 {} 30.25
+}
+#VER B 1370 20220422 "Turtle Pay avr„kning"
+{
+#TRANS 1930 {} 2355.75
+#TRANS 1511 {} -2355.75
+}

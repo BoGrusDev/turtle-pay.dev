@@ -1,0 +1,72 @@
+<?php
+/*
+    CompanyClass
+
+	Date: 2018-10-22
+
+	Actions:
+		-
+
+	Call:
+
+	{
+		"_group" : "Company",
+		"_action" : "PeoplePrincipalList",
+		"_bankid" : "no",
+		"_bankid_personal_id_number" : "195711040054"
+	}
+
+
+*/
+
+class CompanyClass extends ActionOpen {
+    public function Run($data) {
+
+        $actionMethod = 'action' . $data->_action;
+        echo $this->$actionMethod($data);
+
+    }
+
+    private function actionCompanyGet($data) {
+        $json =  json_encode($data);
+        $result = $this->_RestApiCall($json);
+        return $result;
+    }
+
+    private function actionPeoplePrincipalList($data) {
+        $json =  json_encode($data);
+        $result = $this->_RestApiCall($json);
+        return $result;
+    }
+
+    private function actionSignContract($data) {
+		$json =  json_encode($data);
+		$result = $this->_RestApiCall($json);
+		return $result;
+	}
+
+    private function actionSalesPersonList($data) {
+        $json =  json_encode($data);
+        $result = $this->_RestApiCall($json);
+        return $result;
+    }
+
+    private function actionSalesPersonAdd($data) {
+        $json =  json_encode($data);
+        $result = $this->_RestApiCall($json);
+        return $result;
+    }
+
+    private function actionSalesPersonSetStatus($data) {
+        $json =  json_encode($data);
+        $result = $this->_RestApiCall($json);
+        return $result;
+    }
+
+	private function actionUpdate($data) {
+		$json =  json_encode($data);
+		$result = $this->_RestApiCall($json);
+		return $result;
+	}
+
+}

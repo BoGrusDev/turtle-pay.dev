@@ -1,0 +1,155 @@
+<?php
+/*
+    UserClass
+
+	Date: 2019-04-29
+
+*/
+
+class CompanyClass extends ActionPublic {
+
+	public function Run($data) {
+		$peopleId = $this->_CheckToken($data->_token);
+		if ($peopleId) {
+			$data->_people_id = $peopleId;
+			$actionMethod = 'action' . $data->_action;
+			echo $this->$actionMethod($data);
+		} else {
+			$reply = new stdClass();
+			$reply->code = "9";
+			return json_encode($reply);
+		}
+	}
+
+
+	public function actionDetailsLoad($data) {
+
+		/*
+		{
+	        "_group" : "Company",
+	        "_action" : "DetailsLoad"
+	        "_token" : "5F34603A2363CF7945DB0FD1459A0454",
+			"_user_id" : "1",
+		}
+
+		*/
+		//$reply = new stdClass();
+		$param = new stdClass();
+		$param->_group = "Company";
+		$param->_action = "DetailsLoad";
+		$param->_people_id = $data->_people_id;
+		$param->_company_id = $data->_user_id;
+		$result = $this->_RestApiCall(json_encode($param));
+
+		return $result;
+	}
+
+	private function actionAccountList($data) {
+		$data->_company_id = $data->_user_id;
+		$result = $this->_RestApiCall(json_encode($data));
+		return $result;
+	}
+
+	public function actionVatList($data) {
+		$data->_company_id = $data->_user_id;
+		$result = $this->_RestApiCall(json_encode($data));
+		return $result;
+	}
+	
+	private function actionAccountUpdate($data) {
+		$data->_company_id = $data->_user_id;
+		$result = $this->_RestApiCall(json_encode($data));
+		return $result;
+	}
+
+	private function actionDetailsUpdate($data) {
+		$data->_company_id = $data->_user_id;
+		$result = $this->_RestApiCall(json_encode($data));
+		return $result;
+	}
+
+	public function actionTrans($data) {
+
+		/*
+		{
+	        "_group" : "Company",
+	        "_action" : "Trans"
+			"_date_from" : "2019-01-01",
+			"_date_to" : "2019-04-29",
+			"_people_id" : "175"
+		}
+
+		"_token" : "5F34603A2363CF7945DB0FD1459A0454",
+
+		*/
+		$reply = new stdClass();
+
+		$param = new stdClass();
+		$param->_group = "Company";
+		$param->_action = "Trans";
+		$param->_date_from = $data->_date_from;
+		$param->_date_to = $data->_date_to;
+		$param->_company_id = $data->_user_id;
+		$param->_people_id = $data->_people_id;
+		$result = $this->_RestApiCall(json_encode($param));
+
+		return $result;
+	}
+
+	public function actionBookingOrder($data) {
+
+		/*
+		{
+	        "_group" : "Company",
+	        "_action" : "BookingOrder"
+			"_date_from" : "2020-09-01",
+			"_date_to" : "2020-09-16",
+			"_people_id" : "1"
+		}
+
+		"_token" : "5F34603A2363CF7945DB0FD1459A0454",
+
+		*/
+		$reply = new stdClass();
+
+		$param = new stdClass();
+		$param->_group = "Company";
+		$param->_action = "BookingOrder";
+		$param->_date_from = $data->_date_from;
+		$param->_date_to = $data->_date_to;
+		$param->_company_id = $data->_user_id;
+		$param->_people_id = $data->_people_id;
+		$result = $this->_RestApiCall(json_encode($param));
+
+		return $result;
+	}
+	
+	public function actionBookingOrderPdf($data) {
+
+		/*
+		{
+	        "_group" : "Company",
+	        "_action" : "BookingOrderPdf"
+			"_date_from" : "2020-09-01",
+			"_date_to" : "2020-09-16",
+			"_people_id" : "1"
+		}
+
+		"_token" : "5F34603A2363CF7945DB0FD1459A0454",
+
+		*/
+		$reply = new stdClass();
+
+		$param = new stdClass();
+		$param->_group = "Company";
+		$param->_action = "BookingOrderPdf";
+		$param->_date_from = $data->_date_from;
+		$param->_date_to = $data->_date_to;
+		$param->_company_id = $data->_user_id;
+		$param->_people_id = $data->_people_id;
+		$result = $this->_RestApiCall(json_encode($param));
+
+		return $result;
+	}
+
+}

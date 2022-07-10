@@ -1,0 +1,44 @@
+<?php
+/*
+    Class TtansClass
+
+	Date: 2018-10-16
+
+	capi
+
+	Actions:
+		- List
+		- Get
+
+	Call:
+
+
+*/
+
+class TransClass extends ActionOpen {
+
+	public function Run($data) {
+
+		$actionMethod = 'action' . $data->_action;
+		echo $this->$actionMethod($data);
+	}
+
+	private function actionList($data) {
+
+		$json =  json_encode($data);
+		$result = $this->_RestApiCall($json);
+		return $result;
+
+	}
+
+	private function actionGet($data) {
+
+		$json =  json_encode($data);
+		$result = $this->_RestApiCall($json);
+		return $result;
+
+	}
+
+
+
+}

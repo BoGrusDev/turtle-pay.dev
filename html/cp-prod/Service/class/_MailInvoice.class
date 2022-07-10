@@ -1,0 +1,189 @@
+<?php
+
+
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+
+class MailInvoiceClass extends ActionBase {
+
+	public function Run($data) {
+		$actionMethod = 'action' . $data->_action;
+		echo $this->$actionMethod($data);
+	}
+
+	/*
+			// VIKITIGT TA INTE BORT
+			Popel with no email, need Posted
+			SELECT p.people_id, p.first_name, p.last_name, p.email FROM minvoice m, people p WHERE p.people_id = m.people_id AND m.date = '2019-09-03' AND p.email = '' ORDER BY `p`.`email` ASC
+		*/
+
+
+	private function actionEmail($data) {
+		/*
+
+		Last updated: 2020-04-02
+
+		 {
+			 "_group" : "MailInvoice",
+			 "_action" : "Email",
+			 "_period" : "202003"
+		}
+		Result
+		
+			{"code":"1","send":76}
+
+
+		*/
+
+		
+
+		$lastDueDate = substr($data->_period, 0, 4) . '-' . substr($data->_period, 4, 2) . '-28';
+		$invoiceDate = date("Y-m-d", strtotime("+" . $lastDueDate . " + 5 days"));
+
+		$sql = "SELECT * FROM minvoice ORDER BY ocrno";
+
+		$sql = "SELECT m.*, ";
+		$sql .= "p.email, p.first_name, p.last_name ";
+		$sql .= "FROM minvoice m, people p ";
+		$sql .= "WHERE m.people_id = p.people_id AND m.date = '$invoiceDate' AND m.email_sent = 'n' ";
+		$sql .= "AND p.overdue < 3 ";
+		//$sql .= "AND p.people_id = 5 ";
+		$sql .= "ORDER BY p.last_name, p.first_name ";
+		$oMinvoice = $this->_GetList($sql);
+
+		// print_r($oMinvoice); die('');
+
+
+		$iSent = 0;
+		if (sizeof($oMinvoice) > 0) {
+			for ($i = 0; $i < sizeof($oMinvoice); $i++) {
+			//for ($i = 0; $i < 1; $i++) {
+				$invoiceObj = new StdClass();
+
+				$invoiceObj->date = $oMinvoice[$i]['date'];
+				$invoiceObj->duedate = $oMinvoice[$i]['duedate'];
+				$invoiceObj->name = $oMinvoice[$i]['first_name'] . ' ' . $oMinvoice[$i]['last_name'];
+				$invoiceObj->address = $oMinvoice[$i]['address'];
+				$invoiceObj->postaddress = $oMinvoice[$i]['postaddress'];
+				//$invoiceObj->monthly_no = "12";
+				$invoiceObj->monthly_payment_total = $oMinvoice[$i]['monthly_payment_total'];
+				$invoiceObj->pay_all = $oMinvoice[$i]['pay_all'];
+				$invoiceObj->monthly_invoice_fee = $oMinvoice[$i]['monthly_invoice_fee'];;
+
+				if ($oMinvoice[$i]['email'] != null) {
+
+					$invoiceObj->email =  $oMinvoice[$i]['email'];
+					$invoiceObj->ocrno =  $oMinvoice[$i]['ocrno'];
+
+					$invoiceObj->invoice_filename = $oMinvoice[$i]['invoice_filename'];
+					//$INVOICE_FOLDER = '../../finvoice/';
+
+					$toSubject = 'Månadsfaktura Turtle Pay';
+
+					$html = '';
+
+					$toSubject = 'Månadsfaktura ' . 'Turtle Pay';
+
+					$htmlInvoice = '';
+					$htmlInvoice = '<div style="width:100%; max-width:500px; margin: 10px auto 0; border:1px solid #cccccc; border-radius: 8px; font-family: Helvetica,Arial,sans-serif, Verdana; padding:6px">';
+
+					$htmlInvoice .= '<table style="width:100%; border-collapse:separate; border-spacing: 2px; font-size:14px;" >';
+						$htmlInvoice .= '<tbody>';
+							$htmlInvoice .= '<tr><td colspan="2"><h2>Månadsfaktura</h2></td></tr>';
+							$htmlInvoice .= '<tr><td colspan="2">&nbsp;</td></tr>';
+							$htmlInvoice .= '<tr><td colspan="2"><strong>Kund</strong></td></tr>';
+							$htmlInvoice .= '<tr><td colspan="2"> ' . $invoiceObj->name . '</td></tr>';
+							$htmlInvoice .= '<tr><td colspan="2"> '  . $invoiceObj->address . '</td></tr>';
+							$htmlInvoice .= '<tr><td colspan="2"> ' . $invoiceObj->postaddress  . '</td></tr>';
+							$htmlInvoice .= '<tr><td colspan="2">&nbsp;</td></tr>';
+							$htmlInvoice .= '<tr><td colspan="2"> <strong>Utskriftsdatum</strong> ' . $invoiceObj->date . '</td></tr>';
+							$htmlInvoice .= '<tr><td colspan="2"> <strong>Förfallodag</strong> ' . $invoiceObj->duedate . '</td></tr>';
+							$htmlInvoice .= '<tr><td colspan="2">&nbsp;</td></tr>';
+
+							if ($oMinvoice[$i]['invoice_type'] == "c") {
+								$htmlInvoice .= '<tr><td colspan="2"> <strong>Inkassokrav</strong></td></tr>';
+								$htmlInvoice .= '<tr><td colspan="2"> Vi saknar din betalning för förfallet belopp om ' . number_format($oMinvoice[$i]['coll_due_amount'], 0) . ' kronor och hela skulden om ' . number_format($invoiceObj->pay_all, 0) . ' kronor är därför överförd till inkasso.</td></tr>';
+								$htmlInvoice .= '<tr><td colspan="2">
+								Du behöver betala lägst <strong>' . number_format($oMinvoice[$i]['monthly_payment_total'], 0) . ' kronor senast ' . $oMinvoice[$i]['duedate'] . '</strong>,
+								varav ' . number_format($oMinvoice[$i]['coll_amoritze'], 0) . ' kronor utgör ränta och amortering på ej förfallen
+								del av skulden, ' . number_format($oMinvoice[$i]['coll_o_interest'], 0) . ' kronor utgör dröjsmålsränta på förfallen del av skulden och ' . number_format($oMinvoice[$i]['coll_fee'], 0) . ' kronor utgör aviavgift. För det fall
+								lägstabeloppet ovan inte är oss tillhanda senast ' . $oMinvoice[$i]['duedate'] . ' förfaller hela skulden till omedelbar betalning och en
+								ansökan om betalningsföreläggande kan därefter komma att göras hos Kronofogdemyndigheten, vilket i sin tur kan ge
+								upphov till betalningsanmärkning.
+								</td></tr>';
+							}
+							else {
+								$htmlInvoice .= '<tr><td colspan="2"> Betala valfritt belopp dock lägst <strong>' . number_format($invoiceObj->monthly_payment_total ,0) . ' kronor, </strong> inkl. ränta och aviavgift på denna faktura senast ' . $invoiceObj->duedate . '.</td></tr>';
+								$htmlInvoice .= '<tr><td colspan="2"> Förseningsavgift och dröjsmålsränta kan tillkomma vid sen betalning.</td></tr>';
+							}
+
+								//$htmlInvoice .= '<tr><td colspan="2">Logga in på <a href="https://www.turtle-pay.com/logga-in">https://www.turtle-pay.com/logga-in</a> med ditt BankID för att se villkor och alla transaktioner.</td></tr>';
+								//$htmlInvoice .= '<tr><td colspan="2">Ange fakturans ocr-nummer vid inbetalningen.</td></tr>';
+
+							$htmlInvoice .= '<tr><td colspan="2"> OCR-nummer: ' . $invoiceObj->ocrno . '</td></tr>';
+							$htmlInvoice .= '<tr><td colspan="2"> Bankgiro: 5258-0016</td></tr>';
+							$htmlInvoice .= '<tr><td colspan="2"> Se bifogad månadsfaktura.</td></tr>';
+							$htmlInvoice .= '<tr><td colspan="2">&nbsp;</td></tr>';
+
+							$htmlInvoice .= '<tr><td colspan="2"><strong> Betala allt: ' . number_format($invoiceObj->pay_all, 0) . ' kronor </strong> senast ' . $invoiceObj->duedate . '.';
+							$htmlInvoice .= '<tr><td colspan="2">&nbsp;</td></tr>';
+
+							$htmlInvoice .= '<tr><td colspan="2"> Turtle Pay AB, P.O. Box 24078, SE-104 50 Stockholm</td></tr>';
+							$htmlInvoice .= '<tr><td colspan="2"> Öppet vardagar 9-18, helger 11-16, Telefon 08-80 62 20</td></tr>';
+							$htmlInvoice .= '<tr><td colspan="2"> info@turtle-pay.com</td></tr>';
+							$htmlInvoice .= '<tr><td colspan="2"> www.turtle-pay.com</td></tr>';
+						$htmlInvoice .= '</tbody>';
+					$htmlInvoice .= '</table>';
+					$htmlInvoice .= '</div>';
+					//echo $htmlInvoice; die('');
+
+					require_once 'PHPMailerAutoload.php';
+
+					$email = $invoiceObj->email;
+					$emailName = $invoiceObj->name;
+
+					$mail = new PHPMailer;
+					$mail->isSMTP();
+					//$mail->Host = 'postman.vmi.se';
+					//$mail->Host = 'exchange.s.thehostingplatform.com';
+					$mail->Host = 'smtp.gmail.com';
+					$mail->SMTPAuth = true;
+					$mail->Username = 'info.turtlepay@gmail.com';
+					$mail->Password = 'SegTp_2019';
+
+					$mail->CharSet = 'UTF-8';
+					$mail->From = 'info@turtle-pay.com';
+					$mail->FromName = 'TurtlePay';
+				
+					// $email = "bo.grus@yahoo.com";
+					// $email = "stellan.forsberg@turtle-pay.com";
+					$mail->addAddress($email, $emailName);
+					
+					$mail->addBCC('bo.grusell@turtle-pay.com');
+					$mail->addReplyTo('info@turtle-pay.com');
+					$mail->isHTML(true);
+					
+					$mail->AddAttachment('../finvoice/' . $invoiceObj->invoice_filename);
+					$mail->Subject = $toSubject;
+					$mail->Body = $htmlInvoice;
+
+					if($mail->send()) {
+						$param = new stdClass();
+						$param->email_sent = 'y';
+						//echo $mail->ErrorInfo;
+						$this->_Update('minvoice', 'minvoice_id', $oMinvoice[$i]['minvoice_id'], $param);
+						$iSent++;
+					} 
+				}
+
+			}
+		}	
+		$reply = new StdClass();
+		$reply->code = '1';
+		$reply->counts = $iSent;
+		return json_encode($reply);
+
+	}
+}

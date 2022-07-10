@@ -1,0 +1,166 @@
+<?php
+/*
+    UserClass
+
+	Date: 2019-04-09
+
+*/
+
+class UserClass extends ActionPublic {
+
+	public function Run($data) {
+
+		$actionMethod = 'action' . $data->_action;
+		echo $this->$actionMethod($data);
+
+	}
+
+	public function actionLogin($data) {
+
+		$reply = new stdClass();
+
+        $insertData = new StdClass();
+        $insertData->personal_id_number = $data->_personal_id_number;
+        $result = $this->_Insert('token_list', $insertData);
+        $tokenId = $result['id'];
+
+		//
+		// Check if person is connected to any company
+		//
+		$paramCheck = new stdClass();
+		$paramCheck->_group = "User";
+		$paramCheck->_action = "CheckAllowed";
+		$paramCheck->_personal_id_number = $data->_personal_id_number;
+
+		$resultJson = $this->_RestApiCall(json_encode($paramCheck));
+		$resultCheck = json_decode($resultJson);
+
+		/*
+			Could trace More (like update why)
+		*/
+		if ($resultCheck->code == "1") {
+			$peopleId = $resultCheck->people_id;
+		} else {
+			$reply->code = "2";
+			$reply->message = "Personen är inte tillåten att använda Turtle Pays List Service";
+			return json_encode($reply);
+			die('');
+		}
+
+		// Init BankID
+		$paramAuth = new stdClass();
+		$paramAuth->_bankid_personal_id_number = $data->_personal_id_number;
+		$resBankID = $this->_BankIDAuth($paramAuth);
+
+		$reply = new stdClass();
+		$reply->code = $resBankID->code;
+		if ($resBankID->code == "1") {
+			$updateData = new StdClass();
+			// --
+			// -- Save the order_ref and people_id in the tp_log
+			// -  ID Token ID
+			//
+	        $updateData->order_ref = $resBankID->order_ref;
+			$updateData->people_id = $peopleId;
+	        $this->_Update('token_list', "token_id", $tokenId, $updateData );
+			$reply->auto_start_token = $resBankID->auto_start_token;
+			$reply->token_id = $tokenId;
+		} else {
+			$reply->denide_code = $resBankID->denied_code;
+		}
+
+		return json_encode($reply);
+	}
+
+	public function actionConnect($data) {
+
+		$reply = new stdClass();
+
+		$sql = "SELECT people_id, order_ref FROM token_list WHERE ";
+		$sql .= "token_id = $data->_token_id";
+		$result = $this->_get($sql);
+		$peopleId = $result['people_id'];
+
+		$paramCollect = new stdClass();
+		$paramCollect->_order_ref = $result['order_ref'];
+
+		$resBankIdCollect = $this->_BankIDAuthCollect($paramCollect);
+		if ($resBankIdCollect->code == '1' ) {
+
+			//
+			// Get Persons information
+			//
+			$token = $this->_CreateToken();
+
+			/*
+			$paramInfo = new stdClass();
+			$paramInfo->_group = "User";
+			$paramInfo->_action = "PeopleInfo";
+			$paramInfo->_people_id = $peopleId; // personal_id_number;
+			$resultInfo = json_decode($this->_RestApiCall(json_encode($paramInfo)));
+			$resultInfo->token = $token;
+			*/
+			// Update token-log
+			$updateData = new StdClass();
+			$updateData->people_id = $peopleId;
+			$updateData->token = $token;
+	        $updateData->status = "w";
+			$updateData->last_access = date('Y-m-d H:i:s');
+
+	        $this->_Update('token_list', "token_id", $data->_token_id, $updateData );
+
+			$reply = new stdClass();
+			$reply->code = '1';
+			$reply->token = $token;
+
+			return json_encode($reply);
+		}
+		else {
+			$updateData = new StdClass();
+			$updateData->denied_code = $resBankIdCollect->denied_code;
+	        $updateData->status = "c";
+	        $this->_Update('token', "token_id", $data->_token_id, $updateData );
+
+			$reply->code = "0";
+			$reply->denied_code = $resBankIdCollect->denied_code;
+			return json_encode($reply);
+			die('');
+		}
+
+	}
+
+	/*
+	public function actionCheckLogin($data) {
+		/ *
+		{
+	        "_group" : "User",
+	        "_action" : "CheckLogin",
+	        "_token_id" : "195711040054",
+			"_validate" : ""
+		}
+		* /
+		$reply = new stdClass();
+		$sql = "SELECT people_id, created, token, status, denied_code FROM token WHERE ";
+		$sql .= "token_id = $data->_token_id ";
+		$result = $this->_get($sql);
+
+		if ($result['code'] == "1" && $result['status'] == "w") {
+			$paramInfo = new stdClass();
+			$paramInfo->_group = "User";
+			$paramInfo->_action = "PeopleInfo";
+			$paramInfo->_people_id = $result['people_id']; // personal_id_number;
+			$resultInfo = json_decode($this->_RestApiCall(json_encode($paramInfo)));
+			$resultInfo->token = $result['token'];
+			return json_encode($resultInfo);
+		}
+		else {
+			$resultDenied = new stdClass();
+
+			$resultDenied->code = "0";
+			$resultDenied->denied_code = $result['denied_code'];
+			return json_encode($result);
+		}
+	}
+	*/
+
+}

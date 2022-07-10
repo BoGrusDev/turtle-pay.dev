@@ -1,0 +1,136 @@
+<?php
+/*
+    Class InvoiceListClass
+
+	Date: 2018-10-04
+
+	Call:
+	{
+		"_action" : "InvoiceList"
+	}
+
+*/
+
+class InvoiceClass extends ActionBase {
+
+	public function Run($data) {
+		$actionMethod = 'action' . $data->_action;
+		echo $this->$actionMethod($data);
+	}
+
+	/*
+		Old works
+	*/
+	private function actionInvoiceList2($data) {
+		$sql = "SELECT * FROM first_invoice ORDER BY ocrno";
+		return json_encode($this->_GetList($sql));
+	}
+
+
+	private function actionInvoiceList($data) {
+		$sql = "SELECT * FROM first_invoice ORDER BY ocrno";
+		$oInvoice = $this->_GetList($sql);
+
+
+		$invoice = array();
+		$index = -1;
+		for ($i = 0; $i < sizeof($oInvoice); $i++)
+		{
+			$invoice[] = new stdClass();
+			$index++;
+
+			$invoice[$index]->invoice_filename = $oInvoice[$i]['invoice_filename'];
+			$invoice[$index]->ocrno = $oInvoice[$i]['ocrno'];
+		    $invoice[$index]->date = $oInvoice[$i]['date'];
+		    $invoice[$index]->duedate = $oInvoice[$i]['duedate'];
+		    $invoice[$index]->name = $oInvoice[$i]['name'];
+		    $invoice[$index]->company_name = $oInvoice[$i]['company_name'];
+		    $invoice[$index]->shop_name = $oInvoice[$i]['shop_name'];
+		    $invoice[$index]->total = $oInvoice[$i]['total'];
+		    $invoice[$index]->email_sent = $oInvoice[$i]['email_sent'];
+		    $invoice[$index]->printed = $oInvoice[$i]['printed'];
+			$invoice[$index]->type = "First";
+			$invoice[$index]->period = "";
+		}
+
+		$sql = "SELECT * FROM minvoice ORDER BY ocrno";
+		$oMinvoice = $this->_GetList($sql);
+		for ($i = 0; $i < sizeof($oMinvoice); $i++)
+		{
+			$invoice[] = new stdClass();
+			$index++;
+			$invoice[$index]->invoice_filename = $oMinvoice[$i]['invoice_filename'];
+			$invoice[$index]->ocrno = $oMinvoice[$i]['ocrno'];
+		    $invoice[$index]->date = $oMinvoice[$i]['date'];
+		    $invoice[$index]->duedate = $oMinvoice[$i]['duedate'];
+		    $invoice[$index]->name = $oMinvoice[$i]['name'];
+		    $invoice[$index]->company_name = '';
+		    $invoice[$index]->shop_name = '';
+		    $invoice[$index]->total = $oMinvoice[$i]['monthly_payment_total'];
+		    $invoice[$index]->email_sent = "X";
+		    $invoice[$index]->printed = "X";
+			$invoice[$index]->type = "Monthly";
+			$invoice[$index]->period = "p:" . $oMinvoice[$i]['date'];
+		}
+
+
+		return json_encode($invoice);
+
+		/*
+		echo $resInvoice[0]['postaddress'];
+		die('');
+		$oInvoice = $res[0];
+		echo sizeof($oInvoice);
+
+		die('');
+
+
+		$sql = "SELECT * FROM minvoice ORDER BY ocrno";
+		$oMinvoice = (object) $this->_GetList($sql);
+		echo $oMinvoice[0]['postaddress'];
+
+		//$oInvoice[] =
+
+		/*
+		$index = 0;
+		$oInvoice[$index]->invoice_id => 21
+		$oInvoice[$index]->invoice_filename => 12344410410-610A941F-8644-1F2C-1737-3016F4354BC0.pdf
+  			$oInvoice[$index]->date => 2018-12-10
+  			$oInvoice[$index]->duedate => 2019-01-09
+  			$oInvoice[$index]->address => GYLLENSTIERNSGATAN 15 LGH 1306
+	  		$oInvoice[$index]->postaddress => 11526 STOCKHOLM
+  			$oInvoice[$index]->ocrno => 123444104103
+  			$oInvoice[$index]->fee => 0.00
+  			$oInvoice[$index]->start_fee =>
+  			$oInvoice[$index]->admin_fee =>
+  			$oInvoice[$index]->grace_days => 0
+   			$oInvoice[$index]->company_name => Sweden Snowsport
+  			$oInvoice[$index]->shop_name => Gustavslundsvägen 137
+  			$oInvoice[$index]->purchase_date => 2018-12-10
+  			$oInvoice[$index]->receipt_number => 123
+  			$oInvoice[$index]->credit_amount => 0.00
+  			$oInvoice[$index]->total => 0.00
+  			$oInvoice[$index]->monthly_payment => 0
+  			$oInvoice[$index]->monthly_no => 12
+  			$oInvoice[$index]->monthly_payment_total => 0
+			$oInvoice[$index]->interest => 0.00
+  			$oInvoice[$index]->credit_id => 12344410410
+  			$oInvoice[$index]->returnInvoice => y
+  			$oInvoice[$index]->refund_amount => 2,000.00
+  			$oInvoice[$index]->refund_all => y
+  			$oInvoice[$index]->prev_amount => 2,000.00
+  			$oInvoice[$index]->email => Stellan.forsberg@mondayrelations.se
+  			$oInvoice[$index]->name => Stellan Arne Forsberg
+  			$oInvoice[$index]->people_id => 4
+  			$oInvoice[$index]->email_sent => y
+  			$oInvoice[$index]->printed => n
+			*/
+
+	}
+
+	private function actionSetPrinted($data) {
+		$result = $this->_Update("first_invoice", "invoice_filename", $data->_invoice_filename, $data);
+		return json_encode($result);
+	}
+
+}

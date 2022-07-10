@@ -1,0 +1,446 @@
+<?php
+
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+class PepClass extends ActionBase {
+
+	/*
+		{
+			"_group" : "People"
+			"_action" : "List"
+		}
+	*/
+
+	public function Run($data) {
+		$actionMethod = 'action' . $data->_action;
+		echo $this->$actionMethod($data);
+	}
+
+  private function actionPepList($data) {
+    
+    /*
+      SELECT people_id, personal_id_number, last_name, first_name, pep_date, pep, rca 
+      FROM people
+      WHERE pep_date = '2020-03-26' 
+      ORDER BY people_id
+
+      SELECT people_id, personal_id_number, last_name, first_name, pep_date, pep, rca 
+      FROM people
+      WHERE pep_date = '2020-03-26' 
+      ORDER BY people_id
+
+      SELECT people_id, personal_id_number, last_name, first_name, pep_date, pep, rca 
+      FROM people
+      WHERE pep = 'y' OR rca = 'y' 
+      ORDER BY people_id
+
+    */
+
+    $sql =  "SELECT people_id, personal_id_number, last_name, first_name, pep_date, pep, rca ";
+    $sql .= "FROM people ";
+    $sql .= "WHERE pep = 'y' OR rca = 'y' "; 
+    $sql .= "ORDER BY people_id ";
+   
+    $result = $this->_GetList($sql);
+    return json_encode($result);
+
+  }
+
+  private function actionPepBulk($data) {
+        /*
+            {
+                "_group" : "Pep",
+                "_action" : "PepBulk"
+            }
+            
+            p = not checked
+            n = checked, but not
+            y = checked, but is
+
+          The key in the call, nned to get a new, for the https://app.roaring.io/developer?t=apis
+
+
+          // CHECKS
+          SELECT people_id, last_name, pep_date, pep, rca FROM `people` WHERE pep = 'n'
+
+          SELECT DISTINCT c.people_id, c.personal_id_number  FROM credit c, people p WHERE 
+          c.credit_status <> 'r' AND c.people_id = p.people_id AND p.pep = 'p' AND c.start_date <= '2019-12-31'
+          AND c.people_id NOT IN('1','4','5', '39','89','230','542');
+         
+
+      SELECT DISTINCT c.people_id, c.personal_id_number, p.last_name, p.first_name
+      FROM credit c, people p WHERE 
+      c.credit_status <> 'r' AND c.people_id = p.people_id AND p.pep = 'p' AND c.start_date > '2021-01-01' 
+      AND c.people_id NOT IN('1','4','5','34','39','89','230','542','1055','1082','1043','1055')
+      
+
+          
+         
+         
+          */
+      
+      $sql = "SELECT DISTINCT c.people_id, c.personal_id_number, p.last_name, p.first_name ";
+      $sql .= "FROM credit c, people p WHERE ";
+      $sql .= "c.credit_status <> 'r' AND c.people_id = p.people_id AND p.pep = 'p' AND c.start_date > '2021-01-01' ";
+      $sql .= "AND c.people_id NOT IN('1','4','5','34','39','89','230','542','1055','1082','1043','1055')";
+      $list = $this->_GetList($sql);
+
+      $bulkSize = sizeof($list);
+      $today = date('Y-m-d');
+
+      $this->tokenGet();
+
+      $result = new stdClass();
+	    $result->item = array();
+		
+      if (sizeof($list) > 0 ) {
+        for ($i = 0; $i < $bulkSize; $i++) {
+        //for ($i = 0; $i < 1; $i++) {
+              $reply = $this->actionGetPep($list[$i]['people_id'], $list[$i]['personal_id_number']);           
+          }
+      }
+      $result->code = '1';
+      $result->number = $bulkSize;
+     
+      return json_encode($result);
+    }
+
+  
+    private function actionGetPep($peopleId, $personalIdNumber) {
+        
+
+        //$authorization = "Authorization: Bearer 445cdda2-bacc-37a0-969e-a2e90f1ff04b";
+        // $authorization = "Authorization: Bearer c0b049ef-57af-37c7-a7f6-5c8ebeab1245";
+        $authorization = 'Authorization: Bearer ' . $this->accessToken;
+        $url = 'https://api.roaring.io/nordic/pep/1.0/search?countryCode=se&personalNumber=' . $personalIdNumber; 
+        
+        $curl = curl_init();
+        curl_setopt( $curl, CURLOPT_URL, $url);
+        curl_setopt($curl, CURLOPT_HTTPHEADER, array('Content-Type: application/json' , $authorization ));
+        // Will return the response, if false it print the response
+        curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+        // Set the url
+    
+        // Execute
+        $res = curl_exec($curl);
+        // Closing
+        curl_close($curl);
+        
+        // Will dump a beauty json :3
+        $result = json_decode($res);
+        $param = new stdClass();
+        
+        if (isset($result->hitCount)) {
+            if($result->hitCount > '0') {
+                if ($result->hits[0]->pep) {
+                    $param->pep = 'y';
+                    $param->kyc_need = 'y';
+                    $reply->kyc_need = 'y';
+                }
+                else {
+                    $param->pep = 'n';
+                }
+                if ($result->hits[0]->rca) {
+                    $param->rca = 'y';
+                    $param->kyc_need = 'y';
+                    $reply->kyc_need = 'y';
+                }
+                else {
+                    $param->rca = 'n';
+                }
+            }
+            else { // if (isset($this->result->hitCount) {
+                $param->pep = 'n';
+                $param->rca = 'n';
+            }
+            $param->pep_date = date('Y-m-d');
+            $this->_Update('people', 'people_id', $peopleId, $param);
+            
+            //print_r($param);
+            //echo $peopleId;
+
+
+      }
+        
+
+
+        /*
+          if ($pepInfo->hitCount == '1') {
+              $reply->code = '1';
+              $reply->people_id = $data->_people_id;
+              $reply->personal_id_number = $data->_personal_id_number;
+              if ($pepInfo->hits[0]->pep == '1') {
+                  $reply->pep = 'y';
+              }
+              else {
+                  $reply->pep = 'n';
+              }
+              if ($pepInfo->hits[0]->rca == '1') {
+                  $reply->rca = 'y';
+              }
+              else {
+                  $reply->rca = 'n';
+              }
+          }
+          else {
+              $reply->code = '0';
+              $reply->people_id = $data->_people_id;
+              $reply->personal_id_number = $data->_personal_id_number;
+              $reply->pep = 'n';
+              $reply->rca = 'n';
+          }
+        */
+        // return $reply;
+    }
+
+    private function tokenGet() {
+      $clientId = 'jjvvmeOspMvQ4SaLclmcN2JfqDAa';
+      $clientSecret = 'kWdYUvHFj7mHnx_vrwHTAChOf9Ua';
+  
+      $curl = curl_init();
+      curl_setopt( $curl, CURLOPT_URL, 'https://api.roaring.io/token');
+      // curl_setopt($curl, CURLOPT_HTTPHEADER, array('Content-Type: application/json'));
+      curl_setopt($curl, CURLOPT_HTTPHEADER, array('Content-Type: application/x-www-form-urlencoded'));
+      curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+      curl_setopt($curl, CURLOPT_CUSTOMREQUEST, "POST");
+      curl_setopt($curl, CURLOPT_USERPWD, $clientId . ":" . $clientSecret);
+      curl_setopt($curl, CURLOPT_POSTFIELDS, 'grant_type=client_credentials');
+      //curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
+    
+      $result = curl_exec($curl);
+      if (curl_errno($curl)) {
+        return false;	
+        // $error_msg = curl_error($curl);
+        // print_r($error_msg);
+      }	
+  
+      //print_r($result);
+  
+  
+      curl_close($curl);
+      $res = json_decode($result);
+      $this->accessToken = $res->access_token;
+      return true;
+      
+      /*
+        {
+          "access_token": "640c3f00-f82a-353c-a8e9-d11c2c6cd6a3",
+          "scope": "am_application_scope default",
+          "token_type": "Bearer",
+          "expires_in": 3600
+        }	
+      */
+      }
+
+}
+/*
+    {
+        "posts": [
+            {
+                "countryCode": "se",
+                "pep": true,
+                "pepId" : 55000,
+                "rca": true
+            }
+        ]
+    }
+
+
+    {
+        "posts": [
+            {
+                "countryCode": "se",
+                "pep": true,
+                "personalNumber": "193103249078",
+                "pepId" : 55000,
+                "rca": true
+            }
+        ]
+    }
+
+
+    {
+        "properties": {
+            "posts": [
+                "items": {
+                    "properties": {
+                        {
+                        "countryCode": "se",
+                        "pep": true,
+                        "personalNumber": "193103249078",
+                        "pepId" : 55000,
+                        "rca": true
+                    }
+                }
+            ]
+        }
+    }
+
+
+    {
+        "posts": [
+          {
+            "birthDate": "string",
+            "countryCode": "string",
+            "firstName": "string",
+            "gender": "string",
+            "lastName": "string",
+            "pep": true,
+            "pepId": 0,
+            "personalNumber": "string",
+            "rca": true
+          }
+        ]
+      }
+
+      {
+        "properties": {
+          "posts": {
+            "items": {
+              "properties": {
+                "birthDate": {
+                  "description": "Birth date of the PEP (ISO 8601)",
+                  "type": "string"
+                },
+                "countryCode": {
+                  "type": "string"
+                },
+                "firstName": {
+                  "type": "string"
+                },
+                "gender": {
+                  "type": "string"
+                },
+                "lastName": {
+                  "type": "string"
+                },
+                "pep": {
+                  "description": "Categorising entity as person or organisation",
+                  "type": "boolean"
+                },
+                "pepId": {
+                  "description": "Local identifier for the PEP/RCA",
+                  "type": "integer"
+                },
+                "personalNumber": {
+                  "type": "string"
+                },
+                "rca": {
+                  "description": "Organisation that owns the sancion decision",
+                  "type": "boolean"
+                }
+              },
+              "type": "object"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      }
+
+
+     
+        ?pep=1&rca=1&countryCode=se&personalNumber=193103249078
+
+
+        Jan	 Bananberg	 SE	193103249078	55000
+        Karin	 Bananberg 	 SE	192908187541	55001
+        Lena	 Bananberg 	 SE	197109259288	 55002
+        Erik	 Bananberg 	 SE	196501133372	 55003
+
+
+        pep - Filter indicating if the results should include PEP's (query)
+        rca - Filter indicating if the results should include RCA's (query)
+        countryCode - Country to check pep in (ISO 3166-1 alpha-2 standard) (query)
+        personalNumber - Personal number identifier (SSN) from the country of interest (query)
+        firstName - First name of a person to search for (query)
+        lastName - Last name of a person to search for (query)
+        birthDate - birthDate the searched entity should match (ISO 8601 format) (query)
+        gender - gender the searched entity values can be male or female (query)
+
+
+
+
+        Relation types
+
+        Code	Text
+        1	Father-in-law
+        2	Father
+        3	Son-in-law
+        4	Daughter
+        5	Mother-in-law
+        6	Partner
+        7	Son
+        8	Known co-worker
+        9	Daughter-in-law
+        10	Mother
+
+
+        Role types
+
+        Code	Text
+        Base role category	
+        1	Representatives of central banks
+        2	Representatives of international organizations
+        3	Representatives of audit authorities
+        4	Representatives of state-owned companies
+        5	High diplomats
+        6	High judges
+        7	High officers
+        8	Ministers
+        9	Members of parliament
+        10	Heads of State and Government
+        22	Members of party boards
+        Detailed role category	
+        1	Ambassador
+        2	Admiral
+        3	Apostolic nun
+        4	Division director state audit authority
+        5	Deputy Minister
+        6	Brigadier general
+        7	Chargé d’affaires
+        8	Judge in international supreme court
+        11	Queen
+        12	Member of an international organization's governing or controlling body
+        13	Member of Parliament at supranational level
+        18	Commodore
+        20	Executive member of central bank
+        21	General
+        23	Consul General
+        24	Lieutenant General
+        25	Major General
+        36	Judge in national supreme court
+        37	Consul
+        38	Rear Admiral
+        39	Crown Prince
+        40	Crown Princess
+        41	King
+        42	Judge or member of a constitutional court or constitutional referral body
+        43	Member of the central bank's governing or controlling body
+        44	Minister
+        49	Chairman of the central bank's governing or controlling body
+        51	President
+        52	Head of government
+        53	President of central bank
+        54	Member of national parliament
+        55	Senior official of state audit authority
+        56	Board member of state-owned company
+        57	Chairman of state-owned company
+        58	Deputy member of state-owned company
+        59	Deputy member of central bank's governing or controlling body
+        74	President and CEO of state-owned company
+        77	Vice Minister
+        80	Member of state-owned companies executive management group
+        81	Vice-admiral
+        349	Other high diplomat
+        357	President of National Parliament
+        380	Department Head
+        383	Chairman of the party board
+        384	Deputy Chairman of the Party Board
+        385	Member of party board
+        389	Deputy member of party board
+        411	Director of other state operations
+        412	Board member of other state-owned operations
+        */

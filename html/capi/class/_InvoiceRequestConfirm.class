@@ -1,0 +1,232 @@
+<?php
+/*
+    Class InvoiceRequestConfirmClass
+
+	Date: 2018-10-12)
+
+	capi
+
+	Actions:
+		- Check
+		- (BankId SignCollect)
+		- Complete
+
+	Prework
+	- Make a InvoiceReqest ( see InVoice Request class)
+	The flow
+	- Check if the data is Approved code is ok and int BankId SignIn
+	- Call the BankId Class and SignCollect action
+	- If Status OK the do the Confirm
+
+
+	Call:
+	{
+		"_group" : "InvoiceRequestConfirm",
+		"_action" : "start",
+		"_bankid" : "yes",
+		"_bankid_personal_id_number" : "195711040054",
+		 "bankid_text": "\rFAKTURA\r\rMMB Butiken AB (Hair Bar)\rMOOD Gallerian\rKöpesumma 2,000.00 kr\r\rRäntefritt 30 dagar\rAviavgift 29.00 kr\r\rKvittonummer _ReceiptNumber_\r \rMöjlig delbetalning\rLägsta månadsbelopp\r12 mån - ca 199, exklusive avgifter",
+		"_order_ref" : "8c621767-906a-46f1-a1e1-64cbfd2d4de6",
+		"signature" : "test-signature",
+		"ocspResponse" : "test-ocsp",
+		"_approved_code": "EA9FE7D0-A90A-7306-B6A6-ED56043B414E",
+		"cr_id" : "1",
+		"receipt_number" : "123-34"
+	}
+
+	Option if BankId = "yes" sign fpr each request:
+		- _bankid_personal_id_number" : "195711040054"   // Sales person id
+		- _order_ref" : "8c621767-906a-46f1-a1e1-64cbfd2d4de6" // Order ref from Bakis Aut
+
+*/
+
+class InvoiceRequestConfirmClass extends ActionOpen {
+
+	public function Run($data) {
+
+		$actionMethod = 'action' . $data->_action;
+		echo $this->$actionMethod($data);
+
+	}
+
+	public function actionCheckInvoice($data) {
+		/*
+		{
+			"_group" : "InvoiceRequestConfirm",
+			"_action" : "CheckInvoice",
+			"_bankid" : "no",
+			"_approved_code": "EDF67F62-B078-B4DD-A417-7388D11B729B 	"
+		}
+		### OK
+		{
+			"code": "1",
+			"denied_code": ""
+		}
+		### Exampel if denied
+		{
+			"code": "0",
+			"denied_code": "no_valid_approved_code"
+			}
+		*/
+
+		$data->_action = "CheckInvoice";
+		$json =  json_encode($data);
+		$result = json_decode($this->_RestApiCall($json));
+		/*
+		if ($result->code == '1') {
+			$data->_bankid_text = str_replace('_ReceiptNumber_', $data->receipt_number, $data->_bankid_text );
+			$result = $this->_BankIDSignInit($data);
+		}
+		*/
+		echo json_encode($result);
+
+	}
+
+	public function actionComplete($data) {
+		/*
+		{
+			"_group" : "InvoiceRequestConfirm",
+			"_action" : "Complete",
+			"_bankid" : "no",
+			"_approved_code": "AE865EE8-A4AF-C81B-B9EF-956D8EA19058",
+			"_order_ref" : "8c621767-906a-46f1-a1e1-64cbfd2d4de6",
+			"signature" : "test-signature",
+			"ocspResponse" : "test-ocsp",GetEventItemIdByCreditId
+			"receipt_number" : "A-1234-99",
+			"cr_id" : "1"
+		}
+		*/
+
+		$json = json_encode($data);
+		$result = json_decode($this->_RestApiCall($json));
+
+		if ($result->code == '0') {
+			echo json_encode($result);
+			die('');
+		}
+		
+		$result->invoice->people_company_on = 'n'; // NEW 2021-07-03
+		
+		// --- Get EventItemID used for the PDF specification
+		$param2 = new stdClass();
+		$param2->_group = "WebAppV4";
+		$param2->_action = "GetEventItemIdByCreditId";
+		$param2->_credit_id = $result->invoice->credit_id;
+		$resultJson = $this->_RestApiCall(json_encode($param2));
+
+		$eventItem = json_decode($resultJson);
+		if ($eventItem->code == '2') { 
+			// From App Return orgnr
+			$result->invoice->spec = $eventItem;
+		} 
+		else if ($eventItem->code == '1') {
+			$param = new stdClass();
+			$param->_group = "WebAppV4";
+			$param->_action = "EventSpecGet";
+			$param->_event_item_id = $eventItem->event_item_id;
+			$param->_credit_id = $result->invoice->credit_id; // 2021-07-08
+			$resultJson = $this->_RestApiCall(json_encode($param));
+		
+			$res = json_decode($resultJson);
+
+			if ($res->participant_on == 'y') {
+				$result->invoice->people_company_on = $res->people_company_on; // NEW 2021-07-03
+				$result->invoice->spec = $res;
+				$result->invoice->specOn = "y";
+			}
+			else {
+				$result->invoice->people_company_on = $res->people_company_on; // NEW 2021-07-03
+				$result->invoice->spec = $res; // Added 2021-09-16
+				$result->invoice->specOn = "n";
+			}
+		}
+		else {
+			$result->invoice->specOn = "n";
+		}
+
+		require_once 'FirstInvoicePdf.class';
+		$firstInvoice = new FirstInvoicePdfClass(FIRST_INVOICE_FOLDER);
+		$firstInvoice->Create($result->invoice);
+		//$firstInvoice->Create($invoice);
+		$reply = new StdClass();
+
+		$reply->credit_id = $result->credit_id;
+		$reply->code = $result->code;
+		$reply->email = $result->email;
+		$reply->start_date = $result->start_date;
+		$reply->invoice_filename = $result->invoice_filename;
+
+		echo json_encode($reply);
+
+		//echo json_decode($result);
+
+	}
+
+	// Test Invoice
+
+	private function actionReCreateFaktura($data) {
+
+		/*
+			{
+				"_group" : "InvoiceRequestConfirm",
+				"_action" : "ReCreateFaktura",
+				"_invoice_id" : "10308"
+			}
+
+		*/
+		
+		// --- Get Invoice
+		$data->_group = "WebAppV4";
+		$json =  json_encode($data);
+		$resultJson = $this->_RestApiCall($json);
+		$invoice =  json_decode($resultJson);	
+		
+		$invoice->people_company_on = 'n'; // NEW 2021-07-03
+		// --- Get EventItemID used for the PDF specification
+		$param2 = new stdClass();
+		$param2->_group = "WebAppV4";
+		$param2->_action = "GetEventItemIdByCreditId";
+		$param2->_credit_id = $invoice->credit_id;
+		$resultJson = $this->_RestApiCall(json_encode($param2));
+		$eventItem = json_decode($resultJson);
+		if ($eventItem->code == '2') { 
+			// From App Return orgnr
+			$invoice->spec = $eventItem;
+		} 
+		else if ($eventItem->code == '1') {
+			$param = new stdClass();
+			$param->_group = "WebAppV4";
+			$param->_action = "EventSpecGet";
+			$param->_event_item_id = $eventItem->event_item_id;
+			$resultJson = $this->_RestApiCall(json_encode($param));
+			$res = json_decode($resultJson);
+
+			//print_r($resultJson);
+			//die('');
+
+			if ($res->participant_on == 'y') {
+				$invoice->people_company_on = $res->people_company_on; // NEW 2021-07-03
+				$invoice->spec = $res;
+				$invoice->specOn = "y";
+			}
+			else {
+				$invoice->people_company_on = $res->people_company_on; // NEW 2021-07-03
+				$invoice->spec = $res; // Added 2021-09-16
+				$invoice->specOn = "n";
+			}
+		}
+		else {
+			$invoice->specOn = "n";
+		}
+		
+		// echo json_encode($invoice);
+		// die('');
+
+		require_once 'FirstInvoicePdf.class';
+		$firstInvoice = new FirstInvoicePdfClass(FIRST_INVOICE_FOLDER);
+		$firstInvoice->Create($invoice);
+	}
+
+
+
+}

@@ -1,0 +1,172 @@
+<?php
+/*
+    Class InvoiceRequestClass
+
+	Date: 2020-01-09
+
+
+	Call:
+	{
+		"_group" : "InvoiceRequest",
+		"_action" : "start",
+		"company_id" : "69",
+		"store_id" : "67",
+		"sales_person_people_id" : "34",
+		"personal_id_number" : "195711040054",
+		"amount" : "50",
+		"_uc_confirm" : "n",
+		"source" : "ia",
+		"device" : "pad"
+	}
+
+	Option if BankId = "yes" sign fpr each request:
+		- _bankid_personal_id_number" : "195711040054"   // Sales person id
+		- _order_ref" : "8c621767-906a-46f1-a1e1-64cbfd2d4de6" // Order ref from Bakis Aut
+
+*/
+
+class InvoiceRequestClass extends ActionOpen {
+
+	public function Run($data) {
+
+		$actionMethod = 'action' . $data->_action;
+		echo $this->$actionMethod($data);
+
+	}
+
+   	private function actionStart($data) {
+
+		if ($this->_CheckAge($data->personal_id_number)) {
+			// --
+			// -- UC Confirm test
+			//
+			if ($data->source == 'wa' && $data->_uc_confirm == "y") {
+
+
+				// -- 
+				// -- Get the peoples ID, for saving with th UC
+				// --
+				$paramPeople = new stdClass();
+				$paramPeople->_group = 'Uc';
+				$paramPeople->_action =  'GetPeopleId';
+				$paramPeople->_personal_id_number = $data->personal_id_number; 
+				$resPeopleJson = $this->_RestApiCall(json_encode($paramPeople));	
+				$resPeople = json_decode($resPeopleJson);
+
+				$param = new stdClass();
+				$param->_group = 'Uc';
+				$param->_action =  'GetFromUc';
+				//$param->_personal_id_number = '198003190710'; // '196103018039'; 
+				$param->_personal_id_number = $data->personal_id_number;
+				$param->_people_id = $resPeople->people_id;
+				$param->_company_id = $data->company_id;
+				$param->_sp_id = $data->sales_person_people_id;
+				
+				$resUcJson = $this->_RestApiCall(json_encode($param));
+				$resUc = json_decode($resUcJson);
+	
+				if ($resUc->code == '1' && (int) $resUc->credit_limit > 0) {
+					$data->_group = 'InvoiceRequest2';
+					$result = $this->_RestApiCall(json_encode($data));
+					
+					$requestData = json_decode($result);
+					
+					if ($requestData->code = '1') {
+						// --
+						// -- Check if OK
+						// --
+
+						$paramWa = new stdClass();
+						$paramWa->_group = 'WebAppV4';
+						$paramWa->_action =  'SetApprovedCodeEventItem';
+						$paramWa->_event_item_id = $data->_event_item_id;
+						$paramWa->approved_code = $requestData->approved_code;
+						$resWa = $this->_RestApiCall(json_encode($paramWa));
+
+						// Need to update the approve code in the event
+						
+						require_once 'class/InvoiceRequestConfirm.class';
+						$irsObj = new InvoiceRequestConfirmClass($this->Url);					
+						$param = new stdClass();
+						$param->_group = 'InvoiceRequestConfirm';
+						$param->_action = 'Complete';
+						$param->_approved_code = $requestData->approved_code;
+						//$param->_order_ref = $data->order_ref;
+						$param->signature = $data->_signature;
+						$param->ocspResponse = $data->_ocspResponse;
+						$param->receipt_number = $data->_receipt_number;
+						$param->email = $data->_email;
+						$param->cr_id = '1';
+						return $irsObj->actionComplete($param);
+					}
+					else {
+						return $result;
+					}
+				}
+				else {
+					$reply = new stdClass();
+					$reply->code = '3';
+					$reply->denied_code = "denied";
+					return json_encode($reply);
+				}
+			}
+
+			// -- 
+			// -- UC questin has been answer yes and from the UIS app
+			//
+			else if ($data->_uc_confirm == "y") { // source = ia
+				
+				// -- 
+				// -- Get the peoples ID, for saving with th UC
+				// --
+				$paramPeople = new stdClass();
+				$paramPeople->_group = 'Uc';
+				$paramPeople->_action =  'GetPeopleId';
+				$paramPeople->_personal_id_number = $data->personal_id_number; 
+				$resPeopleJson = $this->_RestApiCall(json_encode($paramPeople));	
+				$resPeople = json_decode($resPeopleJson);
+
+				// --
+				// -- Do the UC
+				// --
+				$param = new stdClass();
+				$param->_group = 'Uc';
+				$param->_action =  'GetFromUc';
+				// $param->_personal_id_number = '198303044294'; // '196103018039'; // 198303044294 (39)
+				$param->_personal_id_number = $data->personal_id_number;
+				$param->_people_id = $resPeople->people_id;
+				// -- Used for the UC log
+				$param->_company_id = $data->company_id;
+				$param->_sp_id = $data->sales_person_people_id;
+				
+				// -- Get the People_id based on personal_number_id
+				$resUcJson = $this->_RestApiCall(json_encode($param));	
+
+				$resUc = json_decode($resUcJson);
+				
+				if ($resUc->code == '1' && (int) $resUc->credit_limit > 0) {
+					$result = $this->_RestApiCall(json_encode($data));				
+					$requestData = json_decode($result);
+				}
+				else {
+					$reply = new StdClass();
+					$reply->code = "3";
+					$reply->denied_code = 'no_credit_limit';
+					echo json_encode($reply);
+					die ('');
+				}
+
+			}
+			$data->_group = 'InvoiceRequest2';
+			$json =  json_encode($data);
+
+			$result = $this->_RestApiCall($json);
+			echo $result;
+			
+		}
+		else {
+			echo '{"code":"4", "denied_code":"age_under_18"}';
+		}
+
+	}
+}

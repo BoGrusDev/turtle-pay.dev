@@ -1,0 +1,239 @@
+<?php
+/*
+    Class WebAppClass
+
+	Date: 2019-12-17
+
+*/
+
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+class WebAppOfferClass extends ActionBase {
+
+	public function Run($data) {
+		$actionMethod = 'action' . $data->_action;
+		echo $this->$actionMethod($data);
+    }
+	
+	private function actionGetWaLog($data) {
+		/*
+			{
+				"_group" : "WebAppOffer",
+				"_action" : "GetWaLog",
+				"_log_id" : "18"
+			}
+		*/
+		$sql = "SELECT * FROM wa_log_offer ";
+		$sql .= "WHERE wa_log_offer_id = $data->_log_id";
+		$result = $this->_Get($sql);
+		return json_encode($result);
+	}
+
+	private function actionWriteToLog($data) {
+		
+		// --
+		//--Check if people exist in Turtle
+		//
+		$peopleObj = $this->peopleGet($data->personal_id_number);
+
+		// ---
+		// Person not exits in TurtlePay - Check if Exist in SPAR
+		//
+   		if ($peopleObj->code != '1') {
+			$sparObj = $this->_Spar($data->personal_id_number);
+		
+			// --
+			// -- People not exist in Spar
+			// --
+			if($sparObj->status != "1") {
+				$replySpar = new StdClass();
+				$replySpar->code = '4';
+				$replySpar->denied_code = 'people_not_exist';
+				return json_encode($replySpar);
+				die ('');
+			}
+			// --
+			// -- Create new People in Turtle Pay with data from SPAR
+			// --
+			else {
+				//$sparObj->people->credit_limit = $this->Setting->customer_credit_limit;
+				$this->peopleCreateFromSpar($sparObj->people);
+				$peopleObj = $this->peopleGet($data->personal_id_number);
+			
+			}
+		}
+		$data->people_id = $peopleObj->people_id;
+
+		$param = new stdClass();
+		$param->email = $data->email;
+		$param->mobile = $data->mobile;
+		$this->_Update('people', 'people_id', $data->people_id, $param);
+
+
+		// Load Settings
+		$this->_Settings();
+
+		// --
+		// -- FIX 12 (3%), 18 (3,4%) ,24 (4%)
+		//
+		if ($data->term == '3') {
+			$data->interest_rate = $this->Setting->refinance_interest_margin_3m + $this->Setting->base_interest;
+		}
+		else 
+		if ($data->term == '6') {
+			$data->interest_rate = $this->Setting->refinance_interest_margin_6m + $this->Setting->base_interest;
+		}
+		else if ($data->term == '12') {
+			$data->interest_rate = $this->Setting->refinance_interest_margin_12m + $this->Setting->base_interest;
+		}
+		else if ($data->term == '18') {
+			$data->interest_rate = $this->Setting->refinance_interest_margin_18m + $this->Setting->base_interest;
+		}
+		else if ($data->term == '24') {
+			$data->interest_rate = $this->Setting->refinance_interest_margin_24m + $this->Setting->base_interest;
+		}
+		else if ($data->term == '36') {
+			$data->interest_rate = $this->Setting->refinance_interest_margin_36m + $this->Setting->base_interest;
+		}
+		else if ($data->term == '48') {
+			$data->interest_rate = $this->Setting->refinance_interest_margin_48m + $this->Setting->base_interest;
+		}
+		else {
+			$data->interest_rate = $this->Setting->refinance_interest_margin_6m + $this->Setting->base_interest;
+		}
+
+		$reply = $this->_Insert('wa_log_offer', $data);		
+		return json_encode($reply);
+	}
+
+	private function actionCompleteOffer($data) {
+		/*
+			{
+				"_group" : "WebAppOffer",
+				"_action" : "CompleteOffer",
+				"_wa_log_offer_id" : "9",
+				"signature" : "test-sign",
+				"ocspResponse" : "test-oscp"
+
+			}	
+		*/
+		$sql = "SELECT * FROM wa_log_offer ";
+		$sql .= "WHERE wa_log_offer_id = $data->_wa_log_offer_id";
+		$result = $this->_Get($sql);
+
+		$param = new stdClass();
+
+		$param->purchase_date = date("Y-m-d"); // NOW date
+		$param->people_id = $result['people_id'];
+		$param->personal_id_number = $result['personal_id_number'];
+		$param->amount = $result['amount'];
+		$param->interest_rate = $result['interest_rate'];
+		$param->term = $result['term'];
+		$param->repay_type = $result['repay_type'];
+		$param->clearingno = $result['clearingno'];
+		$param->bank_accountno = $result['bank_accountno'];
+		//$param->bond_ocrno = ""; // Calculate bond no
+		$param->signature = $data->signature;
+		$param->ocspResponse = $data->ocspResponse;
+		$param->bond_status = 'p';
+
+		$replyBond = $this->_Insert('bond', $param);
+		//print_r($replyBond);
+		
+		$param2 = new stdClass();
+		$param2->ocrno = $this->ocrnoCreate($replyBond['id']);
+		$param2->filename = 'b' . $replyBond['id'] . '.pdf';
+		$res = $this->_Update('bond', 'bond_id', $replyBond['id'], $param2);
+		
+
+		//bond->name = "Karl Gustav Karrsson";
+		//$bond->address = "Storgatan 23 Lgh 1822";
+		//$bond->postaddress = "110 23 STOCKHOLM";
+
+		//SELECT CONCAT(p.first_name, ' ', p.last_name) AS people_name, p.address, p.postcode, p.city,  b.* FROM bond b, people p
+		//WHERE p.people_id = b.people_id AND bond_id = '30010000103'
+
+
+		$sql = "SELECT CONCAT(p.first_name, ' ', p.last_name) AS people_name, p.address, p.postcode, p.city, b.* ";
+		$sql .= "FROM bond b, people p ";
+		$sql .= "WHERE p.people_id = b.people_id AND bond_id = " . $replyBond['id'];
+		$reply = $this->_Get($sql);
+
+		if ($result['invoice_event_item_id'] > '0') {
+			$paramUpdate = new stdClass();
+			$paramUpdate->people_id = $result['people_id'];
+			$paramUpdate->people_name = $reply['people_name'];
+			//$paramUpdate->event_item_id = $data->_event_item_id;
+			$paramUpdate->invoice_event_item_status = 'c';
+			$paramUpdate->amount = $result['amount'];
+			$paramUpdate->email = $result['email'];
+			$dt = new DateTime();
+			$paramUpdate->confirmed_datetime = $dt->format('Y-m-d H:i:s');
+			$res = $this->_Update('invoice_event_item', 'invoice_event_item_id', $result['invoice_event_item_id'], $paramUpdate);
+			//print_r($paramUpdate);
+			//print_r($reply);
+		}
+
+		return json_encode($reply);
+
+	}
+
+	function ocrnoCreate($ocrno) {
+		$sum = 0;
+		for ($i=0; $i < strlen($ocrno); $i++) {
+		// Even
+			if ($i % 2 == 0) {
+				$res = $ocrno[$i] * 2;
+				//echo 'even: ' . $ocrno[$i] . ' ';
+			} else {
+				$res = $ocrno[$i];
+			}
+	
+			if ($res > 9) {
+				$res = $res -9;
+			}
+			//echo $sum . '<br>';
+			$sum = $sum + $res;
+		}
+		//echo $sum . '<br>';
+		$nerast10 = ceil($sum / 10) * 10;
+		//echo $nerast10 . '<br>';
+		$checksum =  $nerast10 - $sum;
+		$ocr_number = $ocrno . $checksum; // 11
+		return $ocr_number;
+	}
+
+	private function actionGetBond($data) {
+		/*
+			{
+				"_group" : "WebAppOffer",
+				"_action" : "CompleteOffer",
+				"_bond_id" : "30010000103"
+			}	
+		*/
+
+		$sql = "SELECT CONCAT(p.first_name, ' ', p.last_name) AS people_name, p.address, p.postcode, p.city, p.first_name, p.email, b.* ";
+		$sql .= "FROM bond b, people p ";
+		$sql .= "WHERE p.people_id = b.people_id AND bond_id = " . $data->_bond_id;
+		$reply = $this->_Get($sql);
+		return json_encode($reply);
+
+	}
+
+	private function peopleGet($personal_id_number) {
+
+		$sql = "SELECT people_id FROM people WHERE personal_id_number = '$personal_id_number'";
+		$result = $this->_Get($sql);
+		return (object) $result;
+	}
+
+	private function peopleCreateFromSpar($people) {
+
+		$result = $this->_Insert('people', $people);
+		return $result;
+	}
+
+
+}

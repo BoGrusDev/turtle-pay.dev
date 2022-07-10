@@ -1,0 +1,993 @@
+<?php
+/*
+    Class MonthJobClass
+
+	Date: 2019-02-05
+
+*/
+use setasign\Fpdi;
+
+define('INVOICE_FOLDER',  '../../minvoice/');
+
+class MonthJobClass extends ActionBase {
+
+	public function Run($data) {
+		$actionMethod = 'action' . $data->_action;
+		return $this->$actionMethod($data);
+	}
+
+	private function actionInterest($data) {
+		/*
+			{
+				"_group" : "MonthJob",
+				"_action" : "Interest",
+				"_from_date" : "2019-01-01",
+				"_to_date" : "2019-03-05",
+				"_credit_id" : "12344410449",
+				"_interest" : "14.5"
+			}
+
+			The calculations id _from_date (not include _from_date)
+			_to_date include the to date.
+
+			*/
+
+			/*
+				Balance the Start balance on Credit
+			*/
+
+			$sql = "SELECT SUM(t.amount) AS balance FROM btrans t, booking b ";
+			$sql .= "WHERE ";
+			$sql .= "b.booking_id = t.booking_id AND ";
+			$sql .= "t.account_no = '1380' AND ";
+			$sql .= "t.credit_id = $data->_credit_id AND ";
+			$sql .= "b.booking_date <= '$data->_from_date'";
+			$res = $this->_Get($sql);
+
+			if (empty($res['balance'])) {
+				$balance = '0';
+			}
+			else {
+				$balance = $res['balance'];
+			}
+
+			/*
+				Changes on balance  on Credit
+			*/
+			$sql = "SELECT b.booking_date, SUM(t.amount) as balance FROM btrans t, booking b ";
+			$sql .= "WHERE ";
+			$sql .= "b.booking_id = t.booking_id AND ";
+			$sql .= "t.account_no = '1380' AND ";
+			$sql .= "t.credit_id = $data->_credit_id AND ";
+			$sql .= "b.booking_date > '$data->_from_date' AND b.booking_date <= '$data->_to_date' ";
+			//$sql .= "b.booking_date <= '$data->_to_date' ";
+			$sql .= "GROUP BY b.booking_date ";
+			$oChanges = $this->_GetList($sql);
+
+			$begin = new DateTime($data->_from_date);
+			$begin->modify('+1 day'); //
+			$end = new DateTime($data->_to_date);
+			$end->modify('+1 day');
+
+			$daterange = new DatePeriod($begin, new DateInterval('P1D'), $end);
+
+			$oInterest = array();
+			$iInterest = -1;
+			$totaInterest = 0;
+			foreach($daterange as $date) {
+				$oInterest[] = new StdClass();
+				$iInterest++;
+				$oInterest[$iInterest]->date = $date->format("Y-m-d");
+				if (sizeof($oChanges) > 0) {
+					for ($i=0; $i < sizeof($oChanges); $i++) {
+						if ($oInterest[$iInterest]->date == $oChanges[$i]['booking_date']) {
+							$balance = $balance + $oChanges[$i]['balance'];
+						}
+					}
+				}
+				$oInterest[$iInterest]->balance = $balance;
+				$oInterest[$iInterest]->interest = $balance * $data->_interest / 100 / 360;
+				$totaInterest = $totaInterest + $oInterest[$iInterest]->interest;
+			}
+
+
+			// Tracing and Debugging
+			/*
+			echo $totaInterest;
+			print_r($data);
+
+			//if ($data->_credit_id == '12344410434') {
+				for ($i = 0; $i < sizeof($oInterest); $i++ ) {
+					echo $oInterest[$i]->date . ";";
+					echo $oInterest[$i]->balance . ";";
+					echo $oInterest[$i]->interest . "\n";
+				}
+			//}
+
+			die('');
+			*/
+			return round($totaInterest);
+
+	}
+
+	private function actionStart($data) {
+		/*
+			{
+				"_group" : "MonthJob",
+				"_action" : "Start",
+				"_from_date" : "2019-01-29",
+				"_to_date" : "2019-03-03"
+			}
+
+			data_from
+			date_to + 5 days
+
+			- Sätt_first_invoice duedate in credit
+			- (Sätt next invoice due_date)
+		*/
+
+		$this->_Settings();
+
+		/*
+			Get all credit that are p=pending, a=active and o=ongoing
+		*/
+		$sql = "SELECT c.credit_id, c.start_date, c.people_id, c.credit_status, c.grace_days, c.amount, c.first_invoice_ocrno , f.total, f.duedate, f.monthly_payment_total, ";
+		$sql .= "c.interest_margin, c.monthly_no, c.admin_fee, c.fee, c.start_fee, c.amor_by_plan, CONCAT(p.last_name, ', ', p.first_name) AS people_name ";
+		$sql .= "FROM credit c ";
+		$sql .= "LEFT JOIN first_invoice f ON c.invoice_id = f.invoice_id ";
+		$sql .= "LEFT JOIN people p ON c.people_id = p.people_id ";
+		//$sql .= "LEFT JOIN f ON ";
+		$sql .= "WHERE ";
+		    $sql .= "(c.credit_status = 'p' OR c.credit_status = 'a' OR c.credit_status = 'o') ";
+			$sql .= "AND f.duedate <= '" . $data->_to_date . "' ";
+			// $sql .= "AND c.people_id = 106 "; // 106 (171) 133 - full paid, 50 - not paid, 128 = start pay of
+		$sql .= "ORDER BY c.people_id, c.credit_status DESC, c.credit_id; ";
+
+		$oCredit = $this->_GetList($sql);
+
+		for ($iC = 0; $iC < sizeof($oCredit); $iC++) {
+
+			// Fix the total,, who has format
+			$oCredit[$iC]['total'] = str_replace(',', '', $oCredit[$iC]['total'] );
+
+			// -- Settings load people indiviuel interest
+			$oCredit[$iC]['interest_rate'] = (float) $this->Setting->base_interest + $oCredit[$iC]['interest_margin'];
+
+			// Planed montly repayment
+			$oCredit[$iC]['monthly_repayment'] = round($oCredit[$iC]['amount'] / $oCredit[$iC]['monthly_no']);
+			//echo $oCredit[$iC]['monthly_repayment'];
+
+			// -- Calculate when credits Grace days end, use in the Interest calculation
+
+			// -- Caluclate and set the grace date end (from that date interst will be calculated)
+			$oCredit[$iC]['grace_days_end'] = date("Y-m-d", strtotime("+" . $oCredit[$iC]['grace_days'] . " days", strtotime($oCredit[$iC]['start_date'])));
+
+			switch ($oCredit[$iC]['credit_status']) {
+
+			    case 'p' :
+				case 'a':
+
+					//$oCredit[$iC]['max_allowable_balance'] = $oCredit[$iC]['max_allowable_balance'] - $oCredit[$iC]['monthly_repayment'];
+					//$oCredit[$iC]['minBalance'] = $oP[$iP]->oPc[$iPc]->amount / $oP[$iP]->oPc[$iPc]->monthly_no * 11;
+
+					// -- Caluclade the due date plus the extra date
+					$oCredit[$iC]['duedate_plus'] = date("Y-m-d", strtotime("+" . $oCredit[$iC]['duedate'] . " + 5 days"));
+
+					// -- Get balance on the Due date inklude the extra days (used if payed late)
+					$oCredit[$iC]['balance_plus'] = $this->getTransOnCreditId($oCredit[$iC]['credit_id'], $oCredit[$iC]['duedate_plus'], '1380'); // Invoice credit
+
+					// This is the amount payed until last duedate + 5;
+					$oCredit[$iC]['balance_now'] = $this->getTransOnCreditId($oCredit[$iC]['credit_id'], $data->_to_date, '1380');
+
+					// echo $oCredit[$iC]['balance_now'];
+
+
+					// If full paid before the due date (inkl the 5 extra-days)
+					if ($oCredit[$iC]['balance_plus'] <= 0 && $oCredit[$iC]['balance_now'] <= 0)  {
+						$oCredit[$iC]['text'] = "FULL PAID";
+
+						// If paid more than the balance /book the over-pay to 1680
+						if ($oCredit[$iC]['balance_now'] < 0) {
+
+							$oTrans = array();
+							$oTrans[] = new stdClass();
+							$iTrans = 0;
+							$oTrans[$iTrans]->account_no = "1380";
+							$oTrans[$iTrans]->amount = - $oCredit[$iC]['balance_now'];
+							$oTrans[$iTrans]->credit_id = $oCredit[$iC]['credit_id'];
+							$oTrans[$iTrans]->trans_type = 'over-pay';
+
+							$oTrans[] = new stdClass();
+							$iTrans = 1;
+							$oTrans[$iTrans]->account_no = "1680";
+							$oTrans[$iTrans]->amount = $oCredit[$iC]['balance_now'];
+							$oTrans[$iTrans]->credit_id = $oCredit[$iC]['credit_id'];
+							$oTrans[$iTrans]->trans_type = 'over-pay';
+
+							$this->bookingTrans($oCredit[$iC]['people_id'], $data->_to_date, $oTrans);
+						}
+
+						$param = array ();
+						$param['credit_status'] = 'c';
+						$this->_Update('credit', 'credit_id', $oCredit[$iC]['credit_id'], $param);
+
+					}
+					else {
+
+						//
+						// Start of installment
+						//
+
+						// - create caiables for all booking needed
+						$oTrans = array();
+						$iTrans = -1;
+
+						//-- Calculate the Interest (first)
+						$oParam = new stdClass();
+						$oParam ->_from_date = $oCredit[$iC]['grace_days_end'];
+						$oParam ->_to_date = $data->_to_date;
+						$oParam ->_credit_id = $oCredit[$iC]['credit_id'];
+						$oParam ->_interest = $oCredit[$iC]['interest_rate'];
+						// -- calculate interest day by day
+						$oCredit[$iC]['interest'] = $this->actionInterest($oParam);
+
+						/*
+							Book the interest
+						/*/
+						$oTrans[] = new stdClass();
+						$iTrans++;
+						$oTrans[$iTrans]->account_no = "8300"; //Interest income
+						$oTrans[$iTrans]->amount = - $oCredit[$iC]['interest'];
+						$oTrans[$iTrans]->credit_id = $oCredit[$iC]['credit_id'];
+						$oTrans[$iTrans]->trans_type = 'interest';
+
+						$oTrans[] = new stdClass();
+						$iTrans++;
+						$oTrans[$iTrans]->account_no = "1380";
+						$oTrans[$iTrans]->amount = $oCredit[$iC]['interest'];
+						$oTrans[$iTrans]->credit_id = $oCredit[$iC]['credit_id'];
+						$oTrans[$iTrans]->trans_type = 'interest';
+
+						$oCredit[$iC]['payed_in'] =  (float)$oCredit[$iC]['total'] - (float)$oCredit[$iC]['balance_plus'];
+
+						if ($oCredit[$iC]['payed_in'] < $oCredit[$iC]['monthly_payment_total']) {
+							$oTrans[] = new stdClass();
+							$iTrans++;
+							$oTrans[$iTrans]->account_no = "3544";
+							$oTrans[$iTrans]->amount = - $this->Setting->reminder_fee;
+							$oTrans[$iTrans]->credit_id = $oCredit[$iC]['credit_id'];
+							$oTrans[$iTrans]->trans_type = 'reminder-fee';
+
+							$oTrans[] = new stdClass();
+							$iTrans++;
+							$oTrans[$iTrans]->account_no = "1680";
+							$oTrans[$iTrans]->amount = $this->Setting->reminder_fee; ;
+							$oTrans[$iTrans]->credit_id = $oCredit[$iC]['credit_id'];
+							$oTrans[$iTrans]->trans_type = 'reminder-fee';
+						}
+
+						$oCredit[$iC]['min_balance'] = $oCredit[$iC]['amount'] - $oCredit[$iC]['monthly_repayment'];
+						$oCredit[$iC]['balance_now'] += $oCredit[$iC]['interest'];
+						$oCredit[$iC]['amortise'] = round($oCredit[$iC]['balance_now'] - $oCredit[$iC]['min_balance']);
+
+						if ($oCredit[$iC]['amortise'] > 0) {
+							$oTrans[] = new stdClass();
+							$iTrans++;
+							$oTrans[$iTrans]->account_no = "1380";
+							$oTrans[$iTrans]->amount = - $oCredit[$iC]['amortise'];
+							$oTrans[$iTrans]->credit_id = $oCredit[$iC]['credit_id'];
+							$oTrans[$iTrans]->trans_type = 'amortization';
+
+							$oTrans[] = new stdClass();
+							$iTrans++;
+							$oTrans[$iTrans]->account_no = "1680";
+							$oTrans[$iTrans]->amount = $oCredit[$iC]['amortise'];
+							$oTrans[$iTrans]->credit_id = $oCredit[$iC]['credit_id'];
+							$oTrans[$iTrans]->trans_type = 'amortization';
+
+						}
+
+
+						print_r($oCredit[$iC]);
+						print_r($oTrans);
+						//die('');
+
+						$this->bookingTrans($oCredit[$iC]['people_id'], $data->_to_date, $oTrans);
+
+						$param = array ();
+						$param['credit_status'] = 'o';
+						$param['amor_by_plan'] = $oCredit[$iC]['amor_by_plan'] + $oCredit[$iC]['monthly_repayment'];
+						$this->_Update('credit', 'credit_id', $oCredit[$iC]['credit_id'], $param);
+
+					}
+
+					break;
+
+				case 'o':
+
+					default:
+
+			}
+
+			print_r($oCredit);
+
+
+		}
+
+
+	}
+
+	// -- used
+	private function bookingTrans($peopleId, $bookingDate, $trans) {
+		$booking = new StdClass();
+		$booking->booking_date = $bookingDate;
+		$booking->booking_text = "Settlement";
+		$booking->booking_type = "m-settl";
+		$booking->people_id = $peopleId;
+		$booking->prel = "s";
+		$booking->_trans = $trans;
+		print_r($booking);
+		$this->_Book($booking);
+	}
+
+	// -- used
+	private function getTransOnCreditId($creditId, $untilDate, $accountNo) {
+		$sql = "SELECT SUM(t.amount) AS sum ";
+		$sql .= "FROM booking b, btrans t ";
+		$sql .= "WHERE t.account_no = '$accountNo' AND b.booking_id = t.booking_id AND ";
+		$sql .= "t.credit_id = '$creditId' AND booking_date <= '$untilDate' ";
+
+		$result = $this->_Get($sql);
+		if ($result['sum'] == null) {
+			$result['sum'] = "0";
+		}
+
+		print_r($result);
+
+		return $result['sum'];
+	}
+
+	private function getAccountBalanceOnPeople($peopleId, $untilDate, $accountNo) {
+		$sql = "SELECT SUM(t.amount) AS sum ";
+		$sql .= "FROM booking b, btrans t ";
+		$sql .= "WHERE b.booking_id = t.booking_id AND t.account_no = '$accountNo' AND ";
+		$sql .= "b.people_id = '" . $peopleId . "'";
+		$result = $this->_Get($sql);
+		if ($result['sum'] == null) {
+			$result['sum'] = "0";
+		}
+		return $result['sum'];
+	}
+
+	private function getTransOnOcrno($ocrno, $untilDate, $accountNo) {
+		$sql = "SELECT SUM(t.amount) AS sum ";
+		$sql .= "FROM booking b, btrans t ";
+		$sql .= "WHERE b.booking_id = t.booking_id AND t.account_no = '$accountNo' AND ";
+		$sql .= "b.ocrno = '$ocrno' AND booking_date <= '$untilDate'";
+		$result = $this->_Get($sql);
+		if ($result['sum'] == null) {
+			$result['sum'] = "0";
+		}
+		return $result['sum'];
+	}
+
+	function Interest($amount, $interest, $days) {
+
+		$interest = $amount * $customerInterest / 100 / 360;
+		$monthlyPayment = $amortization + $interest + $monthly_invoice_fee + $administration_fee;
+
+		return number_format($monthlyPayment,0);
+	}
+
+	function accruedInterest($amount, $interest, $days) {
+
+		$interest = $amount * $customerInterest / 100 / 360;
+		$monthlyPayment = $amortization + $interest + $monthly_invoice_fee + $administration_fee;
+
+
+		return number_format($monthlyPayment,0);
+	}
+
+	private function actionNewInvoices($data) {
+		/*
+			{
+				"_group" : "MonthJob",
+				"_action" : "NewInvoices",
+				"_from_date" : "2019-02-29",
+				"_to_date" : "2019-03-28",
+				"_spec_date" : "2018-12-29",
+				"_create_date" : "2019-03-05"
+			}
+
+			data_from
+			date_to
+
+			- Sätt_first_invoice duedate in credit
+			- (Sätt next invoice due_date)
+		*/
+
+		$from = new DateTime($data->_from_date);
+		$to = new DateTime($data->_to_date);
+		$montlyDays = $to->diff($from)->format("%a");
+
+		//$people_id = 56;  // 73 60  61 56 128
+
+		$this->_Settings();
+		$dueInterestRate = $this->Setting->due_interest_margin + $this->Setting->base_interest;
+
+		/*
+			Get all People with ongoing invoices
+		*/
+		$sql = "SELECT DISTINCT people_id FROM credit WHERE credit_status = 'o' ";
+		//$sql .= "AND people_id = 5 "; // 106
+		$sql .= "ORDER BY people_id";
+		$oP = $this->_GetList($sql);
+
+		//print_r($oP);
+
+		for ($iP = 0; $iP < sizeof($oP); $iP++) {
+
+			$sql = "SELECT t.btrans_id, t.booking_id, b.booking_date, b.booking_text, t.trans_type, b.ocrno, b.credit_id, fi.company_name,  t.account_no, t.amount ";
+			$sql .= "FROM btrans t ";
+			$sql .= "LEFT JOIN booking b ON t.booking_id = b.booking_id ";
+			$sql .= "LEFT JOIN first_invoice fi ON b.credit_id = fi.credit_id ";
+			$sql .= "WHERE b.people_id =  " . $oP[$iP]['people_id'] . " AND ";
+			$sql .= "(t.account_no = '1380' OR t.account_no='1680') AND "; //" OR t.account_no='2498') ";
+			$sql .= " b.booking_date <= '$data->_to_date' ";
+			$sql .= "ORDER BY b.booking_date";
+
+			$list = $this->_GetList($sql);
+
+			//print_r($list); //die('');
+
+			for ($i = 0; $i < sizeof($list); $i++) {
+				$list[$i]['amount'] =  -$list[$i]['amount'];
+			}
+
+			/*
+				List contain all transaction
+			*/
+
+			$balance1380 = 0;
+			$balance1680 = 0;
+			$balanceTotal = 0;
+			$ib = 0;
+			$iSpec = 0;
+
+			for ($i = 0; $i < sizeof($list); $i++) {
+				if ($list[$i]['account_no'] == "1380") {
+					$list[$i]['amount_1380'] =  $list[$i]['amount'];
+					$balance1380 += -$list[$i]['amount'];
+					$list[$i]['balance_1380'] = number_format($balance1380, 2);
+					if ($i > 0) {
+						$list[$i]['balance_1680'] = $list[$i - 1]['balance_1680'];
+					} else {
+						$list[$i]['balance_1680'] = number_format(0, 2);
+					}
+				} else if ($list[$i]['account_no'] == "1680") {
+					$balance1680 += -$list[$i]['amount'];
+					$list[$i]['amount_1680'] = $list[$i]['amount'];
+					$list[$i]['balance_1680'] = number_format($balance1680, 2);
+					if ($i > 0) {
+						$list[$i]['balance_1380'] = $list[$i - 1]['balance_1380'];
+					}
+					else {
+						$list[$i]['balance_1380'] = number_format(0, 2);
+					}
+				}
+				$balanceTotal += $list[$i]['amount'];
+				$list[$i]['total'] = number_format($balanceTotal, 2);
+				if ($list[$i]['booking_date'] < $data->_spec_date) {
+					$ib = $balanceTotal;
+					$iSpec = $i;
+				}
+			}
+
+			//echo $balance1380 . " " . $balanceTotal ;
+
+
+			$spec = array();
+			$spec[] = new StdClass();
+
+			$index = 0;
+			$spec[$index]->date = "2018-12-28";
+			$spec[$index]->type = "Ing.bal.";
+			$spec[$index]->ref = "";
+			$spec[$index]->amount = "";
+			$spec[$index]->balance = number_format($ib, 2);
+
+			for ($i = $iSpec; $i < sizeof($list); $i++) {
+				if ($list[$i]['trans_type'] == 're-pay' || $list[$i]['trans_type'] == 'amortization') {
+					// skip
+				}
+				else {
+					$spec[] = new StdClass();
+					$index++;
+					$spec[$index]->date = $list[$i]['booking_date'];
+					$spec[$index]->trans_type = $list[$i]['trans_type'];
+					if ($list[$i]['trans_type'] == 'new-credit') {
+						$spec[$index]->ref = $list[$i]['company_name'] . ' (' . $list[$i]['ocrno'] . ')';
+						$spec[$index]->type = 'Köp';
+					}
+					else if ($list[$i]['trans_type'] == 'billing-fee') {
+						$spec[$index]->ref = "";
+						$spec[$index]->type = 'Aviavgift';
+					}
+					else if ($list[$i]['trans_type'] == 'cust-pmt') {
+						//$known_as = ""
+						$spec[$index]->ref = $list[$i]['company_name'] . ' (' . $list[$i]['ocrno'] . ')';
+						$spec[$index]->type = 'inbet';
+					}
+
+					else if ($list[$i]['trans_type'] == 'interest') {
+						$spec[$index]->ref = "";
+						$spec[$index]->type = 'Ränta';
+					}
+
+					else if ($list[$i]['trans_type'] == 'reminder-fee') {
+						$spec[$index]->ref = "";
+						$spec[$index]->type = 'Förseningsavg.';
+					}
+
+					else if ($list[$i]['trans_type'] == 'refund') {
+						$spec[$index]->ref = "";
+						$spec[$index]->type = 'Retur';
+					}
+
+					else {
+						$spec[$index]->ref = "";
+						$spec[$index]->type = $list[$i]['trans_type'];
+					}
+					$spec[$index]->amount = $list[$i]['amount'];
+					$spec[$index]->balance = $list[$i]['total'];
+				}
+			}
+			//print_r($oP[$iP]);
+			//print_r($spec);
+			//die('stop');
+
+			$invoiceObj = new StdClass();
+			$invoiceObj->people_id = $oP[$iP]['people_id'];
+			$sql = "SELECT credit_id, amount, monthly_no, monthly_index, grace_days, amount, interest_margin, admin_fee, amor_by_plan ";
+			$sql .= "FROM credit ";
+			$sql .= "WHERE people_id = " . $oP[$iP]['people_id'] . " AND credit_status = 'o'";
+			//echo $sql; die('');
+
+			$oCredits = $this->_GetList($sql);
+
+			//$monthlyPay = 0;
+			$accMinBalance = 0;
+			$accInterest = 0;
+			$amorThisMonth = 0;
+
+			 //echo $balance1380; die('');
+			if ($balance1380 <= 100)  {
+				$payAll =  $balance1680 + $balance1380;
+				$monthlyPay = 0;
+				$invoiceObj->overdue = 0;
+				$invoiceObj->monthly_payment_total = 0;
+				$invoiceObj->pay_all = round($payAll);
+			}
+			else {
+				$payAll = $balance1380;
+
+				$interestRate = 0;
+				for ($i = 0; $i < sizeof($oCredits); $i++) {
+
+					$amorThisMonth += round($oCredits[$i]['amount'] / $oCredits[$i]['monthly_no']);
+					//$monthlyPay += $amorThisMonth;
+					$minBalance = $oCredits[$i]['amount'] - $oCredits[$i]['amor_by_plan']; // - $amorThisMonth;
+					//echo $minBalance;
+					$interestRate = (float) $this->Setting->base_interest + $oCredits[$i]['interest_margin'];
+					$normalInterest = $balance1380 * $interestRate / 100 / 12;
+					//$accInterest += $normalInterest;
+					$payAll += $normalInterest;
+					echo $normalInterest . '(I ' . $i . ') ';
+					$accMinBalance += $minBalance;
+				}
+				//echo $payAll . '(p)';
+
+				if ($balance1680 > 0) {
+					$invoiceObj->overdue = $balance1680;
+					$balance1680 += 29;
+					$dueInterest = $balance1680 * $dueInterestRate / 100 / 12;
+
+					$payAll += $dueInterest;
+					$payAll += $balance1680;
+
+				}	else {
+					$invoiceObj->overdue = 0;
+					$payAll += 29;
+
+				}
+
+				//$payAll += 2;
+
+				$accMinBalance = $accMinBalance - $amorThisMonth;
+				echo $accMinBalance . " :all -> " .  $payAll;
+				$invoiceObj->monthly_payment_total = round($payAll - $accMinBalance );
+				if ($invoiceObj->monthly_payment_total < 0) {
+					$invoiceObj->monthly_payment_total = 0;
+				} else {
+					$invoiceObj->monthly_payment_total = $invoiceObj->monthly_payment_total + 2;
+				}
+				$invoiceObj->pay_all = round($payAll);
+			}
+
+			$invoiceObj->date = $data->_create_date;
+			$invoiceObj->duedate = "2019-03-28";
+
+			$sql = "SELECT CONCAT(first_name, ' ', last_name) AS people_name, address, postcode, city, ocrno ";
+			$sql .= "FROM people ";
+			$sql .= "WHERE people_id = " . $oP[$iP]['people_id'] ;
+			$oPerson = $this->_Get($sql);
+
+			$invoiceObj->name = $oPerson['people_name'];
+			$invoiceObj->address = $oPerson['address'];
+			$invoiceObj->postaddress = $oPerson['postcode'] . ' ' . $oPerson['city'];
+
+			$invoiceObj->monthly_invoice_fee = $this->Setting->monthly_invoice_fee;
+			$invoiceObj->ocrno = $oPerson['ocrno'];
+
+			$invoiceObj->invoice_filename = $invoiceObj->ocrno . '-' . '201903' . '.pdf';
+
+			$minvoiceId = $this->_Insert('minvoice', $invoiceObj);
+
+			// Boka invoice fee
+			//$param = array ();
+			//			$param['credit_status'] = 'o';
+			// 1680 min +
+			//$this->_Update('credit', 'credit_id', $oP[$iP]->oPc[$iPc]->credit_id, $param);
+
+
+			$invoiceObj->spec = $spec;
+			$this->acttionCreatePdfInvoice($invoiceObj);
+			print_r($invoiceObj);
+			//die('');
+		}
+
+	}
+
+	private function acttionCreatePdfInvoice($invoice) {
+
+		$folder = INVOICE_FOLDER;
+
+		$font = 'Helvetica';
+		$extra = 0;
+
+		// Init PDF
+		$mall = "fakturamall.pdf";
+		require_once('fpdf181/fpdf.php');
+		require_once('ftpi/autoload.php');
+		$pdf = new Fpdi\Fpdi();
+		$pdf->AddFont('OCR-B','','ocrb.php');
+		$pdf->setSourceFile($mall);
+		$templateId = $pdf->importPage(1);
+		$size = $pdf->getTemplateSize($templateId);
+		$pdf->AddPage('P', array($size['width'], 310));
+		$pdf->useTemplate($templateId);
+
+		/*
+		$pdf->SetFont($font);
+		$pdf->SetFontSize(16);
+		$pdf->SetXY(18, 2-12-21
+		$pdf->Write(16, utf8_decode($invoice->company_name));
+
+		$pdf->SetFont($font,'I');
+		$pdf->SetFontSize(9);
+		$pdf->SetXY(18, 9);
+		$pdf->Write(14, 'i samarbete med Turtle Pay');
+		*/
+		$pdf->SetXY(18, 2);
+		$pdf->Image('faktura-logo.jpg', null,null,42,23); // 60 / 31
+		$pdf->SetFont($font);
+		$pdf->SetFontSize(14);
+		$pdf->SetXY(111, 2);
+		$pdf->Write(16, utf8_decode('MÅNADSFAKTURA'));
+
+		$pdf->SetFont($font,'B');
+		$pdf->SetFontSize(9);
+		$pdf->SetXY(111, 11);
+		$pdf->Write(11, 'Utskriftsdatum');
+		$pdf->SetFont('');
+		$pdf->SetFont($font);
+		$pdf->SetFontSize(10);
+		$pdf->SetXY(111, 16);
+		$pdf->Write(10, $invoice->date);
+
+		$pdf->SetFont($font,'B');
+		$pdf->SetFontSize(9);
+		$pdf->SetXY(111, 20);
+		$pdf->Write(11, utf8_decode('Förfallodatum'));
+		$pdf->SetFont('');
+		$pdf->SetFont($font);
+		$pdf->SetFontSize(10);
+		$pdf->SetXY(111, 25);
+		$pdf->Write(10, $invoice->duedate);
+
+		$pdf->SetFontSize(10);
+		$pdf->SetXY(111, 37);
+		$pdf->Write(10, utf8_decode($invoice->name));
+		$pdf->SetXY(111, 42);
+		$pdf->Write(10, utf8_decode($invoice->address));
+		$pdf->SetXY(111, 47);
+		$pdf->Write(10, utf8_decode($invoice->postaddress));
+
+		$pdf->SetFont($font,'B');
+		$pdf->SetFontSize(11);
+		$pdf->SetXY(18, 68);
+		$pdf->SetFillColor(220,220,220);
+		//$pdf->Cell(184,9,'   Specifikation','BTLR',0,'L',true);
+		$pdf->Cell(184,9,'   Datum         Typ                Referens                                                     Belopp             Balans','BTLR',0,'L',true);
+		//$pdf->Write(10, utf8_decode('Specifikation'));
+
+		$pdf->SetFont('');
+		$pdf->SetFont($font);
+		$pdf->SetFontSize(10);
+		$line = 76;
+		for ($i = 0; $i < sizeof($invoice->spec); $i++) {
+			$pdf->SetXY(20, $line);
+			$pdf->Write(10, utf8_decode($invoice->spec[$i]->date));
+			$pdf->SetXY(44, $line);
+			$pdf->Write(11, utf8_decode($invoice->spec[$i]->type));
+			$pdf->SetXY(67, $line);
+			$pdf->Write(10, utf8_decode($invoice->spec[$i]->ref));
+			$pdf->SetXY(140, $line);
+			//$pdf->Cell(16, 10, utf8_decode($invoice->spec[$i]->amount), 0, 0, "R");
+			$amount = number_format((double) $invoice->spec[$i]->amount, 2);
+
+			$pdf->Cell(16, 10, utf8_decode($amount), 0, 0, "R");
+			$pdf->SetXY(167, $line);
+			$pdf->Cell(16, 10, utf8_decode($invoice->spec[$i]->balance), 0, 0, "R");
+			//$pdf->Write(10, utf8_decode($invoice->spec[$i]->balance));
+			$line += 5;
+		}
+
+		$pdf->SetXY(160, 60);
+		$pdf->Write(10, utf8_decode('Er skuld (-) / fordran (+)'));
+
+		$endLine = 128;
+
+		$line =0 ;
+		//echo $invoice->monthly_payment_total;
+		if ($invoice->monthly_payment_total > 0 || $invoice->pay_all > 0) {
+
+			$pdf->SetXY(70, $endLine + $line);
+			$pdf->SetFont($font,'B');
+			$pdf->Write(10, utf8_decode( number_format($invoice->monthly_payment_total, 0) . ' kronor,'));
+			$pdf->SetFont('');
+			$pdf->SetFont($font);
+			$pdf->SetFontSize(10);
+
+			//$line +=5;
+			$pdf->SetXY(20, $endLine + $line);
+			$pdf->Write(10, utf8_decode('Betala valfritt belopp dock lägst '));
+
+			$len = strlen($invoice->monthly_payment_total);
+			if ($len <= 2) {
+				// under 100
+				$posPlus = 1;
+			}
+			else if ($len < 4) {
+				// over 99 and under 1000
+				$posPlus = 4;
+			}
+			else if ($len >= 4) {
+				// over 1000
+				$posPlus = 7;
+			}
+
+			$pdf->SetXY(86 + $posPlus, $endLine + $line);
+			$pdf->Write(10, utf8_decode('inkl. ränta och avgift senast ' . $invoice->duedate . '.'));
+			//$pdf->Write(10, utf8_decode('inkl. ränta (14.9%) ')); // på denna faktura senast ' . $invoice->duedate ));
+		}
+		if ($invoice->overdue > 0) {
+			$line +=5;
+			$pdf->SetXY(20, $endLine + $line);
+			$pdf->Write(10, utf8_decode('I lägsta månadsbelopp ovan ingår förfallet belopp om ' . number_format($invoice->overdue, 0) . ' kr från föregående period.'));  //Ange fakturans ocr-nummer vid inbetalningen. '));
+		}
+
+		//$line +=5;
+		//$pdf->SetXY(20, $endLine + $line);
+		//$pdf->Write(10, utf8_decode('på denna faktura senast ' . $invoice->duedate . '.'));  //Ange fakturans ocr-nummer vid inbetalningen. '));
+
+
+		//$line +=5;
+		//$pdf->SetXY(20, $line);
+		//$pdf->Write(10, utf8_decode('(Räntefritt 30 dagar, årsränta 14.5%)'));
+
+		$line +=5;
+		$pdf->SetXY(20, $endLine + $line);
+		$pdf->Write(10, utf8_decode('Se villkor på följande länk: www.turtle-pay.com/villkor.'));
+
+		$line +=5;
+		$pdf->SetXY(20, $endLine + $line);
+		$pdf->Write(10, utf8_decode('Ange fakturans ocr-nummer vid inbetalningen.'));
+
+		$line +=5;
+
+		$pdf->SetXY(20, $endLine + $line); // 101
+		$pdf->Write(10, utf8_decode('OCR-nummer: ' . $invoice->ocrno));
+		//$pdf->SetXY(46, $endLine + $line); // 101
+		//$pdf->Write(10, utf8_decode($invoice->ocrno));
+
+		$line +=5;
+
+		$pdf->SetXY(20, $endLine + $line);
+		$pdf->Write(10, utf8_decode('Bankgiro: 5258-0016'));
+
+		if ($invoice->pay_all > 0) {
+			$line +=5;
+			$pdf->SetXY(20, $endLine + $line);
+			$pdf->Write(10, utf8_decode('Betala allt: ' . number_format($invoice->pay_all, 0) . ' kronor senast ' . $invoice->duedate . '.'));
+
+			//$line +=5;
+
+			//$pdf->SetXY(20, $endLine + $line);
+			//$pdf->Write(10, utf8_decode('Nästa månadsfaktura kommer i början av april.'));
+		}
+		$pdf->Line(18,174,201,174);
+
+		$pdf->SetXY(18, 174);
+		$pdf->Write(10, utf8_decode('Org nr: '));
+		$pdf->SetXY(30, 174);
+		$pdf->Write(10, utf8_decode('559101-6786'));
+
+		$pdf->SetXY(166, 174);
+		$pdf->Write(10, utf8_decode('www.turtle-pay.com'));
+
+		$pdf->SetFontSize(8);
+		$pdf->SetXY(18, 188);
+		$pdf->Write(10, utf8_decode('Turtle Pay AB,   P.O. Box 24078,    SE-104 50 Stockholm,   Telefon 08-80 62 20,   Öppet vardagar 9-18,  helger 11-16,    info@turtle-pay.com'));
+
+			$pdf->SetFontSize(8);
+			$pdf->SetXY(20, 230);
+			$pdf->Write(10, utf8_decode($invoice->name));
+			$pdf->SetXY(20, 234);
+			$pdf->Write(10, utf8_decode($invoice->address));
+			$pdf->SetXY(20, 238);
+			$pdf->Write(10, utf8_decode($invoice->postaddress));
+
+			$pdf->SetFontSize(12);
+			//$pdf->SetXY(134, 218);
+			$pdf->SetXY(90, 238);
+			$pdf->Write(12, utf8_decode('Fyll i valfritt belopp'));
+
+			// Write the OCR
+			//$pdf->SetFont('OCRB10PitchBT-Regular');
+			$pdf->SetFont('OCR-B','',12);
+			//$pdf->SetFontSize(10);
+
+			$pdf->SetXY(12, 272);
+			$pdf->Write(10, utf8_decode('#'));
+
+			$pdf->SetXY(49, 272);
+
+			$pdf->Write(10, utf8_decode($invoice->ocrno . ' #'));
+
+			$pdf->SetXY(167, 272);
+			$pdf->Write(10, utf8_decode('52580016#42#'));
+
+		//$filename = $this->folder . '/' . $invoice->invoice_filename;
+		$filename = $folder . $invoice->invoice_filename;
+		try {
+			$pdf->Output($filename,'F');
+		}
+		catch(Exception $e) {
+			echo 'Message: ' .$e->getMessage();
+		}
+	}
+
+	private function actionSetOcrno($data) {
+		/*
+			{
+				"_group" : "MonthJob",
+				"_action" : "SetOcrno"
+			}
+
+		295711079505
+		295711079505
+		*/
+
+		$sql = "SELECT people_id, personal_id_number ";
+		$sql .= "FROM people ";
+		$sql .= "WHERE  ocrno IS NULL";
+		$oPeople = $this->_GetList($sql);
+
+		for ($i=0; $i < sizeof($oPeople); $i++){
+			//print_r($oPeople[$i]);
+			$controlNumber = '2' . substr($oPeople[$i]['personal_id_number'], 2, 6) . mt_rand(1000, 9999);
+			$ocrno = $this->ocrnoCreate($controlNumber);
+			//echo $ocrno . " - ";
+			$param = array ();
+			$param['ocrno'] = $ocrno;
+			$this->_Update('people', 'people_id', $oPeople[$i]['people_id'], $param);
+		}
+		//$controlNumber = "2790131" . mt_rand(1000, 9999);
+		//$ocrno = ocrnoCreate($controlNumber);
+		// 1 23 44 41 05514
+		//echo $ocrno; die('');
+
+		//print_r($oPeople); die('');
+
+
+
+	}
+
+
+	function ocrnoCreate($ocrno) {
+		$sum = 0;
+		for ($i=0; $i < strlen($ocrno); $i++) {
+		// Even
+			if ($i % 2 == 0) {
+				$res = $ocrno[$i] * 2;
+				//echo 'even: ' . $ocrno[$i] . ' ';
+			} else {
+				$res = $ocrno[$i];
+			}
+
+			if ($res > 9) {
+				$res = $res -9;
+			}
+			//echo $sum . '<br>';
+			$sum = $sum + $res;
+		}
+		//echo $sum . '<br>';
+		$nerast10 = ceil($sum / 10) * 10;
+		//echo $nerast10 . '<br>';
+		$checksum =  $nerast10 - $sum;
+		$ocr_number = $ocrno . $checksum; // 11
+		return $ocr_number;
+	}
+
+	private function actionSetFee($data) {
+		/*
+			{
+				"_group" : "MonthJob",
+				"_action" : "SetFee"
+			}
+		*/
+
+		$sql = "SELECT people_id, credit_id FROM credit WHERE credit_status = 'o' ";
+		$sql .= "ORDER BY people_id";
+		$oP = $this->_GetList($sql);
+
+		//echo sizeof($oP);
+		//print_r($oP);
+		$antal = 0;
+
+		$skip = array(61, 98, 64, 110, 153, 105);
+		for ($i = 0; $i < sizeof($oP); $i++) {
+			if (in_array($oP[$i]['people_id'], $skip)) {
+				//echo "NOT -----" .  $oP[$i]['credit_id'] . "-- ";
+			} else {
+				$trans = array();
+
+				$trans[] = new stdClass();
+				$trans[0]->account_no = "1380";
+				$trans[0]->amount = '29.00';
+				$trans[0]->trans_type = 'billing-fee';
+				$trans[0]->people_id = $oP[$i]['people_id'];
+
+				$trans[] = new stdClass();
+				$trans[1]->account_no = "3540";
+				$trans[1]->amount = '-29.00';
+				$trans[1]->trans_type = 'billing-fee';
+				$trans[1]->people_id = $oP[$i]['people_id'];
+
+				$booking = new StdClass();
+				$booking->booking_date = "2019-03-05";
+				$booking->booking_text = "Billing Fee";
+				$booking->booking_type = "billing-fee";
+				$booking->people_id = $oP[$i]['people_id'];
+
+				$booking->_trans = $trans;
+				//print_r($booking);
+				$this->_Book($booking);
+
+				$antal++;
+			}
+		}
+		echo " - Antal - " . $antal;
+	}
+}

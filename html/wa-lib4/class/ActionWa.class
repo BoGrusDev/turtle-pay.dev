@@ -1,0 +1,86 @@
+<?php
+/**
+ * Database Service 
+ *
+ * EMinimize version for Turtle Pay WebApp
+ *
+ * Last updated: 2019-08-13
+ *
+ * @author Bo Grus
+ *
+ */
+
+class ActionWa {
+
+	protected $db;
+	//public $Setting;
+
+	public function __construct($DB_HOST, $DB_NAME, $DB_USER, $DB_PASS) {
+		$this->db = new PDO('mysql:host=' . $DB_HOST . ';dbname=' . $DB_NAME . ';charset=utf8', $DB_USER , $DB_PASS);
+	}
+
+	function _Get($sql) {
+		$stmt = $this->db->prepare($sql);
+		$stmt->execute();
+		if ($stmt->errorCode() == 0) {
+			if($stmt->rowCount() > 0) {
+				$result =  $stmt->fetch(PDO::FETCH_ASSOC);
+				$result['code'] = "1";
+				return $result;
+			} else {
+				$result =  array();
+				$result['code'] = "0";
+				return $result;
+			}
+		} else {
+			$code = $stmt->errorCode() * -1;
+			$result =  array();
+			//$result['code'] = $code;
+			$result['code'] = "0";
+			return $result;
+		}
+	}
+
+	function _GetList($sql) {
+		$stmt = $this->db->prepare($sql);
+		$stmt->execute();
+		if ($stmt->errorCode() == 0) {
+			return $stmt->fetchAll(PDO::FETCH_ASSOC);
+		} else {
+			//return -1;
+			$errors = $stmt->errorInfo();
+			return $errors[0] . ":" . $errors[1] . ":" . $errors[2];
+		}
+	}
+
+	function _Update($table, $primary_key, $id, $data) {
+
+		$prepare = "UPDATE $table SET ";
+		$paramArray = array();
+		foreach($data as $key => $value) {
+			if (substr($key, 0, 1) != '_') {
+				$prepare .= $key . "='" . $value . "',";
+			}
+		}
+		$prepare = rtrim($prepare, ",");
+
+		$prepare .= " WHERE $primary_key = '" . $id . "'";
+		//echo $prepare; die('');
+		$stmt = $this->db->prepare($prepare);
+		$stmt->execute();
+		if ($stmt->errorCode() == 0) {
+			$result =  array();
+			$result['code'] = "1";
+			return $result;
+		} else {
+			$result =  array();
+			$result['code'] = "0";
+			//$result['error'] = $stmt->errorCode();
+			return $result;
+			//$code = $stmt->errorCode() * -1;
+			//print_r($stmt);
+			//return $code;
+		}
+	}
+
+}

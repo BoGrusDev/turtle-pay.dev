@@ -1,0 +1,21 @@
+<?php
+/*
+    UserClass
+
+	Date: 2020-01-14
+
+*/
+
+class WebAppClass extends ActionPublic {
+
+	public function Run($data) {
+        $actionMethod = 'action' . $data->_action;
+        echo $this->$actionMethod($data);
+	}
+
+	public function actionCheckCompanyUrl($data) {
+		$result = $this->_RestApiCall(json_encode($data));
+		return $result;
+	}
+
+}

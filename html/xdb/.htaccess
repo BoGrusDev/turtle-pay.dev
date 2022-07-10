@@ -1,0 +1,22 @@
+# For security reasons, Option followsymlinks cannot be overridden.
+#Options +FollowSymlinks
+Options +SymLinksIfOwnerMatch
+
+# Prevent Directoy listing 
+#Options -Indexes (move back)
+
+# Prevent Direct Access to files
+#<FilesMatch "\.(tpl|ini|log)">
+# Order deny,allow
+# Deny from all
+#</FilesMatch>
+
+# SEO URL Settings
+
+RewriteEngine On
+
+RewriteCond %{HTTPS} off
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+RewriteCond %{REQUEST_FILENAME} !-d    
+RewriteRule ^([a-zA-Z0-9,-]+)/?$ index.php?param=$1 [L,QSA]

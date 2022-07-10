@@ -1,0 +1,125 @@
+<?php
+/*
+    Class BankIDClass
+
+	Date: 2018-10-12
+
+	capi
+
+	Actions:
+		- AuthInit
+		- AuthCollect
+		- Cancel
+
+*/
+
+class BankIDClass extends ActionOpen{
+
+	public function Run($data) {
+
+		$actionMethod = 'action' . $data->_action;
+		echo $this->$actionMethod($data);
+	}
+
+	private function actionAuthInit($data) {
+		/*
+		{
+			"_group" : "BankID",
+			"_action" : "AuthInit",
+			"_bankid_personal_id_number" : "195711040054"
+		}
+		{
+			"code": "1",
+			"order_ref": "397566a5-f6e1-4e84-ab3e-01b471afa0c5",
+			"denied_code": ""
+		}
+
+		denied_code:
+		- bankid_personal_id_number_is_missing
+		*/
+
+		$result = $this->_BankIDAuth($data);
+		return json_encode($result);
+
+	}
+
+	private function actionAuthCollect($data) {
+		/*
+		{
+			"_group" : "BankID",
+			"_action" : "AuthCollect",
+			"_order_ref": "747b136c-c6bc-4cd7-9e14-a300ccdfcf6c"
+		}
+		{
+		    "code": "1",
+		    "name": "BO GRUSELL",
+		    "givenName": "BO",
+		    "surname": "GRUSELL",
+		    "ipAddress": "95.109.124.99"
+		}
+		*/
+
+		$result = $this->_BankIDAuthCollect($data);
+
+	    return json_encode($result);
+	}
+
+	private function actionCancel($data) {
+
+		$result = $this->_BankIDCancel($data);
+		return json_encode($result);
+
+	}
+
+	private function actionSignInit($data) {
+
+		/*
+		{
+			"_group" : "BankID",
+			"_action" : "SignInit",
+			"_bankid" : "yes",
+			"_bankid_personal_id_number" : "195711040054",
+			"_bankid_text": "\rFAKTURA\r\rMMB Butiken AB (Hair Bar)\rMOOD Gallerian\rKöpesumma 3,000.00 kr\r\rRäntefritt 30 dagar\rAviavgift 29.00 kr\r\rKvittonummer _ReceiptNumber_\r \rMöjlig delbetalning\rLägsta månadsbelopp\r12 mån - ca 299, exklusive avgifter"
+		}
+		{
+		    "code": "1",
+		    "order_ref": "419c644c-a814-4052-b173-8606c888e062",
+		    "denied_code": ""
+		}
+		*/
+
+		$result = $this->_BankIDSignInit($data);
+		return json_encode($result);
+	}
+
+	public function actionSignCollect($data) {
+
+		/*
+		{
+			"_group" : "BankID",
+			"_action" : "SignCollect",
+			"_bankid" : "no",
+			 "_order_ref": "8e5c146c-3eea-485b-9d1c-da3080b884be"
+		}
+		{
+		    "code": "2",
+ 			"denied_code" : "Pending"
+		}
+		{
+		    "code": "1",
+		    "name": "BO GRUSELL",
+		    "givenName": "BO",
+		    "surname": "GRUSELL",
+		    "ipAddress": "95.109.124.99",
+		    "signature": "PD94bWwgdmVyc2lvbj0i3dImXR1cmU+",
+		    "ocspResponse": "MIIHjwoBAKCCB4gwggVVtt9oUviBAHA=="
+		}
+
+		*/
+
+
+		$result = $this->_BankIDSignCollect($data);
+		return json_encode($result);
+	}
+
+}

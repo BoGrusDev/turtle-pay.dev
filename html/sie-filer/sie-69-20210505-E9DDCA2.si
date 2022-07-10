@@ -1,0 +1,54 @@
+#FLAGGA 0
+#FORMAT PC8
+#SIETYP 4
+#PROGRAM "Turtle Pay Kundportal" 2021.1
+#GEN 20210520
+#FNAMN "Test Bolaget AB"
+#ORGNR 556000-0000
+#KPTYP BAS95
+#KONTO 3030 "L„geravgift"
+#KONTO 1610 "Turtle Pay avr„kning"
+#KONTO 4000 "Transaktionsavgift"
+#KONTO 2611 "Utg†ende moms 25 %"
+#KONTO 3009 "Test"
+#KONTO  ""
+#VER T 202 20210505 "Ny WenApp"
+{
+#TRANS 3030 {} -160.00
+#TRANS 1610 {} 200.00
+#TRANS 1610 {} -4.00
+#TRANS 4000 {} 4.00
+#TRANS 2611 {} -40.00
+}
+#VER T 203 20210505 "Ny WenApp"
+{
+#TRANS 3030 {} -80.00
+#TRANS 1610 {} 100.00
+#TRANS 1610 {} -2.00
+#TRANS 4000 {} 2.00
+#TRANS 2611 {} -20.00
+}
+#VER T 204 20210505 "Maxantal test"
+{
+#TRANS 1610 {} 300.00
+#TRANS 1610 {} -6.00
+#TRANS 4000 {} 6.00
+}
+#VER T 205 20210505 "Maxantal test"
+{
+#TRANS 1610 {} -300.00
+#TRANS 1610 {} 6.00
+#TRANS 4000 {} -6.00
+}
+#VER T 206 20210505 "Maxantal test"
+{
+#TRANS 1610 {} 200.00
+#TRANS 1610 {} -4.00
+#TRANS 4000 {} 4.00
+}
+#VER T 207 20210505 "Maxantal test"
+{
+#TRANS 1610 {} -200.00
+#TRANS 1610 {} 4.00
+#TRANS 4000 {} -4.00
+}

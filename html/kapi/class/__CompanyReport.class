@@ -1,0 +1,1442 @@
+<?php
+/*
+   CompanyClass
+
+	Date:2020-10-25
+
+
+    ALTER TABLE `company` ADD `bo_settl_account_name` VARCHAR(30) NOT NULL DEFAULT 'Turtle Pay avräkning' AFTER `has_sie`, ADD `bo_bank_account_name` VARCHAR(30) NOT NULL DEFAULT 'Bank' AFTER `bo_settl_account_name`, ADD `bo_transfee_account_name` VARCHAR(30) NOT NULL DEFAULT 'Transaktionsavgift' AFTER `bo_bank_account_name`, ADD `bo_interest_account_name` VARCHAR(30) NOT NULL DEFAULT 'Ränta' AFTER `bo_transfee_account_name`, ADD `bo_app_account_name` VARCHAR(30) NOT NULL DEFAULT 'Turte Pay App' AFTER `bo_interest_account_name`, ADD `sie_type` CHAR(1) NOT NULL DEFAULT 's' AFTER `bo_app_account_name`, ADD `sie_serie` VARCHAR(8) NOT NULL DEFAULT 'T' AFTER `sie_type`, ADD `sie_verno` INT NOT NULL DEFAULT '0' AFTER `sie_serie`, ADD `fy_year_no` INT NOT NULL DEFAULT '1' AFTER `sie_verno`;
+
+    ALTER TABLE `company`  ADD `has_vat_invoice` CHAR(1) NOT NULL DEFAULT 'n'  AFTER `vat_account_name_code_3`;
+
+    UPDATE btrans SET company_id = NULL WHERE trans_type = 'billing-fee' 
+      UPDATE btrans SET company_id = NULL WHERE trans_type = 'fee' 
+
+    UPDATE `btrans` SET `company_id` = NULL WHERE `btrans`.`btrans_id` = 2131;
+    UPDATE `btrans` SET `company_id` = NULL WHERE `btrans`.`btrans_id` = 2132;
+
+
+*/
+
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+use setasign\Fpdi;
+
+class CompanyReportClass extends ActionPortal {
+
+	public function Run($data) {
+
+		//$data->_company_id = $data->_user_id;
+
+		$actionMethod = 'action' . $data->_action;
+
+		$sql = "SELECT COUNT(*) principal FROM company_people ";
+		$sql .= "WHERE people_id = $data->_people_id AND company_id = $data->_company_id AND priv IN ('su','pr','ac')";
+		//$sql .= "WHERE people_id = $data->_people_id AND company_id = $data->_company_id AND priv = 'pr'";
+		$result = $this->_Get($sql);
+		if ($result['code'] == '1' && $result['principal'] == '1' ) {
+			echo $this->$actionMethod($data);
+		}
+		else {
+			$reply = new StdClass();
+			$reply->code = "8"; // not allowed
+			echo json_encode($reply);
+		}
+
+	}
+
+	private function getCompany($companyId) {
+		//
+		// -- Get company Booking info
+		//
+		$sql = "SELECT company_id_number, company_name, bo_text, has_vat_accounting,";
+		$sql .= "bo_settl_account, bo_bank_account, bo_transfee_account, bo_interest_account, ";
+		$sql .= "bo_settl_account_name, bo_bank_account_name, bo_transfee_account_name, bo_interest_account_name, ";
+		$sql .= "vat_account_no_code_1, vat_account_name_code_1,";
+		$sql .= "vat_account_no_code_2, vat_account_name_code_2,";
+		$sql .= "vat_account_no_code_3, vat_account_name_code_3 ";
+		$sql .= "FROM company ";
+		$sql .= "WHERE company_id = $companyId";
+		return $this->_Get($sql);
+	}	
+
+	private function getCompanySieInfo($companyId) {
+		//
+		// -- Get company SIE info
+		//
+		$sql = "SELECT company_id_number, company_name, ";
+		$sql .= "has_sie, sie_type, sie_serie, sie_first_verno, sie_start_date, fy_year_no, sie_kp_type ";
+		$sql .= "FROM company ";
+		$sql .= "WHERE company_id = $companyId";
+		return $this->_Get($sql);
+	}
+
+	private function setCompanyBaseAccount($resCompany) {
+		//
+		// -- Set Company Base Account List
+		// -- use for match customized accountnumber and name
+		$baseAccount['1930'] = new stdClass();
+			$baseAccount['1930']->accountNo = $resCompany['bo_bank_account'];
+			$baseAccount['1930']->accountName = $resCompany['bo_bank_account_name'];
+		$baseAccount['2981'] = new stdClass();
+			$baseAccount['2981']->accountNo = $resCompany['bo_settl_account'];
+			$baseAccount['2981']->accountName = $resCompany['bo_settl_account_name'];
+		$baseAccount['3593'] = new stdClass();
+			$baseAccount['3593']->accountNo = $resCompany['bo_transfee_account']; // 2498 Sales Fee
+			$baseAccount['3593']->accountName = $resCompany['bo_transfee_account_name'];
+		$baseAccount['8300'] = new stdClass();
+			$baseAccount['8300']->accountNo = $resCompany['bo_interest_account'];
+			$baseAccount['8300']->accountName = $resCompany['bo_interest_account_name'];
+		
+		return $baseAccount;
+	}
+
+    private function setCompanyVat($resCompany) {
+		// __
+		// -- 
+		// --
+
+        $sql = "SELECT vat_code, vat_rate "; 
+        $sql .= "FROM vat_item ";
+        $sql .= "WHERE vat_id = 1 ";
+        $sql .= "ORDER BY vat_code ";
+        $listVat = $this->_GetList($sql);
+        
+		$list[1] = new stdClass();
+			$list[1]->accountNo = $resCompany['vat_account_no_code_1'];
+			$list[1]->accountName = $resCompany['vat_account_name_code_1'];
+            $list[1]->vatRate = $listVat[1]['vat_rate'];
+        $list[2] = new stdClass();
+            $list[2]->accountNo = $resCompany['vat_account_no_code_2'];
+            $list[2]->accountName = $resCompany['vat_account_name_code_2'];
+            $list[2]->vatRate = $listVat[2]['vat_rate'];
+        $list[3] = new stdClass();
+            $list[3]->accountNo = $resCompany['vat_account_no_code_3'];
+            $list[3]->accountName = $resCompany['vat_account_name_code_3'];
+            $list[3]->vatRate = $listVat[3]['vat_rate'];
+        
+		return $list;
+    }
+
+    private function getCompanyIncomeAccount($companyId) {
+		
+        //
+		// -- Get Company Income Account List
+		//-- Use for match with 1380
+        //
+		$sql = "SELECT account_no, account_name, vat_code, tp_account ";
+		$sql .= "FROM company_account ";
+		$sql .= "WHERE company_id = $companyId ";
+		$sql .= "ORDER BY tp_account, account_no ";
+        $res = $this->_GetList($sql);
+
+        for ($i=0; $i<sizeof($res); $i++) {
+            $accountNo = $res[$i]['account_no'];
+            $list[$accountNo] = new stdClass();
+            $list[$accountNo]->accountName = $res[$i]['account_name'];
+            $list[$accountNo]->vatCode = $res[$i]['vat_code']; 
+        }
+
+        // Add okonterat
+            
+            $list[0] = new stdClass();
+            $list[0]->accountName = 'Okonterad intäkt';
+            $list[0]->vatCode = 0; 
+
+		return $list;
+	}
+
+    private function getTpAppAccount($companyId) {
+        $sql = "SELECT account_no ";
+		$sql .= "FROM company_account ";
+		$sql .= "WHERE company_id = $companyId AND tp_account='a'";
+        $res = $this->_Get($sql);
+        return $res['account_no'];
+    }
+
+	private function getCompanyEvent($companyId) {
+		//
+		// -- Get Company Event List
+		//
+		$sql = "SELECT e.event_id, e.company_account_id, ca.account_no, ca.account_name ";
+		$sql .= "FROM event_v4 e ";
+        $sql .= "LEFT JOIN company_account ca ON e.company_account_id = ca.company_account_id ";
+        $sql .= "WHERE e.company_id = $companyId ";
+		$sql .= "ORDER BY e.event_id ";
+        $res = $this->_GetList($sql);
+        for ($i=0; $i<sizeof($res); $i++) {
+            $index = $res[$i]['event_id'];
+            $list[$index] = new stdClass();
+            $list[$index]->companyAccountId = $res[$i]['company_account_id'];
+            $list[$index]->accountNo = $res[$i]['account_no'];
+            // $list[$index]->account_name = $res[$i]['account_name']; // Maybe not needed
+        }
+        //print_r($list); die('');
+		return $list;
+	}
+
+    private function getTransOnDate($companyId, $date) {
+        // --
+        // Get Bokorder Transaction for a day
+        //
+        $sql = "SELECT t.account_no, t.amount, b.credit_id ";
+        $sql .= "FROM btrans t LEFT JOIN booking b ON t.booking_id = b.booking_id LEFT ";
+        $sql .= "JOIN people p ON b.people_id = p.people_id ";
+        $sql .= "WHERE t.company_id = $companyId AND t.amount <> 0 AND ";
+        $sql .= "b.booking_date = '$date' AND t.account_no not in ('1680','3540') AND t.prel ='n' ";
+        $res = $this->_GetList($sql);
+		for ($i=0; $i<sizeof($res); $i++) {
+			if ($res[$i]['amount'] < 0) {
+				$res[$i]['amount'] = $res[$i]['amount'] * -1;
+			}
+			else if ($res[$i]['amount'] > 0) {
+				$res[$i]['amount'] = -$res[$i]['amount'];
+			}
+		}
+		return $res;
+		//$num = -1 * abs($num)
+    }
+
+    private function aggregateBaseAccount($trans, $companyBaseAccount) {
+        // -- 
+        // Aggregate the base accountCreate the base 
+        // Not the 1380, tha is the income account
+        // 
+        $list = [];
+        // $record = new stdClass();
+        for($i=0; $i<sizeof($trans); $i++) {
+            if ($trans[$i]['account_no'] <> '1380') {
+                $addOn = true;
+                if ($i > 0) {
+                    // If not first, check if already set, and if sio aggregate it
+                    for ($j=0; $j<sizeof($list); $j++) {
+                        if ( $list[$j]->base_account_no == $trans[$i]['account_no']) {
+                            $list[$j]->amount += $trans[$i]['amount'];
+                            $addOn = false;
+                        }
+                    }
+                }	
+                if ($addOn) {	
+                    // First time account, add it to list
+                    $record = new stdClass();
+                    $record->base_account_no = $trans[$i]['account_no'];
+                    $record->amount = $trans[$i]['amount'];
+                    array_push( $list, $record);
+                }
+            }
+        }
+        for($i=0; $i<sizeof($list); $i++) {
+            $baseAccountNo = $list[$i]->base_account_no;
+            $list[$i]->account_no = $companyBaseAccount[$baseAccountNo]->accountNo;
+            $list[$i]->name = $companyBaseAccount[$baseAccountNo]->accountName;
+            $list[$i]->list_amount = number_format($list[$i]->amount, 2);
+        }
+        // print_r($list); die('');
+        return $list;
+    }
+
+    private function aggregateIncomeAccount($trans, $companyEvent, $companyIncomeAccount, $companyVat, $vatOn, $tpAppAccountNo, $list) {
+        /*
+            Aggregate the income accountCreate = 1380
+            Paramter:
+                - $trans : alla transaktioner, denna dag som omfattar kund. Endast 1380 kommer använads
+                - $companyEvent : Array på företags alla event
+                - $companyIncomeAccount : Array på företags alla Inkomst konton
+                - $companyVat : Array på företgas alla Moms konton
+                - Företag har VAT på slaget
+                - $list : Konteringa utförda för baskonton, resultat ska läggas till på $list.
+        
+        */
+       
+        //print_r($trans); 
+        //print_r($companyIncomeAccount);
+        //print_r($companyEvent);
+        //
+        // array för accumulerad momsbelopp
+        // 
+        if ($vatOn == 'y') {
+            $vatAccount[1] = 0;
+            $vatAccount[2] = 0;
+            $vatAccount[3] = 0;
+        }
+
+        for($i=0; $i<sizeof($trans); $i++) {
+
+           // echo $trans[$i]['account_no']; die('');
+
+            if ($trans[$i]['account_no'] == '1380') {
+                
+                // 
+                // get Company_account_id for the trans  12344413971
+                //
+                $sql = "SELECT event_id FROM event_item_v4 WHERE credit_id = " . $trans[$i]['credit_id'];
+                $resEventId = $this->_Get($sql);
+                // print_r($resEventId); die('');
+                if ($resEventId['code'] == '1') {
+                    // event exist
+                    $eventId = $resEventId['event_id'];
+                    // print_r($companyEvent); die('');
+                    // echo $companyEvent[$eventId]; die('');
+                    if ($companyEvent[$eventId]->companyAccountId == '0') {
+                        $accountNo = '0'; // okonterad
+                    }
+                    else {
+                        $accountNo = $companyEvent[$eventId]->accountNo;
+                    }
+                }
+                else {
+                    $accountNo = $tpAppAccountNo;
+                }
+                if ($vatOn == 'y') {
+                    //$accountNo 
+                    $vatCode = $companyIncomeAccount[$accountNo]->vatCode;     
+                    if ($vatCode > 0) {              
+                        $vatResult = $this->vatCalculate($trans[$i]['amount'], $companyVat[$vatCode]->vatRate);
+                        $trans[$i]['amount'] = $vatResult->amount;
+                        $vatAccount[$vatCode] += $vatResult->vat;
+                    }
+                }
+                $addOn = true;
+                if ($i > 0) {
+                    // If not first, check if already set, and if sioo aggregate it
+                    for ($j=0; $j<sizeof($list); $j++) {
+                        if ( $list[$j]->account_no == $accountNo) {
+                            $balance = $list[$j]->amount + $trans[$i]['amount']; // (float)
+                            $list[$j]->amount = round($balance, 2);
+                            $list[$j]->list_amount = number_format($list[$j]->amount, 2);
+                            $addOn = false;
+                        }
+                    }
+                }	
+                if ($addOn) {	
+                    // First time account occur, add it to dayTrans
+                    $record = new stdClass();
+                    $record->base_account_no = '1380';
+                    $record->account_no = $accountNo;
+                    //print_r($companyIncomeAcount); die('');
+                    $record->name = $companyIncomeAccount[$accountNo]->accountName;
+                    $record->amount = $trans[$i]['amount']; // (float) 
+                    $record->list_amount = number_format($record->amount, 2);
+                    // $record->gross = $trans[$i]['amount'];
+                    array_push($list, $record);
+                }
+            }
+        }
+       
+        // --
+        // Add the whole sum
+        //
+		if ($vatOn == 'y') {
+			for ($i=1; $i<=3; $i++) {
+				// print_r($vatAccount[$i]); 
+				if ($vatAccount[$i] > 0 || $vatAccount[$i] < 0 ) {
+					
+					$record = new stdClass();
+					//$record->base_account_no = 'moms';
+					$record->account_no = $companyVat[$i]->accountNo;
+					$record->name = $companyVat[$i]->accountName;
+					$record->amount = round($vatAccount[$i], 2);
+					$record->list_amount = number_format($vatAccount[$i], 2);
+				 
+					array_push($list, $record);
+				}
+			}
+		}
+        return $list; 
+    }
+
+	private function sieBooking($companyId, $dateStart, $dateTo, $companyEvent, $companyBaseAccount, $companyIncomeAccount, $companyVat, $vatOn, $tpAppAccountNo) {
+
+		$list = [];
+
+		$sql = "SELECT * FROM booking AS bo ";
+		$sql .= "WHERE bo.company_id = $companyId AND ";
+		$sql .= "bo.prel = 'n' AND ";
+		$sql .= "bo.booking_date >= '$dateStart' AND bo.booking_date <= '$dateTo' AND ";
+		$sql .= "NOT EXISTS ( ";
+		$sql .= "SELECT * ";
+		$sql .= "FROM sie_log AS sl ";
+		$sql .= "WHERE bo.booking_id = sl.booking_id AND bo.company_id = bo.company_id ";
+		$sql .= ") ";
+		$sql .= "ORDER BY bo.booking_date, bo.booking_id";
+
+		$replyReport = array();
+
+		$resBooking = $this->_GetList($sql);
+
+		//print_r($sql); die('');
+
+		for ($i=0; $i<sizeof($resBooking); $i++) {
+
+			$recList = new stdClass();
+			$recList->bo_text = '';			
+			$recList->date = str_replace("-", "", $resBooking[$i]['booking_date']);
+			$recList->booking_type = $resBooking[$i]['booking_type'];
+			//$recList->credit_id = $resBooking[$i]['credit_id'];
+			$bookingType = $resBooking[$i]['booking_type'];
+			if ($bookingType == 'new-credit' || $bookingType == 'pcreding' || $bookingType == 'refund' || $bookingType == 'crediting') {
+				$sql = "SELECT ei.event_id, e.event_name FROM event_item_v4 ei, event_v4 e ";
+				$sql .= "WHERE ei.credit_id = " . $resBooking[$i]['credit_id'] . " AND ei.event_id = e.event_id";
+				$resEventId = $this->_Get($sql);
+				// -- Has event connected
+				if ($resEventId['code'] == '1') {
+					// event exist
+					$eventId = $resEventId['event_id'];
+					// $recList->bo_text = $resBooking[$i]['receipt_number']; 
+					$recList->bo_text =$resEventId['event_name']; 
+				}
+				else {
+					$recList->bo_text = 'Turtle Pay App ' . $resBooking[$i]['receipt_number'];	
+				}
+			}
+			else if ($bookingType == 'vendor-pmt') {	
+				$recList->bo_text ='Turtle Pay avräkning';
+			}
+			else if ($bookingType == 'c-settl') {	
+				$recList->bo_text ='Ränta';
+			}
+			else if ($bookingType == 'comp-pmt') {	
+				$recList->bo_text ='Inbetalning Turte Pay';
+			}
+			$recList->trans = []; 
+		
+			$sql = "SELECT * FROM btrans ";
+			$sql .= "WHERE booking_id = " . $resBooking[$i]['booking_id'] . " AND prel = 'n' AND company_id = $companyId ";
+			$sql .= "ORDER BY account_no";
+			$resTrans = $this->_GetList($sql);
+			
+			if ($vatOn == 'y') {
+				$vatAccount[1] = 0;
+				$vatAccount[2] = 0;
+				$vatAccount[3] = 0;
+			}
+			for ($j=0; $j<sizeof($resTrans); $j++) {
+				if ($resTrans[$j]['trans_type'] == 'sales-reb' ||  $resTrans[$j]['trans_type'] == 'billing-fee') {
+					// Skip
+				}
+				else {	
+					$lineOK = false;
+					if ($resTrans[$j]['amount'] < 0) {
+						$resTrans[$j]['amount'] = $resTrans[$j]['amount'] * -1;
+						$lineOK = true;
+					}
+					else if ($resTrans[$j]['amount'] > 0) {
+						$resTrans[$j]['amount'] = -$resTrans[$j]['amount'];
+						$lineOK = true;
+					}
+					//if ($lineOk) {
+						$recTrans = new stdClass();
+						$recTrans->base_account = $resTrans[$j]['account_no'];
+						$recTrans->trans_type = $resTrans[$j]['trans_type'];
+						// print_r($resTrans[$j]); die('');
+						// Base acoounit
+						if ($recTrans->base_account == '1380') {
+							$sql = "SELECT event_id FROM event_item_v4 WHERE credit_id = " . $resTrans[$j]['credit_id'];
+							$resEventId = $this->_Get($sql);
+							// -- Has event connected
+							if ($resEventId['code'] == '1') {
+								// event exist
+								$eventId = $resEventId['event_id'];
+								$recTrans->account_no = $companyEvent[$eventId]->accountNo;
+
+								if ($vatOn == 'y') {
+									$vatCode = $companyIncomeAccount[$recTrans->account_no]->vatCode;     
+									if ($vatCode > 0) {     
+										$recTrans->include_vat = $resTrans[$j]['amount'];         
+										$vatResult = $this->vatCalculate($resTrans[$j]['amount'], $companyVat[$vatCode]->vatRate);
+										$recTrans->amount = $vatResult->amount;
+										$vatAccount[$vatCode] += $vatResult->vat;
+									}
+								}
+								else {
+									$recTrans->amount = $resTrans[$j]['amount'];
+								}
+							}
+							else {
+								$recTrans->account_no = $tpAppAccountNo;
+								$recTrans->amount = $resTrans[$j]['amount'];
+							}
+							$recTrans->name = $companyIncomeAccount[$recTrans->account_no]->accountName; // new
+						}
+						else {
+						
+							// echo $recTrans->base_account . ' - '; 
+						
+							$recTrans->account_no = $companyBaseAccount[$recTrans->base_account]->accountNo;
+							$recTrans->amount = $resTrans[$j]['amount'];
+							$recTrans->name = $companyBaseAccount[$recTrans->base_account]->accountName; // New
+						}
+
+						array_push($recList->trans, $recTrans);
+					//}
+				}
+			}
+
+			// --
+			// Add the whole sum
+			//
+			if ($vatOn == 'y') {
+				for ($j=1; $j<=3; $j++) {
+					// print_r($vatAccount[$i]); 
+					if ($vatAccount[$j] > 0 || $vatAccount[$j] < 0 ) {
+						
+						$record = new stdClass();
+						//$record->base_account_no = 'moms';
+						$record->account_no = $companyVat[$j]->accountNo;
+						$record->name = $companyVat[$j]->accountName;
+						$record->amount = round($vatAccount[$j], 2);
+						$record->list_amount = number_format($vatAccount[$j], 2);
+					
+						array_push($recList->trans, $record);
+					}
+				}
+			}
+			$checkSum = 0;
+			for ($j=0; $j<sizeof($recList->trans) ; $j++) {
+				$checkSum += (float) $recList->trans[$j]->amount;
+			}
+			$recList->checksum = round($checkSum, 2);
+			/*
+			if ($recList->checksum == 0) {
+				// else 
+			}
+			else {
+				print_r($dayAggregated);
+				die('');
+			}
+			array_push($list, $dayAggregated);
+			*/
+		
+			array_push($list, $recList);
+		}
+		
+		//echo json_encode($list); die('');
+		//die('');
+
+		return $list;
+
+	}
+	
+    private function vatCalculate($amount, $vatRate) {
+        $vatResult = new stdClass();
+        $vatRate = (float) $vatRate;
+        $total = (float) $amount;                
+        $formula = ($vatRate / 100) + 1;
+        $amount = $total / $formula; 
+        $vat = $total - $amount;
+        $dif = $total - $amount - $vat; 
+        if ($dif > 0 || $dif < 0 ) {
+            $amount = $amount + $dif;
+        }
+        $vatResult->amount = round($amount, 2);
+        $vatResult->vat = round($vat, 2);
+        return $vatResult;       
+    }
+
+    private function processBookings($data, $sieType = 'a') {
+
+		// $checksum = true;
+		//
+		// -- Get company Booking info
+		//
+		$resCompany = $this->getCompany($data->_company_id);
+        //print_r($resCompany); die('');
+
+        //
+        // Set some company account
+        // 
+        $boText = $resCompany['bo_text'];
+        $vatOn = $resCompany['has_vat_accounting'];
+       
+        //
+		// -- Set Company Base Account List
+		//
+		$companyBaseAccount = $this->setCompanyBaseAccount($resCompany); 
+        // print_r($companyBaseAccount); die('');
+        
+        // --
+        // -- Load the Vat
+        //
+        if ($resCompany['has_vat_accounting'] == 'y') {
+            $companyVat = $this->setCompanyVat($resCompany);
+            // print_r($companyVat); die('');
+        }
+		else {
+			$companyVat = '';
+		}
+		//
+		// -- Get Company Account List
+		//
+		$companyIncomeAccount = $this-> getCompanyIncomeAccount($data->_company_id);
+		// print_r($companyIncomeAccount);  die('');
+
+        // --
+        // -- Get Turtle Pay App acouunt
+        //
+        $tpAppAccountNo = $this->getTpAppAccount($data->_company_id);
+
+		//
+		// -- Get Company Event List
+		//
+		$companyEvent = $this->getCompanyEvent($data->_company_id);
+        //print_r($companyEvent); die('');
+		
+		if ($sieType == 'a') {
+			// --
+			// Create the Daterange
+			//
+			$begin = new DateTime($data->_date_from);
+			$end = new DateTime(date("Y-m-d", strtotime("+" . $data->_date_to . " + 1 days")));
+			$daterange = new DatePeriod($begin, new DateInterval('P1D'), $end);
+
+			$indexList = -1;
+			$list = [];
+			foreach($daterange as $date){
+    			$date = $date->format("Y-m-d");
+			
+				// --
+				// Get Bokorder Transaction for a day
+				//
+				$resTrans = $this->getTransOnDate($data->_company_id, $date);
+				
+				// --
+				// Aggregate  Bas account for a days transactions
+				// no account_no 1380, that is the the income account
+				// 
+
+				if (sizeof($resTrans) > 0) {
+
+					// -- 
+					// Aggregate the base accountCreate the base 
+					// 
+					$dayAggregated = new stdClass();
+					$dayAggregated->bo_text = $boText;
+					$dayAggregated->date = $date;
+
+					$trans = $this->aggregateBaseAccount($resTrans, $companyBaseAccount);
+					// print_r($dayAggregated->trans); die('');
+					
+					$dayAggregated->trans = $this->aggregateIncomeAccount($resTrans, $companyEvent, $companyIncomeAccount, $companyVat, $vatOn, $tpAppAccountNo, $trans);
+
+					$checkSum = 0;
+					for ($i=0; $i<sizeof($dayAggregated->trans) ; $i++) {
+						$checkSum += (float) $dayAggregated->trans[$i]->amount;
+					}
+					$dayAggregated->checksum = round($checkSum,2);
+					if ($dayAggregated->checksum == 0) {
+						// else 
+					}
+					else {
+						//print_r($dayAggregated);
+						//die('');
+					}
+					array_push($list, $dayAggregated);
+				}
+				
+			}
+		}
+		else {
+			// --
+			// SIE - detaljerad export
+			// --
+			$booking =  $this->sieBooking($data->_company_id, $data->_date_from, $data->_date_to, $companyEvent, $companyBaseAccount, $companyIncomeAccount, $companyVat, $vatOn, $tpAppAccountNo);
+			return $booking;
+		}
+       
+        return $list;
+       
+	}
+
+    private function getSieLogInfo($companyId, $firstVerNo, $firstDate) {
+        // --
+		// -- Get Next VerNo form and next date
+		//
+        $reply = new stdClass();
+		$sql = "SELECT ver_no, booking_date FROM sie_log WHERE company_id = $companyId ORDER BY ver_no DESC LIMIT 1";
+		$res = $this->_Get($sql);
+        // First verno
+		if ($res['code'] == '0') {
+			$reply->verNo =  $firstVerNo - 1;  // Should be the set in sie-settings
+            //$reply->nextDate = '2021-01-01';
+			$reply->nextDate = $firstDate;
+		}
+		else {
+			$reply->verNo = $res['ver_no'];
+			$date = new DateTime($res['booking_date']);
+			$date->modify('+1 day');
+			$reply->nextDate = $date->format('Y-m-d');
+		}
+
+        return $reply;
+    }
+
+	private function writeToSieLog($companyId, $bookingDate, $verNo, $SiefileId) {
+        // --
+		// -- Get Next VerNo form Sie Log
+		//
+        
+        $param = new stdClass();
+        $param->company_id = $companyId;
+        $param->booking_date = $bookingDate;
+        $param->ver_no = $verNo;
+		$param->siefile_id = $SiefileId;
+        $res = $this->_Insert('sie_log', $param);
+        // Fix line 145 in ActionPortal.class
+        if ($res['code'] != '1') {
+            return json_encode($resSieLog);
+            die('die');
+        }
+    }
+
+    public function actionBookingOrder($data) {
+		/*
+			{
+				"_group" : "Company",
+				"_action" : "BookingOrder",
+				"_company_id" : "69",
+				"_people_id" : "1",
+				"_date_from" : "2020-09-01",
+			   	"_date_to" : "2020-09-16"
+			}
+
+			reply: []
+				date : 2021-01-03
+				trans [
+				"name": "Turtle Pay avrärning",
+				"account_no": "1641",
+				"amount": "1188.00",
+				"list_amount": "1,188.00"
+			}
+		*/
+        
+      
+        // --
+        // -- Get all Transationer som ska exportras
+        //
+        return json_encode($this->processBookings($data));
+    }
+
+	public function actionBookingOrderPdf($data) {
+		/*
+			{
+				"_group" : "Company",
+				"_action" : "BookingOrderPdf",
+				"_company_id" : "69",
+				"_people_id" : "1",
+				"_date_from" : "2021-01-01",
+			   	"_date_to" : "2021-03-24"
+			}
+		*/
+		
+		$sql = "SELECT company_id_number, company_name, bo_text, address, postcode, city, company_id_number ";
+		$sql .= "FROM company ";
+		$sql .= "WHERE company_id = $data->_company_id";
+		$company = $this->_Get($sql);
+
+		// $list = json_decode($this->actionBookingOrder($data));
+        $list =$this->processBookings($data);
+		
+        // print($list); die('');
+
+		$param = new stdClass();
+		$param->_key = 'test-key';
+		//$param->_group = 'PdfBookingOrder';
+    	// $param->_action = 'Create';
+		$param->_company_name = $company['company_name'];
+        $param->_address = $company['address'];
+        $param->_postcode = $company['postcode'];
+        $param->_city = $company['city'];
+		$param->_orgno = $company['company_id_number'];
+		$param->_bo_text = $company['bo_text'];
+		$param->_list = $list;
+
+        
+        $reply = $this->pdfCreate($param);
+
+		return json_encode($reply);
+
+		//echo json_encode($param); die('');
+
+		//return $reply = $this->_RestApiCall(json_encode($param));
+
+		/*
+		echo sizeof($list);
+		for ($i = 0; $i < sizeof($list); $i++) {
+			echo $list[$i]->date;
+		}
+		*/
+	
+
+	}
+
+	public function actionSieExport($data) {
+		/*
+			{
+				"_group" : "Company",
+				"_action" : "SieExport",
+				"_company_id" : "13",
+				"_people_id" : "13",
+			   	"_date_to" : "2021-01-01"
+			}
+
+			reply: []
+				date : 2021-01-03
+				trans [
+				"name": "Turtle Pay avrärning",
+				"account_no": "1641",
+				"amount": "1188.00",
+				"list_amount": "1,188.00"
+			}
+		*/
+		
+		// --
+		// -- Check so all event has a income account connected
+		
+		$reply = new stdClass();
+
+		$sql = "SELECT event_id, event_name FROM event_v4 WHERE company_id = $data->_company_id AND company_account_id = 0";
+	
+		$resEvenAccount = $this->_GetList($sql);
+		if (sizeof($resEvenAccount) > 0) {
+			$reply->code = '0';
+			$reply->denied_code = "has-no-event-bo-account";
+			$reply->list = $resEvenAccount;
+			return json_encode($reply);
+			die('');
+		}
+
+		// --
+		// Get company and sie info
+        // --
+		$companySie = $this->getCompanySieInfo($data->_company_id);  
+		
+        $serie = $companySie['sie_serie'];
+        $firstVerno = $companySie['sie_first_verno'];
+		$firstDate = $companySie['sie_start_date'];
+        $verText = 'Turtle Pay Avräkning';
+		$sieType = $companySie['sie_type'];
+
+        //
+        // -- Get the from date
+        // 
+        $sieLog = $this->getSieLogInfo($data->_company_id, $firstVerno, $firstDate);
+        
+		// print_r($sieLog); die('');
+
+        $data->_date_from = $sieLog->nextDate;
+        //$verNo = $sieLog->verNo;
+		$verNo = $data->_last_ver_no;
+
+        // --
+        // -- Get all Transationer som ska exportras
+        //
+        $list = $this->processBookings($data, $sieType);
+        
+		if (sizeof($list) > 0) {
+			$lastDate =  $list[sizeof($list) - 1]->date;
+			$lastDate = str_replace('-', '', $lastDate);
+			$paramSieFile = new stdClass();
+			$paramSieFile->company_id = $data->_company_id;
+			$paramSieFile->siefile_name = 'sie-' . $data->_company_id . '-' .  $lastDate . '-' . $this->guiShort(); //  . '.si.txt';
+			$paramSieFile->date_from = $sieLog->nextDate;
+			$paramSieFile->date_to = $data->_date_to;
+			$resSieFile = $this->_insert('siefile', $paramSieFile);
+			$sieFileId = $resSieFile['id'];
+
+			$file = fopen('../sie-filer/'  . $paramSieFile->siefile_name . '.si', 'w');
+			$eol = "\r\n";
+
+			$this->fileWrite($file, '#FLAGGA 0');
+			$this->fileWrite($file, '#FORMAT PC8');
+			$this->fileWrite($file, '#SIETYP 4');
+			$this->fileWrite($file, '#PROGRAM "Turtle Pay Kundportal" 2021.1');
+			$genDate = date('Ymd');
+			
+			#KPTYP
+			// Bas type
+
+			$this->fileWrite($file, "#GEN $genDate");
+			
+			$this->fileWrite($file, '#FNAMN "' . $companySie['company_name'] . '"');
+			$sieOrgno = $companySie['company_id_number'];
+			$sieOrgno = substr($sieOrgno, 0, 6) . '-' . substr($sieOrgno, 6);
+			$this->fileWrite($file, '#ORGNR ' . $sieOrgno);
+			
+			// --
+			// #KPTYP
+			// --
+			$this->fileWrite($file, "#KPTYP " . $companySie['sie_kp_type'] );
+
+			// --
+			// Get and write the KONTO to sie file
+			//
+			$accountList = [];
+			for ($i=0; $i<sizeof($list); $i++) {
+				for ($j=0; $j<sizeof($list[$i]->trans); $j++) {
+					$accountNo = $list[$i]->trans[$j]->account_no;
+					if (array_search($accountNo, $accountList) == false) {
+						$accountList[$accountNo] = $list[$i]->trans[$j]->name;
+					}
+				}
+			}
+			foreach ($accountList as $key => $value) {
+				$this->fileWrite($file, '#KONTO ' . $key . ' "' . $value . '"');
+			}
+	
+			if ($sieType == 'a') {
+				for ($i=0; $i<sizeof($list); $i++) {
+					$verNo++;
+					$verDate = str_replace('-', '', $list[$i]->date);
+					$this->fileWrite($file, '#VER ' . $serie . ' ' . $verNo . ' ' . $verDate . ' "' . $verText . '"'); 
+					$this->fileWrite($file, '{' );
+					for ($j=0; $j<sizeof($list[$i]->trans); $j++) {
+						$accountNo = $list[$i]->trans[$j]->account_no;
+						$amount = number_format($list[$i]->trans[$j]->amount, 2,'.','');
+						$this->fileWrite($file, '#TRANS ' . $accountNo . ' {} ' . $amount);
+					}
+					$this->fileWrite($file, '}' );
+					$this->writeToSieLog($data->_company_id, $list[$i]->date, $verNo ,$sieFileId);
+				}
+			}
+			else {
+				// print_r($list); die('');
+				for ($i=0; $i<sizeof($list); $i++) {
+
+					if (sizeof($list[$i]->trans) > 0) {
+						$verNo++;
+						$verDate = str_replace('-', '', $list[$i]->date);
+						$this->fileWrite($file, '#VER ' . $serie . ' ' . $verNo . ' ' . $verDate . ' "' . $list[$i]->bo_text . '"'); 
+						$this->fileWrite($file, '{' );
+						for ($j=0; $j<sizeof($list[$i]->trans); $j++) {
+							if ($list[$i]->trans[$j]->amount > 0 || $list[$i]->trans[$j]->amount < 0) {
+								$accountNo = $list[$i]->trans[$j]->account_no;
+								$amount = number_format($list[$i]->trans[$j]->amount, 2,'.','');
+								$this->fileWrite($file, '#TRANS ' . $accountNo . ' {} ' . $amount);
+							}
+						}
+						$this->fileWrite($file, '}' );
+						$this->writeToSieLog($data->_company_id, $list[$i]->date, $verNo, $sieFileId); 
+					}
+				}
+			}
+
+			// Close the SIE export
+			fclose($file);
+
+
+			$paramUpdate = new stdClass();
+			$paramUpdate->no_of_ver = sizeof($list);
+			$this->_Update('siefile', 'siefile_id', $sieFileId, $paramUpdate);
+		
+			//
+			// Create zip
+			//
+			$zip = new ZipArchive;
+			// $res = $zip->open($name, ZipArchive::OVERWRITE); /* truncate as empty file is not valid */
+			$res = $zip->open(SIE_FILE__DIR . $paramSieFile->siefile_name . '.zip', ZipArchive::CREATE);
+			if ($res === TRUE) {
+				if ($zip->addFile(SIE_FILE__DIR . $paramSieFile->siefile_name . '.si', $paramSieFile->siefile_name . '.si')) {
+					$reply->denied_code = 'zip-ok'; 
+				}
+				else {
+					$reply->denied_code = 'zip-fail';
+				}
+				$zip->close();
+			
+			} else {
+				$reply->denied_code = 'cant-create-zip'; 
+			}
+		
+			$reply->code = '1';
+			$reply->no_of_ver = sizeof($list);
+			$reply->siefile_name = $paramSieFile->siefile_name;
+			$reply->siefile_save_as = 'sie-' . $data->_company_id . '-' .  $lastDate . '.zip';
+		}
+		else {
+			$reply->code = '0';
+			$reply->no_of_ver = 0;
+			$reply->siefile_name = '';
+			$reply->siefile_save_as = '';
+		}
+
+		return json_encode($reply);
+
+    }
+
+    private function pdfCreate($data) {
+
+        /*
+            {
+				"_key" : "test-key",
+				"_group" : "PdfBookingOrder",
+				"_action" : "Create",
+				"booking_date" : "2020-10-15",
+				"ocrno" : "123444109680",
+				"amount" : "2000"
+			}		
+            SetFontSize(float size)
+        */
+
+        // print_r($data->_list); 
+        // die('');
+
+        $font = 'Helvetica';
+
+		require('fpdf181/fpdf.php');
+		require_once('ftpi/autoload.php');
+		$pdf = new Fpdi\Fpdi();
+        
+        for ($i = 0; $i < sizeof($data->_list); $i++) {
+			//echo $data->_list[$i]->date;
+		
+            $pdf->AddPage();
+            $pdf->SetFont($font,'',14);
+
+            $pdf->SetFontSize(14);
+            $pdf->SetXY(14, 4);
+            $pdf->Write(14, utf8_decode($data->_company_name));
+            $pdf->SetFont($font,'');
+            $pdf->SetFontSize(10);
+            $pdf->SetXY(14, 9);
+            $pdf->Write(14, utf8_decode($data->_address));
+            $pdf->SetXY(14, 13);
+            $pdf->Write(14, utf8_decode($data->_postcode . ' ' . $data->_city));
+            $pdf->SetXY(14, 17);
+            $pdf->Write(14, utf8_decode('Orgnr: ' . $data->_orgno));
+      
+            $pdf->SetFont($font);
+            $pdf->SetFontSize(14);
+            $pdf->SetXY(111, 4); // 2
+            $pdf->Write(16, utf8_decode('Bokföringsorder'));
+
+            $pdf->SetFont($font,'B');
+            $pdf->SetFontSize(9);
+            $pdf->SetXY(111, 14); // 11
+            $pdf->Write(11, 'Utskriftsdatum');
+            $pdf->SetFont('');
+            $pdf->SetFont($font);
+            $pdf->SetFontSize(10);
+            $pdf->SetXY(111, 18); // 16
+            $pdf->Write(11, date('Y-m-d'));
+
+            $pdf->SetFont($font,'B');
+            $pdf->SetFontSize(10);
+            $pdf->SetXY(18, 46);
+            $pdf->SetFillColor(220,220,220);
+            $pdf->Cell(184,9,' Datum             Text                        Namn                                         Konto                       Debet                     Kredit','BTLR',0,'L',true);        
+
+            $pdf->SetFont($font);
+            $pdf->SetFontSize(11);
+            
+            $line = 56;
+            //for ($i = $startIndex; $i < sizeof($invoice->spec); $i++) {
+               
+            $pdf->SetXY(19, $line);
+            $pdf->Write(10, utf8_decode($data->_list[$i]->date));
+
+            $pdf->SetXY(43, $line);
+            $pdf->Write(10, utf8_decode($data->_bo_text));
+            $line += 5;
+
+            for ($j = 0; $j < sizeof($data->_list[$i]->trans); $j++) {
+
+                $amount = (float) $data->_list[$i]->trans[$j]->amount;
+                if ($amount == 0) {
+                    // Skip
+                }
+                else {
+
+                    $pdf->SetXY(73, $line);
+                    $pdf->Write(11, utf8_decode($data->_list[$i]->trans[$j]->name));
+                    $pdf->SetXY(123, $line);
+                    if ($data->_list[$i]->trans[$j]->account_no > 0) {
+                        $pdf->Write(11, utf8_decode($data->_list[$i]->trans[$j]->account_no));
+                    }
+                    // $amount = (float) $data->_list[$i]->trans[$j]->amount;
+                    if ($amount >= 0) {
+                        $pdf->SetXY(152, $line);  
+                    }
+                    else {
+                        $amount = $amount * -1;
+                        $pdf->SetXY(182, $line);
+                    }
+                    $amount = number_format($amount, 2);
+                    $pdf->Cell(16, 10, utf8_decode($amount), 0, 0, "R");
+                
+                    $line += 5;
+                }
+            }                
+        }
+        $fileName = $this->_gui();
+        $pdfUrl = '../pdf-files/' . $fileName . '.pdf';
+        $pdf->Output($pdfUrl, 'F');
+        $reply = new stdClass();
+        $reply->code = '1';
+        $reply->filename =  $fileName;
+        return $reply;
+    }
+
+	public function actionBookingCheck($data) {
+		/*
+			{
+				"_group" : "Company",
+				"_action" : "BookingCheck",
+				"_company_id" : "69",
+				"_people_id" : "1",
+				"_date_from" : "2020-09-01",
+			   	"_date_to" : "2020-09-16"
+			}
+		*/
+		
+		$sql = "SELECT company_id ";
+		$sql .= "FROM company ";
+		$sql .= "WHERE company_id = '80' ";
+		$sql .= "ORDER BY company_id";
+		$companyList = $this->_GetList($sql);
+		
+		// print_r($companyList); die('');
+
+		$all = [];
+		$indexAll -1;
+		for ($k=0; $k<sizeof($companyList); $k++) {
+		
+			$sql = "SELECT company_id_number, company_name, bo_text, bo_settl_account, bo_bank_account, bo_transfee_account, bo_interest_account ";
+			$sql .= "FROM company ";
+			$sql .= "WHERE company_id = " . $companyList[$k]['company_id'];
+			$company = $this->_Get($sql);
+			
+			$sql = "SELECT company_account_id, account_no, account_name ";
+			$sql .= "FROM company_account ";
+			$sql .= "WHERE company_id = " . $companyList[$k]['company_id'];
+			$sql .= "ORDER BY account_no ";
+			$companyAccount = $this->_GetList($sql);
+		
+			$begin = new DateTime($data->_date_from);
+			$end = new DateTime(date("Y-m-d", strtotime("+" . $data->_date_to . " + 1 days")));
+		
+			$daterange = new DatePeriod($begin, new DateInterval('P1D'), $end);
+
+			$indexList = -1;
+			$list = [];
+
+			foreach($daterange as $date){
+				$date =  $date->format("Y-m-d");
+			
+				$sql = "SELECT t.account_no, SUM(t.amount) AS day_trans ";
+				$sql .= "FROM btrans t ";
+				$sql .= "LEFT JOIN booking b ON t.booking_id = b.booking_id ";
+				$sql .= "LEFT JOIN people p ON b.people_id = p.people_id ";
+				$sql .= "WHERE b.company_id = " . $companyList[$k]['company_id'] . " AND ";
+				$sql .= "t.prel IN ('y','n') AND b.prel IN ('y','n') AND "; 
+				$sql .= "b.booking_date = '$date' ";
+				// $sql .= "b.booking_date >= '$data->_date_from' AND b.booking_date <= '$data->_date_from'";
+				$sql .= "GROUP BY t.account_no";
+				
+				$balance = $this->_GetList($sql);
+
+				// print_r($balance); die('');
+				/*
+				$sql = "SELECT e.company_account_id,  SUM(t.amount) AS day_trans ";
+				$sql .= "FROM btrans t, booking b, people p, event_item_v4 i, event_v4 e ";
+				$sql .= "WHERE ";
+				$sql .= "t.booking_id = b.booking_id AND ";
+				$sql .= "b.people_id = p.people_id AND ";
+				$sql .= "b.company_id = $data->_company_id AND ";
+				$sql .= "t.prel IN ('y','n') AND ";
+				$sql .= "b.prel IN ('y','n') AND "; 
+				$sql .= "t.account_no = '1380' AND ";
+				$sql .= "b.booking_date = '$date' AND ";
+				$sql .= "b.credit_id = i.credit_id AND ";
+				$sql .= "i.event_id = e.event_id ";
+				$sql .= "GROUP BY e.company_account_id ";
+
+				$balanceBo = $this->_GetList($sql);
+
+				$sql = "SELECT e.company_account_id,  SUM(t.amount) AS day_trans ";
+				$sql .= "FROM btrans t, booking b, people p, event_item_v4 i, event_v4 e ";
+				$sql .= "WHERE ";
+				$sql .= "t.booking_id = b.booking_id AND ";
+				$sql .= "b.people_id = p.people_id AND ";
+				$sql .= "b.company_id = $data->_company_id AND ";
+				$sql .= "t.prel IN ('y','n') AND ";
+				$sql .= "b.prel IN ('y','n') AND "; 
+				$sql .= "t.account_no = '1380' AND ";
+				$sql .= "b.booking_date = '$date' AND ";
+				$sql .= "b.credit_id = i.credit_id AND ";
+				$sql .= "i.event_id = e.event_id ";
+				$sql .= "GROUP BY e.company_account_id ";
+
+				
+
+				$creditBo = $this->_GetList($sql);
+				*/
+				//if (sizeof($balance) > 0) {
+					//print_r($balance);
+				// }
+				// print_r($balanceBo);
+
+				if (sizeof($balance) > 0) {		
+					
+					$trans = [];
+					$index = -1;
+					$indexTransfee = 0;
+					
+					for ($i=0; $i<sizeof($balance); $i++) {
+
+							// Turtle Pay avräkning
+						if ($balance[$i]['account_no'] == '2981') {
+							$index++;
+							$trans[$index] = new stdClass();
+							$trans[$index]->name = 'Turtle Pay avräkning';
+							$trans[$index]->account_no = $company['bo_settl_account'];
+							$trans[$index]->amount = 0 - $balance[$i]['day_trans'];
+							$trans[$index]->list_amount = number_format($trans[$index]->amount, 2);
+							$trans[$index]->amount = str_replace(',','',$trans[$index]->list_amount);
+						} 
+						else // Bank
+						if ($balance[$i]['account_no'] == '1930') {
+							$index++;
+							$trans[$index] = new stdClass();
+							$trans[$index]->name = 'Bank';
+							$trans[$index]->account_no = $company['bo_bank_account'];
+							$trans[$index]->amount = 0 - $balance[$i]['day_trans'];	
+							$trans[$index]->list_amount = number_format($trans[$index]->amount, 2);
+							$trans[$index]->amount = str_replace(',','',$trans[$index]->list_amount);
+						} 
+						else // 
+						if ($balance[$i]['account_no'] == '3593' || $balance[$i]['account_no'] == '2498') {
+							if ($indexTransfee > 0 ) {
+								$trans[$indexTransfee]->amount += 0 - $balance[$i]['day_trans'];
+								$trans[$indexTransfee]->list_amount = number_format($trans[$indexTransfee]->amount, 2);
+								$trans[$indexTransfee]->amount = str_replace(',','',$trans[$indexTransfee]->list_amount);
+							}
+							else {
+								$index++;
+								$trans[$index] = new stdClass();
+								$trans[$index]->name = 'Transaktionsavgift';
+								$trans[$index]->account_no = $company['bo_transfee_account'];
+								$trans[$index]->amount = 0 - $balance[$i]['day_trans'];
+								$trans[$index]->list_amount = number_format($trans[$index]->amount, 2);
+								$trans[$index]->amount = str_replace(',','',$trans[$index]->list_amount);
+								$indexTransfee = $idex;
+							}
+						} 
+						else // Ränta
+						if ($balance[$i]['account_no'] == '8300') {
+							$index++;
+							$trans[$index] = new stdClass();
+							$trans[$index]->name = 'Ränta';
+							$trans[$index]->account_no = ''; $company['bo_interest_account'];
+							$trans[$index]->amount = 0 - $balance[$i]['day_trans'];
+							$trans[$index]->list_amount = number_format($trans[$index]->amount, 2);
+							$trans[$index]->amount = str_replace(',','',$trans[$index]->list_amount);
+						} 
+
+						else // Intäkt
+						if ($balance[$i]['account_no'] == '1380') {
+							$index++;
+							$trans[$index] = new stdClass();
+							$trans[$index]->name = 'Intäkt';
+							$trans[$index]->account_no = ''; $company['bo_interest_account'];
+							$trans[$index]->amount = 0 - $balance[$i]['day_trans'];
+							$trans[$index]->list_amount = number_format($trans[$index]->amount, 2);
+							$trans[$index]->amount = str_replace(',','',$trans[$index]->list_amount);
+						} 
+					
+					}
+
+					$indexList++;
+					$list[$indexList] = new stdClass();
+					$list[$indexList]->date = $date; 
+					$list[$indexList]->trans = $trans;
+					$list[$indexList]->bo_text = $company['bo_text'];
+					
+					$check = 0;
+					for ($l=0; $l < sizeof($trans); $l++)
+					{	
+						$check = $this->decimalAdd($check ,$trans[$l]->amount);	
+					}
+
+					if ($check != 0) {
+						//die('');
+						print_r($trans);
+
+						$indexAll++;
+						$all[$indexAll] = new stdClass();
+						$all[$indexAll]->date = $date;
+						$all[$indexAll]->company_id = $companyList[$k]['company_id'];
+						$all[$indexAll]->check = $check;
+						print_r($all[$indexAll]);
+						
+					}
+
+				}
+			}
+		}
+		echo json_encode($all);
+	}
+
+	function decimalAdd($a,$b, $numDecimals=2) {
+		$intSum=(int)str_replace(".","",$a)+(int)str_replace(".","",$b);
+		$paddedIntSum=str_pad(abs($intSum),$numDecimals,0,STR_PAD_LEFT);
+		$result=($intSum<0?"-":"").($intSum<100&&$intSum>-100?"0":"").substr_replace($paddedIntSum,".",-$numDecimals,0);
+		return $result;
+	}
+
+	function cp437($text) {
+		return iconv( "UTF-8", "CP437", $$text);
+	}
+
+	function fileWrite($file, $text) {
+		$eol = "\r\n";
+		fwrite($file, iconv( "UTF-8", "CP437", $text) . $eol);
+	} 
+
+    function _gui($hyphenOn = true){
+		// Return 2F8672B9-1BB8-2FFA-C56D-C5F8E8946FEF
+		//if (function_exists('com_create_guid')){
+		//	return com_create_guid();
+		//}	else {
+			if ((int) phpversion() < 7) {
+				mt_srand((double)microtime()*10000);//optional for php 4.2.0 and up.
+			}
+			else {
+				srand((double) microtime() * 1000000);
+			}
+            $charid = strtoupper(md5(uniqid(rand(), true)));
+            if ($hyphenOn) {
+                $hyphen = chr(45); // "-"
+                $uuid =
+                    substr($charid, 0, 8).$hyphen
+                    .substr($charid, 8, 4).$hyphen
+                    .substr($charid,12, 4).$hyphen
+                    .substr($charid,16, 4).$hyphen
+                    .substr($charid,20,12);
+                return $uuid;
+            }
+            else {
+                return $charid;
+            }
+		//}
+	}
+
+	function guiShort($length = 8){
+		// Return 2F8672B9-1BB8-2FFA-C56D-C5F8E8946FEF
+		//if (function_exists('com_create_guid')){
+		//	return com_create_guid();
+		//}	else {
+		if ((int) phpversion() < 7) {
+			mt_srand((double)microtime()*10000);//optional for php 4.2.0 and up.
+		}
+		else {
+			srand((double) microtime() * 1000000);
+		}
+		$charid = strtoupper(md5(uniqid(rand(), true)));
+		
+		return substr($charid, 0, 7);
+		//}
+	}
+	
+	private function actionSieExportCheck($data) {
+		/*
+		{
+			"_group" : "CompanyReport",
+			"_action" : "SieExportCheck",
+			"_company_id" : "69",
+			"_people_id" : "1",
+			"_sie_date" : "2022-01-12"
+		}
+
+		Fix to set all to a account
+		UPDATE event_v4 SET company_account_no = 2 WHERE company_id = 69
+
+
+		*/
+
+		$reply = new stdClass();
+		$sieDate = $data->_sie_date;
+
+		// -- Get SIE info from Company, and 
+		$sql = "SELECT sie_type, sie_serie, sie_first_verno, fy_year_no, sie_kp_type, sie_allowed, sie_start_date, fy_last_date ";
+		$sql .= "FROM company ";
+		$sql .= "WHERE company_id = $data->_company_id";
+		$resSie = $this->_Get($sql);
+		$fyLastDate = $resSie['fy_last_date'];
+		
+		$sql = "SELECT ver_no, booking_date FROM sie_log WHERE company_id = $data->_company_id ORDER BY booking_date DESC, ver_no DESC LIMIT 1";
+		$resLog = $this->_Get($sql);
+		if ($resLog['code'] == '1') {
+			$sieLastDate = $resLog['booking_date'];
+			$lastVerNo = $resLog['ver_no'];
+		}
+		else if  ($resLog['code'] == '0') {
+			$sieLastDate = $resSie['sie_start_date'];
+			$lastVerNo =  $resSie['sie_first_verno'] - 1;
+		}
+		else {
+			$reply->denied_code = 'no-booking';
+			$reply->code = '0';
+			return json_encode($reply);
+		}
+		
+		$sql = "SELECT * FROM booking WHERE company_id = $data->_company_id AND booking_date > '$sieLastDate' LIMIT 1 ";
+		$resBooking = $this->_Get($sql);
+		if ($resBooking['code'] == '1') {
+			$bookingNextDate = $resBooking['booking_date'];
+		}
+		else {
+			$bookingNextDate = $sieLastDate;
+		}
+		
+		/*
+			Check if new year
+		*/
+		
+		if ($sieDate > $fyLastDate ) {
+			if ($bookingNextDate <= $fyLastDate) {
+				// Oberlapping 2 finacial year
+				$reply->code = '2';
+				//$reply->sieLastDate = $sieLastDate; // test
+				//$reply->bookingNextDate = $bookingNextDate; // test
+				$reply->new_sie_date = $fyLastDate;
+				$reply->last_ver_no = $lastVerNo;
+				return json_encode($reply);
+			}
+			else {
+				$param = new stdClass();
+				$year = substr($fyLastDate, 0, 4);
+				$year++;
+				$param->fy_last_date = $year . substr($fyLastDate, 4);
+				$res = $this->_Update('company', 'company_id', $data->_company_id, $param);
+				$reply->code = '3';
+				$reply->last_ver_no = '0';
+				//$reply->bookingNextDate = $bookingNextDate;
+				//$reply->fyLastDate = $fyLastDate;
+				return json_encode($reply);
+			}
+			
+		}
+		// OK to export
+		$reply->last_ver_no = $lastVerNo;
+		$reply->code = '1';
+		return json_encode($reply);
+	
+		/*
+			<option value="1">Januari - December</option>
+			<option value="2">Februari - Januari</option>
+			<option value="3">Mars - Februari</option>
+			<option value="4">April - Mars</option>
+			<option value="5">Maj - April</option>
+			<option value="6">Juni - Maj</option>
+			<option value="7">Juli - Juni</option>
+			<option value="8">Augusti - Juli</option>
+			<option value="9">September - Augusti</option>
+			<option value="10">Oktoberr - September</option>
+			<option value="11">November - Oktober</option>
+			<option value="12">December - November</option>
+		*/
+
+	}
+}

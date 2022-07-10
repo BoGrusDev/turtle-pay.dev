@@ -1,0 +1,1165 @@
+<?php
+/*
+    PeopleClass
+
+	Date: 2019-08-02
+
+*/
+
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+
+class InvoiceEventClass extends ActionPortal {
+
+	public function Run($data) {
+
+		//$data->_company_id = $data->_user_id;
+
+		$actionMethod = 'action' . $data->_action;
+
+		$sql = "SELECT COUNT(*) principal FROM company_people ";
+		//$sql .= "WHERE people_id = $data->_people_id AND company_id = $data->_company_id AND priv = 'pr'";
+		$sql .= "WHERE people_id = $data->_people_id AND company_id = $data->_company_id AND priv IN ('su','pr','ac')";
+		$result = $this->_Get($sql);
+		if ($result['code'] == '1' && $result['principal'] == '1' ) {
+			echo $this->$actionMethod($data);
+		}
+		else {
+			$reply = new StdClass();
+			$reply->code = "8"; // not allowed
+			echo json_encode($reply);
+		}
+
+		// SELECT COUNT(*) principal FROM company_people WHERE people_id = 1 AND company_id = 1 AND priv = 'pr'
+
+	}
+
+	private function actionInvoiceEventStatusSet($data) {
+		/*
+		2020-03-09
+		{
+            "_group" : "Event",
+            "_action" : "EventStatusSet",
+            "_company_id" : "69",
+			"_people_id" : "1",
+			"_invoice_event_id" : "",
+			"invoice_event_status" : ""
+        }
+		*/
+		$result = $this->_Update("invoice_event", "invoice_event_id", $data->_invoice_event_id, $data);
+		return json_encode($result);
+	}
+
+	private function actionEventList($data) {
+
+		/*
+		{
+            "_group" : "InvoiceEvent",
+            "_action" : "EventList",
+            "_company_id" : "13",
+            "_people_id" : "1"
+        }
+		*/
+	
+		/*
+			$sql = "SELECT event_id, event_name ";
+			$sql .= "FROM event_v4 ";
+			$sql .= "WHERE company_id = $data->_company_id AND event_status = 'p' ";
+			$sql .= "ORDER BY event_name";
+			$result = $this->_GetList($sql);
+		*/
+		
+		$sql = "SELECT event_id, event_name, ref, base_event_id, tdb_on ";
+		$sql .= "FROM event_v4 ";
+		$sql .= "WHERE company_id = $data->_company_id AND event_status = 'p' ";
+		$sql .= "ORDER BY event_name";
+		$resultDraft = $this->_GetList($sql);
+		
+		$result = array();
+		if (sizeof($resultDraft) > 0) {
+			for ($i=0; $i<sizeof($resultDraft); $i++) {
+				if ($resultDraft[$i]['event_id'] == $resultDraft[$i]['base_event_id'] && $resultDraft[$i]['tdb_on'] == 'y') {
+					// Skip first tdb event, that is auto created
+				}
+				else {
+					array_push($result, $resultDraft[$i]);
+				}
+			}
+		}
+
+
+		if (sizeof($result) > 0) {
+			for ($i=0; $i<sizeof($result); $i++) {
+				$sql = "SELECT event_name FROM event_v4 WHERE event_id = " . $result[$i]['base_event_id'];
+				$res = $this->_Get($sql);
+				if ($res['code'] == '1') {
+					$result[$i]['event_name'] = $res['event_name'] . ' (' . $result[$i]['ref'] . ')';
+				}
+				else {
+					$result[$i]['event_name'] = $result[$i]['event_name'] . ' / ' . $result[$i]['ref'];
+				}
+			}
+		} 
+		
+		return json_encode($result);
+	}
+
+	private function actionInvoiceEventList($data) {
+
+		/*
+		{
+            "_group" : "InvoiceEvent",
+            "_action" : "InvoiceEventList",
+            "_company_id" : "13",
+            "_people_id" : "1"
+        }
+		*/
+		// SELECT * FROM bet_event_group WHERE company_id = 13 ORDER BY create_date
+	
+		$sql = "SELECT * ";
+		$sql .= "FROM invoice_event ";
+		$sql .= "WHERE company_id = $data->_company_id  ";
+		$sql .= "ORDER BY create_date";
+
+		$result = $this->_GetList($sql);
+
+		//print_r($result); die('');
+
+		for ($i=0; $i<sizeof($result); $i++){
+			$sql = "SELECT COUNT(*) AS no_items FROM invoice_event_item WHERE invoice_event_id=" . $result[$i]['invoice_event_id'];
+			$reply = $this->_Get($sql);
+			$result[$i]['no_items'] = $reply['no_items'];
+
+			// This is change to all a,p r 
+			//$sql = "SELECT COUNT(*) AS no_sent FROM invoice_event_item WHERE sent_datetime IS NOT NULL AND invoice_event_id=" . $result[$i]['invoice_event_id'];
+			
+			$sql = "SELECT COUNT(*) AS no_sent FROM invoice_event_item ";
+			$sql .= "WHERE invoice_event_item_status IN ('p', 'a', 's', 'r') AND invoice_event_id=" . $result[$i]['invoice_event_id'];
+
+			$reply = $this->_Get($sql);
+			$result[$i]['no_sent'] = $reply['no_sent'];
+			
+			$sql = "SELECT COUNT(*) AS no_confirmed FROM invoice_event_item WHERE confirmed_datetime IS NOT NULL AND invoice_event_id=" . $result[$i]['invoice_event_id'];
+			$reply = $this->_Get($sql);
+			$result[$i]['no_confirmed'] = $reply['no_confirmed'];
+
+		}
+
+		return json_encode($result);
+
+	}
+
+	private function actionInvoiceEventGet($data) {
+
+		/*
+		// Used by meddelande
+		{
+	        "_group" : "InvoiceEvent",
+	        "_action" : "EventGet",
+			"_company_id" : "13",
+			"_people_id" : "1",
+			"_invoice_event_id" : "7"
+		}
+
+	SELECT i.event_id, i.invoice_event_name, i.body, i.reminder_text_on, i.reminder_body, i.webform_link, i.invoice_event_type, i.invoice_event_status,
+e.amount, e.ref, e.amount_on, e.event_name, e.inherit_event_id, e.participant_on 
+FROM invoice_event i, event_v4 e 
+WHERE i.event_id = e.event_id AND i.invoice_event_id = 12877
+
+		*/
+		
+		$sql = "SELECT i.event_id, i.invoice_event_name, i.body, i.reminder_text_on, i.reminder_body, i.webform_link, i.invoice_event_type, i.invoice_event_status,";
+		$sql .= "e.amount, e.ref, e.amount_on, e.event_name, e.inherit_event_id, e.participant_on, tdb_on, tdb_closed ";
+		$sql .= "FROM invoice_event i, event_v4 e ";
+		$sql .= "WHERE i.event_id = e.event_id AND i.invoice_event_id = " . $data->_invoice_event_id;
+		$result = $this->_Get($sql);
+
+		$sql = "SELECT email FROM people WHERE people_id = $data->_people_id";	
+		$res = $this->_Get($sql);
+
+		$result['email'] = $res['email'];
+
+		// 2021-10-06
+		$sql = "SELECT wa_url FROM company WHERE company_id = $data->_company_id";
+		$company = $this->_Get($sql);
+		$result['wa_url'] = $company['wa_url'];
+		
+		return json_encode($result);
+
+	}
+
+    private function actionEventCreate($data) {
+        /*
+			{
+				"_group": "InvoiceEvent",
+				"_action": "EventCreate",
+				"_token": "B0044A966CD85D29817AC36AA7C7BECF", 
+				"_user_id": "69", 
+				"_store_id": "67",
+				"invoice_event_name": "Ölfestival resa",
+				"event_id" : "114",
+				"_import": "y",
+				"_import_id": "48",
+				"_people_id" : "1",
+				"_company_id": "69"
+			}
+
+			SELECT amount, ref FROM event_v4 WHERE event_id = 114;
+
+		*/
+		/*
+		$sql = "SELECT amount, ref ";
+		$sql .= "FROM event_v4 ";
+		$sql .= "WHERE event_id = $data->event_id  ";
+		$res = $this->_Get($sql);
+		*/
+	
+		$data->company_id = $data->_company_id;
+		$data->create_date =  date("Y-m-d");
+
+		$result = $this->_Insert("invoice_event", $data);
+		
+		$sql = "SELECT child_on, inherit_event_id, ref FROM event_v4 WHERE event_id = $data->event_id"; 
+		$event = $this->_Get($sql);
+
+		if ($event['child_on'] == 'y') {
+			// Import from inherit event;
+			$sql = "SELECT * FROM event_item_v4 WHERE event_item_status = 'c' AND event_id  = " . $event['inherit_event_id'];
+			$eventItem = $this->_GetList($sql);
+			if (sizeof($eventItem) > 0) {
+				for ($i = 0; $i < sizeof($eventItem); $i++) {
+					$param = new stdClass();
+					$param->invoice_event_id = $result['id'];
+					$param->invoice_event_item_code = $this->_GUI();
+					$param->event_id = $data->event_id; 
+					$param->people_name = $eventItem[$i]['people_name'];
+					$param->email = $eventItem[$i]['email'];
+					$param->mobile = $eventItem[$i]['mobile'];
+					$param->referens = $event['ref'];
+					// $param->referens = $eventItem[$i]['referens'];
+					$param->parent_event_item_id = $eventItem[$i]['event_item_id'];
+					$param->invoice_event_item_status =  'p'; 
+					
+					$param->planed_date = date('Y-m-d'); 
+						
+					$reply = $this->_Insert("invoice_event_item", $param);
+				}
+			}
+		}
+		
+		return json_encode($result);
+    }
+
+	private function actionEventUpdate($data) {
+        /*
+        {
+			"_group" : "InvoiceEvent",
+			"_action" : "EventUpdate",
+			"_company_id" : "13",
+			"_people_id" : "1",
+			"_item_id" : "8",
+			"invoice_event_name" : "Höstevent special",
+			"subject" : "Kvitto på köp",
+			"body" : "Du kan betala niu eller senare",
+			"spec" : "Årsavgift",
+			"pre_send_date" : "y",
+			"send_date" : "2019-08-30",
+			"invoice_event_status" : "a"
+    	}
+		*/
+	
+		$result = $this->_Update("invoice_event", "invoice_event_id", $data->_event_id, $data);
+		
+		return json_encode($result);
+    }
+
+	private function actionCompanyStatus($data) {
+		/*
+		{
+	        "_group" : "InvoiceEvent",
+	        "_action" : "CompanyStatus",
+			"_company_id" : "13",
+			"_people_id" : "1"
+		}
+		*/
+		$sql = "SELECT wa_url ";
+		$sql .= "FROM company ";
+		$sql .= "WHERE company_id = $data->_company_id";
+		
+		$result = $this->_Get($sql);
+
+		return json_encode($result);
+
+	}
+
+	private function actionEventItemList($data) {
+
+		/*
+		{
+	        "_group" : "InvoiceEvent",
+	        "_action" : "EventItemList",
+			"_company_id" : "69",
+			"_people_id" : "1",
+			"_invoice_event_id" : "146"
+
+		}
+		
+		*/
+		
+		$sql = "SELECT ei.inherit_event_id, ei.event_id, ei.ref FROM event_v4 ei, invoice_event e WHERE ei.event_id = e.event_id AND e.invoice_event_id = $data->_invoice_event_id"; 
+		$resId = $this->_Get($sql);
+
+		// print_r($resId); die('');
+
+		if ($resId['inherit_event_id']) {
+			$this->refrestFromEvent($resId['inherit_event_id'], $data->_invoice_event_id, $resId['event_id'], $resId['ref']);
+			$this->checkInvalidItems($data->_invoice_event_id);
+		}
+		$sql = "SELECT * ";
+		$sql .= "FROM invoice_event_item ";
+		// -- $sql .= "WHERE company_id = $data->_company_id  AND invoice_event_id = $data->_invoice_event_id  ";
+		$sql .= "WHERE invoice_event_id = $data->_invoice_event_id  ";
+		$sql .= "ORDER BY people_name, email";
+		$result = $this->_GetList($sql);
+
+		//if ($data->_company_id == '75' || $data->_company_id == '78') {
+		for ($i=0; $i<sizeof($result); $i++) {
+			if ($result[$i]['invoice_event_item_status'] == 'c') {
+				// print_r($result[$i]);
+				$sql = "SELECT amount FROM event_item_v4 where event_item_id=" . $result[$i]['event_item_id'];
+				$reply = $this->_Get($sql);
+				if ($reply['code'] == '1') {
+					$result[$i]['amount'] = $reply['amount'];
+				}
+				// print_r($result[$i]);
+			}
+		}
+		//}
+		return json_encode($result);
+	}
+
+	private function refrestFromEvent($inherit_event_id, $invoice_event_id, $event_id, $ref) {
+
+	
+		$sql = "SELECT c.* ";
+		$sql .= "FROM event_item_v4  c ";
+		$sql .= "WHERE NOT EXISTS (SELECT * ";
+		$sql .= "FROM invoice_event_item s ";
+		$sql .= "WHERE c.event_item_id = s.parent_event_item_id AND s.event_id = $event_id ) AND c.event_id = " . $inherit_event_id . " AND c.event_item_status = 'c'";
+		$eventItem = $this->_GetList($sql);
+
+		// print_r($eventItem); die('');
+
+		if (sizeof($eventItem) > 0) {
+			for ($i = 0; $i < sizeof($eventItem); $i++) {
+				$param = new stdClass();
+				$param->invoice_event_id = $invoice_event_id;
+				$param->invoice_event_item_code = $this->_GUI();
+				$param->event_id = $event_id; 
+				$param->people_name = $eventItem[$i]['people_name'];
+				$param->email = $eventItem[$i]['email'];
+				$param->mobile = $eventItem[$i]['mobile'];
+				$param->referens = $ref;
+				// $param->referens = $eventItem[$i]['referens'];
+				$param->parent_event_item_id = $eventItem[$i]['event_item_id'];
+				$param->invoice_event_item_status =  'p'; 
+				
+				$param->planed_date = date('Y-m-d'); 
+					
+				// print_r($param); die('');
+
+				$reply = $this->_Insert("invoice_event_item", $param);
+			}
+		}
+		
+	}
+
+	private function checkInvalidItems($invoice_event_id) {
+
+		$sql = "SELECT invoice_event_item_id, parent_event_item_id ";
+		$sql .= "FROM invoice_event_item ";
+		$sql .= "WHERE invoice_event_id = $invoice_event_id  AND invoice_event_item_status IN ('p','s','a','r')";
+		$result = $this->_GetList($sql); 
+		if (sizeof($result) > 0) {
+			for ($i=0; $i<sizeof($result); $i++) {
+				$sql = "SELECT COUNT(*) participant_number FROM event_participant ";
+				$sql .= "WHERE event_item_id = " . $result[$i]['parent_event_item_id'] . " AND event_participant_status = 'c'"; 
+				$res = $this->_Get($sql);
+				if ($res['participant_number'] == 0) {
+					$param = new stdClass();
+					$param->invoice_event_item_status = 'm';	
+					$this->_Update('invoice_event_item', ' invoice_event_item_id', $result[$i]['invoice_event_item_id'], $param);
+				}
+			}	
+		}
+	}
+
+	/*
+	private function actionEventItemList($data) {
+
+		
+		{
+	        "_group" : "InvoiceEvent",
+	        "_action" : "EventItemList",
+			"_company_id" : "13",
+			"_people_id" : "1",
+			"_invoice_event_id" : "3"
+
+		}
+		
+		// SELECT * FROM bet_event_group WHERE company_id = 13 ORDER BY create_date
+	
+		$sql = "SELECT * ";
+		$sql .= "FROM invoice_event_item ";
+		$sql .= "WHERE company_id = $data->_company_id  AND invoice_event_id = $data->_invoice_event_id  ";
+		$sql .= "ORDER BY people_name, email";
+
+		$result = $this->_GetList($sql);
+
+		return json_encode($result);
+
+	}
+	*/
+	private function actionItemGet($data) {
+
+		/*
+		{
+	        "_group" : "InvoiceEvent",
+	        "_action" : "ItemGet",
+			"_company_id" : "13",
+			"_people_id" : "1",
+			"_item_id" : "130"
+		}
+		*/
+		
+		$sql = "SELECT * ";
+		$sql .= "FROM invoice_event_item ";
+		$sql .= "WHERE invoice_event_item_id = $data->_item_id";
+		
+		$result = $this->_Get($sql);
+
+		return json_encode($result);
+
+	}
+
+	private function actionItemUpdate($data) {
+        /*
+        {
+	        "_group" : "InvoiceEvent",
+	        "_action" : "ItemUpdate",
+            "_company_id" : "69",
+			"people_name" : "Ronald Reagan",
+			"email" : "rolle@yahoo.com",
+			"referens" : "",
+			"amount" : "0",
+			"_invoice_event_item_id" : "3095",
+			"_invoice_event_id" : "106",
+			"_current_invoice_event_item_status" : "s",
+			"invoice_event_item_status" : "s",
+			"auto_reminder" : "y",
+			"reminder_days" : "3",
+			"reminder_times" : "2",
+			"_invoice_reminder_all" : "y"
+		}
+		"planed_date" : "2019-08-30",
+		if $data_invoice_event_item_id == 0 means a new
+		*/
+
+		//print_r($data); die('');
+
+		$today = date('Y-m-d');
+		$sendToday = false;
+		$sendAll = false;
+		$setAllReminder = false;
+		$setReminderAll = false;
+		if (isset($data->planed_date)) {
+			if ($data->planed_date <= $today) {
+				$sendToday = true;
+			}
+		}
+		if (isset($data->_invoice_send_all)) {
+			if ($data->_invoice_send_all == 'y') {
+				$sendAll = true;
+			}
+		}
+		if (isset($data->_invoice_reminder_all)) {
+			if ($data->_invoice_reminder_all == 'y') {
+				$setReminderAll = true;
+			}
+		}
+		// 2020-06-30- Fix
+		else {
+			$setReminderAll = false;
+		}
+		if (is_numeric($data->amount) == false) {
+			unset($data->amount);
+		}
+
+		$invoiceEventItemStatus = $data->invoice_event_item_status;
+
+		if ($data->_invoice_event_item_id == 0) {
+			$data->invoice_event_item_code = $this->_GUI();
+			$result = $this->_Insert("invoice_event_item", $data);
+			$invoiceEventItemId = $result['id'];
+		}
+		else {
+			if ($sendAll) {
+				unset($data->invoice_event_item_status); // status is updated with send event
+			}
+			$result = $this->_Update("invoice_event_item", "invoice_event_item_id", $data->_invoice_event_item_id, $data);
+			$invoiceEventItemId = $data->_invoice_event_item_id;
+		}
+
+		$result['reminder_updated'] = 'n';
+		$result['planed_update_updated'] = 'n';
+		$result['email_send'] = 'n';
+	
+		if ($invoiceEventItemStatus == 'a' || $invoiceEventItemStatus == 'p' || $invoiceEventItemStatus == 's' || $invoiceEventItemStatus == 'r')  {
+			if ($setReminderAll == true) {
+				if ($invoiceEventItemStatus == 's' || $invoiceEventItemStatus == 'r') {
+					$this->setReminderBulk($data->auto_reminder, $data->reminder_days, $data->reminder_times, $data->_invoice_event_id, $data->_current_invoice_event_item_status, $data->reminder_next_date);
+				}
+				else {
+					$this->setReminderBulk($data->auto_reminder, $data->reminder_days, $data->reminder_times, $data->_invoice_event_id, $data->_current_invoice_event_item_status, false);
+				}
+					$result['reminder_updated'] = 'y';
+			}
+		}
+
+		if ($invoiceEventItemStatus == 'a' || $invoiceEventItemStatus == 'p') {
+			
+			if ($sendToday && $invoiceEventItemStatus == 'a') {
+				// Skicka ett email Now
+				if ($sendAll == false) {
+					if ($this->mailUtskick($invoiceEventItemId)) {
+						$result['email_send'] = 'y';
+						$result['send_counter'] = 1;
+						$result['fail_counter'] = 0;
+					}
+					else {
+						$result['email_send'] = 'y';
+						$result['send_counter'] = 0;
+						$result['fail_counter'] = 1;
+					}
+				}
+				else if ($invoiceEventItemStatus == 'a' || $invoiceEventItemStatus == 'p') {
+					$result = $this->mailUtskickBulk($data->_invoice_event_id, $data->_current_invoice_event_item_status, $data->planed_date);
+					$result->email_send = 'y';
+				}
+			}
+			else {
+				if ($sendAll) {
+					$this->setSendDateBulk($data->planed_date, $data->_invoice_event_id, $data->_current_invoice_event_item_status);
+					if ($invoiceEventItemStatus != $data->_current_invoice_event_item_status) {
+						$this->changeInvoiceEventItemStatus($data->_invoice_event_id, $data->_current_invoice_event_item_status, $invoiceEventItemStatus);
+					}
+					$result['planed_update_updated'] = 'y';
+				}	
+			}
+		}
+
+		// Change the status if needed
+		//if ($sendAll) {
+		//	if ($data->invoice_event_item_status != $data->_current_invoice_event_item_status) {
+		//		$this->changeInvoiceEventItemStatus($data->_invoice_event_id, $data->_current_invoice_event_item_status, $data->invoice_event_item_status);
+		//	}
+		//}
+
+		return json_encode($result);
+
+    }
+
+	private function actionItemRemove($data) {
+		 /*
+        {
+	        "_group" : "InvoiceEvent",
+	        "_action" : "ItemRemove",
+            "_company_id" : "13",
+			"_people_id" : "1",
+			"_item_id" : "541"
+        }
+		*/
+		//if ($data->_status == "d") {
+		//	$result = $this->_Delete("invoice_event_item", "invoice_event_item_id", $data->_invoice_event_item_id);
+		//}
+		//else {
+			$param = new stdClass();
+			$param->invoice_event_item_status = 'm';
+			$result = $this->_Update("invoice_event_item", "invoice_event_item_id", $data->_invoice_event_item_id, $param);
+		//}
+		return json_encode($result);
+	}
+
+	private function actionSetCode ($data) {
+		$sql = "SELECT * FROM invoice_event_item WHERE invoice_event_id = 20";
+		$items = $this->_GetList($sql);
+		for ($i = 0; $i < sizeof($items); $i++) {
+			$param = new stdclass();
+			$param->invoice_event_item_code = $this->_GUI();
+			$result = $this->_Update("invoice_event_item", "invoice_event_item_id", $items[$i]['invoice_event_item_id'], $param);
+		}
+		echo sizeof($items);
+	}
+
+	function setReminderBulk($autoReminder, $reminderDays, $reminderTimes, $invoiceEventId, $invoiceItemStatus,	$reminderNextDate) {
+		$sql = "UPDATE invoice_event_item SET ";
+		if ($reminderNextDate) {
+			$sql .= "auto_reminder = '$autoReminder', reminder_days = $reminderDays, reminder_times = $reminderTimes, reminder_next_date = '$reminderNextDate'";
+		}
+		else {
+			$sql .= "auto_reminder = '$autoReminder', reminder_days = $reminderDays, reminder_times = $reminderTimes ";
+		}
+		$sql .= " WHERE invoice_event_item_status = '$invoiceItemStatus' AND invoice_event_id = $invoiceEventId";
+		$res = $this->_Query($sql);
+		//echo $sql;
+	}
+
+	function setSendDateBulk($planedDate, $invoiceEventId, $invoiceEventItemStatus) {
+		$sql = "UPDATE invoice_event_item SET planed_date = '$planedDate' WHERE invoice_event_item_status = '$invoiceEventItemStatus' AND invoice_event_id = $invoiceEventId";
+		$res = $this->_Query($sql);
+	}
+
+	function changeInvoiceEventItemStatus($invoiceEventId, $currentInvoiceItemStatus, $invoiceItemStatus) {
+		$paramUpdate = array ();
+		$paramUpdate['invoice_event_item_status'] = $invoiceItemStatus;
+		
+		$sql = "UPDATE invoice_event_item SET ";
+		$sql .= "invoice_event_item_status = '$invoiceItemStatus' ";
+		$sql .= " WHERE invoice_event_item_status = '$currentInvoiceItemStatus' AND invoice_event_id = $invoiceEventId";
+		$res = $this->_Query($sql);
+
+	}
+	
+	function setStatusSend($invoiceEventItemId,$autoReminder, $reminderDays) {
+
+		$paramUpdate = array ();
+		$paramUpdate['invoice_event_item_status'] = 's';
+		$dt = new DateTime();
+		$paramUpdate['sent_datetime'] = $dt->format('Y-m-d H:i:s');
+		if ($autoReminder == 'y') {
+			$dateNow= $dt->format('Y-m-d');
+			$paramUpdate['reminder_next_date'] = date("Y-m-d", strtotime("+" . $dateNow . " + " . $reminderDays . " days"));
+		}
+		$res = $this->_Update('invoice_event_item', 'invoice_event_item_id', $invoiceEventItemId, $paramUpdate);
+		
+	}
+
+	function setStatusActive($invoiceEventItemId, $planedDate) {
+		$paramUpdate = array ();
+		$paramUpdate['invoice_event_item_status'] = 'a';
+		$paramUpdate['planed_date'] = $planedDate;
+		$res = $this->_Update('invoice_event_item', 'invoice_event_item_id', $invoiceEventItemId, $paramUpdate);
+	}
+
+	private function actionGetMailCounter($data) {
+
+		/*
+		{
+			"_group" : "InvoiceEvent",
+			"_action" : "GetMailCounter",
+			"_user_id": "69", 
+			"_company_id" : "69",
+			"_people_id" : "1",
+			"_invoice_event_id" : "97",
+			"_planed_date" : "2020-02-21",
+			"_invoice_event_item_status" : "p"
+		}
+		*/
+
+		$counter = $this->getMailCounter($data->_invoice_event_id, $data->_invoice_event_item_status);
+		$reply = new stdClass();
+		$reply->code = '1';
+		$reply->counter = $counter;
+		return json_encode($reply);
+	}
+
+	function getMailCounter($invoiceEventId,  $invoiceEventItemStatus) {
+		$sql = "SELECT COUNT(*) AS counter FROM invoice_event_item WHERE invoice_event_id = $invoiceEventId AND ";
+		$sql .= "invoice_event_item_status = '$invoiceEventItemStatus'"; // AND planed_date <= '$planedDate'";
+		$res = $this->_Get($sql);
+		return $res['counter'];
+	}
+
+	private function actionUpdatingBulk($data) {
+		
+		if (isset($data->send_date)) {
+			$sql = "UPDATE invoice_event_item SET planed_date = '$data->send_date' WHERE invoice_event_item_status = 'a' AND invoice_event_id = $data->_invoice_event_id";
+			$res = $this->_Query($sql);
+		}
+		if (isset($data->auto_reminder)) {
+			$sql = "UPDATE invoice_event_item SET ";
+			$sql .= "auto_reminder = '$data->auto_reminder', reminder_days = $data->reminder_days, reminder_times = $data->reminder_times ";
+			$sql .= " WHERE invoice_event_item_status = 'a' AND invoice_event_id = $data->_invoice_event_id";
+			$res = $this->_Query($sql);
+		}
+
+		$reply = new stdClass();
+		$reply->code = "1";
+		return json_encode($reply);
+	}
+
+	private function mailUtskickBulk($invoiceEventId, $currentInvoiceEventItemStatus, $planedDate) {
+		$sql = "SELECT invoice_event_item_id FROM invoice_event_item WHERE invoice_event_id = $invoiceEventId AND ";
+		$sql .= "invoice_event_item_status = '$currentInvoiceEventItemStatus'"; //  AND planed_date <= '$planedDate'";
+		$item = $this->_GetList($sql);
+		//echo '<pre>';
+		//print_r($item);
+		//echo '</pre>';
+		$reTryList = array();
+		$sendCounter = 0 ;
+		$failCounter = 0 ;
+		if (sizeof($item) > 0 ) {
+			for ($i=0; $i < sizeof($item); $i++) {
+				if ($this->mailUtskick($item[$i]['invoice_event_item_id'])) {
+					$sendCounter++;
+				} else {
+					array_push($reTryList, $item[$i]['invoice_event_item_id']);	
+				}
+			}
+			//echo '<pre>';
+			//print_r($reTryList);
+			//echo '</pre>';
+			for ($i=0; $i<sizeof($reTryList); $i++) {
+				if ($this->mailUtskick($reTryList[$i])) {
+					$sendCounter++;
+				} else {
+					$this->setStatusActive($reTryList[$i], $planedDate);
+					$failCounter++;
+				}
+			}
+		}
+		$reply = new stdClass();
+		$reply->send_counter = $sendCounter;
+		$reply->fail_counter = $failCounter;
+
+		return $reply;
+
+	}
+
+	private function mailUtskick($invoiceEventItemId) {
+		$sql = "SELECT i.email, i.invoice_event_item_code, e.invoice_event_name, e.invoice_event_type, e.body, e.webform_link, c.wa_url, i.auto_reminder, i.reminder_days, c.known_as  ";
+		$sql .= "FROM invoice_event_item i, invoice_event e, company c ";
+		$sql .= "WHERE i.invoice_event_item_id = $invoiceEventItemId ";
+		$sql .= "AND i.invoice_event_id = e.invoice_event_id AND c.company_id = e.company_id ";
+		$mailData = $this->_Get($sql); 
+		
+		$subject = $mailData['invoice_event_name'];
+	
+		$body = $mailData['body'];
+		$body = str_replace("\n", "<br>", $body);
+		
+		//$email = "bo.grus@yahoo.com";
+		//$email = "bo.grusell@goodminton.se";
+		$eventCode = $mailData['invoice_event_item_code'];
+		
+		//$linkUrl = 'https://www.turtle-pay.com/' . $mailData['wa_url'] . '/?' . $mailData['invoice_event_type'] . '=' . $eventCode;
+		
+		$linkUrl = SITE_URL . $mailData['wa_url'] . '/?' . $mailData['invoice_event_type'] . '=' . $eventCode;
+		
+		$toSubject = $subject . ' ';
+
+		$html = '';
+		$html .= '<div style="width:780px; margin: 10px auto 0; font-family: Helvetica,Arial,sans-serif, Verdana; padding:6px">';
+		$html .= '<p>' . $body . '</p>';
+		
+		$html .= '<p><a href="' . $linkUrl . '">' . $mailData['webform_link'] . '</a></p>';
+		
+		$html .= '</div>';
+
+		// echo $html;
+		// die('');
+		// return;
+		
+		require_once 'PHPMailerAutoload.php';
+		
+		$mail = new PHPMailer;
+		$mail->isSMTP();
+		/*
+		if (ENV_TYPE == 'prod') {
+			$mail->Host = 'smtp.gmail.com';
+			$mail->SMTPAuth = true;
+			$mail->Username = 'info.turtlepay@gmail.com';
+			$mail->Password = 'SegTp_2019';
+			$mail->CharSet = 'UTF-8';
+			$mail->From = 'info@turtle-pay.com';
+			$email = $mailData['email'];
+			$mail->FromName = $mailData['known_as'];;
+			$mail->addAddress($mailData['email']);
+			// $mail->addBCC('bo.grus@yahoo.com');
+		}
+		else {
+			$mail->Host = 'mail.grus.zone';
+			$mail->SMTPAuth = true;
+			$mail->Username = 'demo@grus.zone';
+			$mail->Password = 'Test@2021';
+			$mail->CharSet = 'UTF-8';
+			$mail->From = 'demo@grus.zone';
+			$mail->FromName = 'Demo - TurtlePay';
+			$mail->Port = 465;
+			//$mail->SMTPDebug = 1; 
+			$mail->SMTPSecure = 'ssl';
+			$mail->addReplyTo('demo@grus.zone');
+			$mail->addAddress('bo.grus@yahoo.com');
+		}
+		*/
+		$mail->Host = 'mail.turtle-shop.se';
+		$mail->SMTPAuth = true;
+		$mail->Username = 'info@turtle-shop.se';
+		$mail->Password = 'SegTp@2022';
+		$mail->CharSet = 'UTF-8';
+		$mail->From = 'info@turtle-pay.com';
+		$mail->FromName = 'Turtle Pay';
+		$mail->Port = 465;
+		$mail->SMTPSecure = 'ssl';
+		$mail->From = 'info@turtle-pay.com';
+		$mail->FromName = $mailData['known_as'];
+		$mail->addAddress($mailData['email']);
+		$mail->addReplyTo('info@turtle-pay.com');
+		$mail->addBCC('info@turtle-shop.se');
+		
+		$mail->isHTML(true);
+		$mail->Subject = $toSubject;
+		//$mailInvoice->Body = $this->htmlInvoice . '<div style="width:100%; padding:20px 0 10px 0; text-align:center"><a href="' . DOCVIEW . 'o/' . $this->orderid . '.html"' . '" style="font-size:20px; font-weight:bold; color: green">Skriv ut</a>';
+		$mail->Body = $html;
+
+	
+		if(!$mail->send()) {
+			//echo $mail->ErrorInfo;
+			return false;
+		} else {
+	
+			$this->setStatusSend($invoiceEventItemId, $mailData['auto_reminder'], $mailData['reminder_days']);
+			return true;
+		}
+	}
+
+	private function actionEventImportCutIn($data) {
+		$counts = 0;
+		if (sizeof($data->importData) > 0) {
+			for ($i=0; $i<sizeof($data->importData); $i++) {
+				if ($this->checkDouble($data->importData[$i], $data->invoice_event_id)) {
+					$counts++;
+					$newData = new stdClass();
+					$newData->invoice_event_id = $data->invoice_event_id;
+					$newData->invoice_event_item_code = $this->_GUI();
+					$newData->event_id = $data->event_id;
+					$newData->email = $data->importData[$i];
+					$newData->people_name = '';
+					/*
+					if ($data->amount_on == 'y') {
+						if (isset($data->_amount)) {
+							$newData->amount = $data->_amount;
+						}
+					}
+					*/
+					if (isset($data->_ref)) {
+						$newData->referens = $data->_ref;
+					}
+					
+					$newData->invoice_event_item_status =  'p'; 
+					$newData->planed_date = date('Y-m-d');
+					$reply = $this->_Insert("invoice_event_item", $newData);
+				}
+			}
+		}
+		$reply = new stdClass();
+		$reply->code = "1";
+		$reply->imported_number = $counts;
+
+		return json_encode($reply);
+	}
+
+	private function actionImportFromOld($data) {
+	
+		$invoiceEventId = $data->invoice_event_id;
+		$eventId = $data->event_id;
+		$sql = "SELECT referens, email, people_name ";
+		$sql .= "FROM invoice_event_item ";
+		$sql .= "WHERE invoice_event_id = $data->invoice_event_id_from ";
+		//$sql .= " AND invoice_event_item_status = 'c' ";
+		
+		$list = $this->_GetList($sql);
+		
+		// = 0;
+		$result['importerd'] = sizeof($list);
+		if (sizeof($list) > 0) {
+			for ($i=0; $i<sizeof($list); $i++) {
+				$newData = new stdClass();
+				$newData->invoice_event_id = $invoiceEventId;
+				$newData->invoice_event_item_code = $this->_GUI();
+				$newData->event_id = $eventId;
+				if ($data->_ref_on == 'y') {
+					$newData->referens = $list[$i]['referens'];
+				}
+				else if (isset($data->_ref)) {
+					$newData->referens = $data->_ref;
+				}
+				/*
+				if ($data->amount_on == 'y') {
+					if (isset($data->_amount)) {
+						$newData->amount = $data->_amount;
+					}
+				}
+				*/
+				$newData->people_name = $list[$i]['people_name'];
+				$newData->email = $list[$i]['email'];
+
+				/*
+				if (isset($data->_amount)) {
+					$newData->amount = $data->_amount;
+				}
+				if (isset($data->_ref)) {
+					$newData->referens = $data->_ref;
+				}
+				*/
+				$newData->invoice_event_item_status =  'p'; 
+				$newData->planed_date = date('Y-m-d'); 
+
+				$reply = $this->_Insert("invoice_event_item", $newData);
+			}
+		}
+		$reply = new stdClass();
+		$reply->code = "1";
+		$reply->imported_number = sizeof($list);
+
+		return json_encode($reply);
+	}
+
+	function checkDouble($email, $invoiceEventId, $ref=false) {
+		//
+		// SELECT COUNT(*) counts FROM invoice_event_item  WHERE email='a.j.chalupova@gmail.com' AND invoice_event_id = 95;
+		// 
+		$sql = "SELECT COUNT(*) AS counts FROM invoice_event_item ";
+		$sql .= " WHERE email='$email' AND invoice_event_id = $invoiceEventId";
+		if ($ref) {
+			$sql .= " AND referens=$ref"; 
+		}
+		
+		$res = $this->_Get($sql);
+		if ($res['counts'] == '0') {
+			return true;
+		}
+		else {
+			return false;
+		}
+	}
+	
+	private function actionStoreList($data) {
+
+		/*
+		{
+			"_group" : "InvoiceEvent",
+			"_action" : "StoreList",
+			"_company_id" : "1",
+			"_people_id" : "1"
+		}
+		*/
+		
+		$sql = "SELECT store_id, store_name FROM store WHERE company_id = $data->_company_id AND store_status = 'a' ";
+		$sql .= "ORDER BY store_name";
+		$result = $this->_GetList($sql);
+
+		return json_encode($result);
+
+	}
+
+	private function actionCustomerList($data) {
+
+		/*
+		{
+	        "_group" : "InvoiceEvent",
+	        "_action" : "CustomerList"
+	        "_company_id" : "13"
+		}
+		*/
+		// CONCAT(last_name, ', ', first_name) AS people_name
+	
+		$sql = "SELECT p.people_id, p.last_name, p.first_name, p.email, p.mobile,  p.address, p.postcode, p.city ";
+		$sql .= "FROM credit cr, people p ";
+		$sql .= "WHERE cr.company_id = $data->_company_id AND cr.people_id = p.people_id ";
+		$sql .= "GROUP BY p.people_id, p.last_name, p.first_name, p.email, p.mobile,  p.address, p.postcode, p.city ";
+		$sql .= "ORDER BY p.last_name, p.first_name";
+
+		$result = $this->_GetList($sql);
+
+		return json_encode($result);
+
+	}
+
+	private function actionTestEmail($data) {
+		/*
+			{
+				"_group" : "InvoiceEvent",
+				"_action" : "TestEmail",
+				"_company_id" : "69",
+				"_people_id" : "1",
+				"_invoice_event_id" : "105",
+				"_email" : "bo.grus@yahoo.com"
+			}
+		*/
+		/*
+		$sql = "SELECT e.invoice_event_name, e.body, e.webform_link, c.wa_url, c.known_as  ";
+		$sql .= "FROM invoice_event e, company c ";
+		$sql .= "WHERE e.invoice_event_id = $data->_invoice_event_id ";
+		$sql .= "AND c.company_id = e.company_id ";
+		*/
+
+		$sql = "SELECT e.invoice_event_name, e.body, e.webform_link, c.wa_url, c.known_as, e4.event_url  ";
+		$sql .= "FROM invoice_event e, company c, event_v4 e4 ";
+		$sql .= "WHERE e.invoice_event_id = $data->_invoice_event_id AND e.event_id = e4.event_id ";
+		$sql .= "AND c.company_id = e.company_id ";
+
+		$mailData = $this->_Get($sql); 
+		$mailData['email'] = $data->_email;
+
+		$subject = 'FÖRHANDSGRANSKA - ' . $mailData['invoice_event_name'];
+	
+		$body = $mailData['body'];
+		$body = str_replace("\n", "<br>", $body);
+		
+		//$email = "bo.grus@yahoo.com";
+		//$email = "bo.grusell@goodminton.se";
+		//$eventCode = ''; // $mailData['invoice_event_item_code'];
+		//$linkUrl = 'https://turtle-pay.com/event-demo/' . $mailData->wa_url . '/?test=' . $data->_invoice_event_id;
+		//$linkUrl .= $eventCode;
+
+		$linkUrl = 'https://www.turtle-pay.com/' . $mailData['wa_url'] . '/?e=' . $mailData['event_url'] . '&test=on';
+
+		$toSubject = $subject . ' ';
+
+		$html = '';
+		$html .= '<div style="width:780px; margin: 10px auto 0; font-family: Helvetica,Arial,sans-serif, Verdana; padding:6px">';
+		$html .= '<p>' . $body . '</p>';
+		
+		$html .= '<p><a href="' . $linkUrl . '">' . $mailData['webform_link'] . '</a></p>';
+		
+		$html .= '</div>';
+
+		//echo $html;
+		//return 'OK';
+		//print_r($data);
+		//die('');
+		//return;
+		
+		require_once 'PHPMailerAutoload.php';
+		
+		$mail = new PHPMailer;
+		$mail->isSMTP();
+		/*
+		if (ENV_TYPE == 'prod') {
+			$mail->Host = 'smtp.gmail.com';
+			$mail->SMTPAuth = true;
+			$mail->Username = 'info.turtlepay@gmail.com';
+			$mail->Password = 'SegTp_2019';
+
+			$mail->CharSet = 'UTF-8';
+			$mail->From = 'info@turtle-pay.com';
+			$mail->FromName = $mailData['known_as'];
+			$mail->addAddress($mailData['email']);
+		}
+		else {
+			$mail->Host = 'mail.grus.zone';
+			$mail->SMTPAuth = true;
+			$mail->Username = 'demo@grus.zone';
+			$mail->Password = 'Test@2021';
+			$mail->CharSet = 'UTF-8';
+			$mail->From = 'demo@grus.zone';
+			$mail->FromName = 'Demo - TurtlePay';
+			$mail->Port = 465;
+			//$mail->SMTPDebug = 1; 
+			$mail->SMTPSecure = 'ssl';
+			$mail->addReplyTo('demo@grus.zone');
+			$mail->addAddress('bo.grus@yahoo.com');
+		}
+		*/
+		$mail->Host = 'mail.turtle-shop.se';
+		$mail->SMTPAuth = true;
+		$mail->Username = 'info@turtle-shop.se';
+		$mail->Password = 'SegTp@2022';
+		$mail->CharSet = 'UTF-8';
+		$mail->From = 'info@turtle-pay.com';
+		$mail->FromName = 'Turtle Pay';
+		$mail->Port = 465;
+		$mail->SMTPSecure = 'ssl';
+		$mail->From = 'info@turtle-pay.com';
+		$mail->FromName = $mailData['known_as'];
+		$mail->addAddress($mailData['email']);
+		$mail->addReplyTo('info@turtle-pay.com');
+		$mail->addBCC('bo.grusell@turtle-pay.com');
+	
+		//-- 2020-07-07 $mail->addReplyTo($data->_email_report);
+		
+		$mail->isHTML(true);
+		$mail->Subject = $toSubject;
+		//$mailInvoice->Body = $this->htmlInvoice . '<div style="width:100%; padding:20px 0 10px 0; text-align:center"><a href="' . DOCVIEW . 'o/' . $this->orderid . '.html"' . '" style="font-size:20px; font-weight:bold; color: green">Skriv ut</a>';
+		$mail->Body = $html;
+
+	
+		if(!$mail->send()) {
+			//$this->setStatusSend($invoiceEventItemId, $mailData->autoReminder, $mailData->remiderDays);
+			//echo $mail->ErrorInfo;
+			return false;
+		} else {
+	
+			//-- 2020-07-07 $this->setStatusSend($invoiceEventItemId, $mailData->autoReminder, $mailData->remiderDays);
+			return true;
+			//echo $mail->ErrorInfo;
+		}
+
+
+		//print_r($mailData);
+	}
+
+	private function actionCreateByEvent($data) {
+		/*
+		{
+			"_group" : "InvoiceEvent",
+			"_action" : "CreateByEvent",
+			"_user_id": "69", 
+			"_company_id" : "69",
+			"_people_id" : "1",
+			"_event_id" : "202"
+		}
+		*/
+		// event_item_status, as well
+		$sql = "SELECT email, people_name FROM event_item_v4 WHERE event_id = 202"; //  AND email = 'bo.grus@icloud.com'";
+		$eventItems = $this->_GetList($sql);
+		
+		print_r($eventItems);
+
+		for ($i=0; $i<sizeof($eventItems); $i++) {
+			/*
+				INSERT INTO `invoice_event_item` (`invoice_event_item_id`, `event_item_id`, `event_id`, `invoice_event_id`, `invoice_event_item_code`, `people_id`, `people_name`, `email`, `mobile`, `referens`, `amount`, `planed_date`, `sent_datetime`, `confirmed_datetime`, `auto_reminder`, `reminder_days`, `reminder_next_date`, `reminder_last_datetime`, `reminder_times`, `reminder_performed`, `invoice_event_item_status`) 
+				VALUES (NULL, '0', '203', '0', 'test-203', '1', 'Grusell Bo Erik', 'bo.grus@icloud.com', NULL, '', '0.00', NULL, NULL, NULL, 'n', '0', NULL, NULL, '0', '0', 'a');
+
+			*/
+		}
+
+	}
+
+	private function actionLoadItemFromEvent($data) {
+		/*
+		TESTING
+		{
+			"_group" : "InvoiceEvent",
+			"_action" : "LoadItemFromEvent",
+			"_user_id": "69", 
+			"_company_id" : "69",
+			"_people_id" : "1",
+			"_code" : "test-203"
+		}
+		*/
+		// event_item_status, as well
+		$sql = "SELECT * FROM invoice_event_item WHERE invoice_event_item_code = '$data->_code'"; //  AND email = 'bo.grus@icloud.com'";
+		$invoiceItem = $this->_Get($sql);
+		$invoiceItem['parent_event_item_id'] = '4748';
+		print_r($invoiceItem);
+
+		
+
+	}
+
+
+}

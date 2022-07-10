@@ -1,0 +1,15 @@
+#FLAGGA 0
+#FORMAT PC8
+#SIETYP 4
+#PROGRAM "Turtle Pay Kundportal" 2021.1
+#GEN 20210504
+#FNAMN "Saltsj”badens Slalomklubb"
+#ORGNR 814000-9252
+#KPTYP EUBAS97
+#KONTO 8400 "R„nta"
+#KONTO 1641 "Turtle Pay avr„kning"
+#VER T 1 20210503 "Turtle Pay Avr„kning"
+{
+#TRANS 8400 {} 1.00
+#TRANS 1641 {} -1.00
+}

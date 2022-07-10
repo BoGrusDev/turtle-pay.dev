@@ -1,0 +1,111 @@
+<?php
+/*
+    Class SettlementReportClass
+
+*/
+
+class SettlementReportClass extends ActionBase {
+
+	public function Run($data) {
+		$actionMethod = 'action' . $data->_action;
+		echo $this->$actionMethod($data);
+	}
+
+	private function actionPeriod($data) {
+		/*
+			{
+				"_group" : "SettlementReport",
+				"_action" : "Period"
+			}
+		*/
+		$sql = "SELECT DISTINCT period FROM booking WHERE period IS NOT NULL ORDER BY period";
+		return json_encode($this->_GetList($sql));
+	}
+	
+	private function actionPeriodDetails($data) {
+		/*
+			{
+				"_group" : "SettlementReport",
+				"_action" : "Period"
+			}
+		*/
+	
+		$nextPeriod = $data->_period + 1;
+		if ($nextPeriod == '202113') {
+			$nextPeriod = '202201';
+		}
+		$lastDueDate = substr($data->_period, 0, 4) . '-' . substr($data->_period, 4, 2) . '-28';
+		$invoiceDate = date("Y-m-d", strtotime("+" . $lastDueDate . " + 5 days"));
+
+		$reply = new stdClass();
+		$sql = "SELECT count(*) AS counts FROM booking WHERE booking_type = 'm-settl' AND period = '$data->_period' AND prel='n'";
+		$res = $this->_Get($sql);
+		$reply->counts_people_settlement = $res['counts'];
+
+		$sql = "SELECT count(*) AS counts FROM booking WHERE booking_type = 'p-settl' AND period = '$data->_period' AND prel='y'";
+		$res = $this->_Get($sql);
+		$reply->counts_pre_settlement = $res['counts'];
+
+		$sql = "SELECT count(*) AS counts FROM booking WHERE booking_type = 'p-settl' AND period = '$nextPeriod' AND prel='y'";
+		$res = $this->_Get($sql);
+		$reply->counts_pre_settlement_done = $res['counts'];
+
+		$sql = "SELECT count(*) AS counts FROM minvoice WHERE date = '$invoiceDate'";
+		$res = $this->_Get($sql);
+		$reply->counts_created_invoices = $res['counts'];
+		
+		$sql = "SELECT count(*) AS counts FROM minvoice WHERE date = '$invoiceDate' AND email_sent = 'n'";
+		$res = $this->_Get($sql);
+		$reply->counts_email_not_sent = $res['counts'];
+
+		$sql = "SELECT count(*) AS counts FROM minvoice WHERE date = '$invoiceDate' AND email_sent = 'y'";
+		$res = $this->_Get($sql);
+		$reply->counts_email_sent = $res['counts'];
+
+		$sql = "SELECT count(*) AS counts FROM booking WHERE booking_type = 'c-settl' AND booking_date = '$invoiceDate' AND prel='n'";
+		$res = $this->_Get($sql);
+		$reply->counts_company_settlement = $res['counts'];
+
+		return json_encode($reply);
+	}
+
+	private function actionPeople($data) {
+		/*
+			{
+				"_group" : "SettlementReport",
+				"_action" : "People",
+				"_period" : "2019-04-28"
+			}
+		*/
+		$sql = "SELECT b.people_id,  CONCAT(p.last_name, ', ', p.first_name)AS people_name, b.booking_date, b.booking_id, b.period  ";
+		$sql .= "FROM booking b, people p ";
+		$sql .= "WHERE b.booking_type = 'm-settl' AND period = '$data->_period' AND p.people_id = b.people_id ";
+		$sql .= "ORDER BY p.people_id";
+		return json_encode($this->_GetList($sql));
+	}
+
+	private function actionSummary($data) {
+
+		$sql = "SELECT period, count(*) settlements FROM booking WHERE booking_type = 'm-settl' AND prel IN ('n') GROUP BY period";
+		$result = $this->_GetList($sql);
+
+		return json_encode($result);
+
+		/*
+			Databas fix:
+			SELECT * FROM booking WHERE booking_type = 'm-settl' AND booking_date = "2019-02-28" 
+
+			UPDATE booking SET period = '201902' WHERE booking_type = 'm-settl' AND booking_date = '2019-02-28' 
+			UPDATE booking SET period = '201901' WHERE booking_type = 'm-settl' AND booking_date = '2019-01-28'; 
+			UPDATE booking SET period = '201903' WHERE booking_type = 'm-settl' AND booking_date = '2019-03-28'; 
+			UPDATE booking SET period = '201905' WHERE booking_type = 'm-settl' AND booking_date = '2019-06-02' AND period IS NULL;
+			UPDATE booking SET period = '201904' WHERE booking_type = 'm-settl' AND booking_date = '2019-05-03' AND period IS NULL;
+
+		*/
+
+		//$sql = "SELECT period, count(*) FROM booking WHERE booking_type = 'm-settl' AND prel IN ('n') GROUP BY period";
+
+		//$sql = "SELECT period, count(*) FROM booking WHERE booking_type = 'p-settl' AND prel IN ('y') GROUP BY period";
+	}
+
+}

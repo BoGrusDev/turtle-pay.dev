@@ -1,0 +1,57 @@
+#FLAGGA 0
+#FORMAT PC8
+#SIETYP 4
+#PROGRAM "Turtle Pay Kundportal" 2021.1
+#GEN 20220430
+#FNAMN "Saltsj”badens Slalomklubb"
+#ORGNR 814000-9252
+#KPTYP EUBAS97
+#KONTO 1641 "Turtle Pay avr„kning"
+#KONTO 6570 "Transaktionsavgift"
+#KONTO 3613 "L„ger"
+#KONTO 1940 "Bank"
+#VER T 216 20220423 "Turtle Pay Avr„kning"
+{
+#TRANS 1641 {} 2673.00
+#TRANS 6570 {} 27.00
+#TRANS 3613 {} -2700.00
+}
+#VER T 217 20220424 "Turtle Pay Avr„kning"
+{
+#TRANS 1641 {} 3217.50
+#TRANS 6570 {} 32.50
+#TRANS 3613 {} -3250.00
+}
+#VER T 218 20220425 "Turtle Pay Avr„kning"
+{
+#TRANS 1641 {} 2828.00
+#TRANS 1940 {} 290.50
+#TRANS 6570 {} 31.50
+#TRANS 3613 {} -3150.00
+}
+#VER T 219 20220426 "Turtle Pay Avr„kning"
+{
+#TRANS 1641 {} -198.00
+#TRANS 1940 {} 3118.50
+#TRANS 6570 {} 29.50
+#TRANS 3613 {} -2950.00
+}
+#VER T 220 20220427 "Turtle Pay Avr„kning"
+{
+#TRANS 1641 {} 99.00
+#TRANS 1940 {} 1980.00
+#TRANS 6570 {} 21.00
+#TRANS 3613 {} -2100.00
+}
+#VER T 221 20220428 "Turtle Pay Avr„kning"
+{
+#TRANS 1641 {} -1881.00
+#TRANS 1940 {} 3019.50
+#TRANS 6570 {} 11.50
+#TRANS 3613 {} -1150.00
+}
+#VER T 222 20220429 "Turtle Pay Avr„kning"
+{
+#TRANS 1641 {} -1138.50
+#TRANS 1940 {} 1138.50
+}

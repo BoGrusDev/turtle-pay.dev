@@ -1,0 +1,16 @@
+# For security reasons, Option followsymlinks cannot be overridden.
+#Options +FollowSymlinks
+Options +SymLinksIfOwnerMatch
+
+# Prevent Directoy listing 
+Options -Indexes
+
+# Prevent Direct Access to files
+<FilesMatch "\.(inc|ini|log)">
+Order deny,allow
+Deny from all
+</FilesMatch>
+
+Order deny,allow
+Allow from ::1
+Deny from all

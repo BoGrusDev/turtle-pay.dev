@@ -1,0 +1,113 @@
+#FLAGGA 0
+#FORMAT PC8
+#SIETYP 4
+#PROGRAM "Turtle Pay Kundportal" 2021.1
+#GEN 20210408
+#FNAMN "T„by Tennisklubb"
+#ORGNR 816000-1809
+#KPTYP EUBAS97
+#KONTO 1930 "Bank"
+#KONTO 1511 "Turtle Pay avr„kning"
+#KONTO 3012 "Abonnemang"
+#KONTO 4000 "Transaktionsavgift"
+#KONTO 8400 "R„nta"
+#VER B 1 20210201 "Turtle Pay avr„kning"
+{
+#TRANS 1930 {} 10080.00
+#TRANS 1511 {} -10080.00
+}
+#VER B 2 20210201 "Abonnemang A-tid VT 2021"
+{
+#TRANS 3012 {} -10080.00
+#TRANS 1511 {} 10080.00
+}
+#VER B 3 20210201 "Abonnemang A-tid VT 2021"
+{
+#TRANS 3012 {} -5040.00
+#TRANS 1511 {} 5040.00
+}
+#VER B 4 20210201 "Abonnemang A-tid VT 2021"
+{
+#TRANS 3012 {} -5040.00
+#TRANS 1511 {} 5040.00
+}
+#VER B 5 20210202 "Turtle Pay avr„kning"
+{
+#TRANS 1930 {} 20160.00
+#TRANS 1511 {} -20160.00
+}
+#VER B 6 20210202 "Abonnemang A-tid VT 2021"
+{
+#TRANS 3012 {} -5040.00
+#TRANS 1511 {} 5040.00
+}
+#VER B 7 20210202 "Abonnemang A-tid VT 2021"
+{
+#TRANS 3012 {} -5040.00
+#TRANS 1511 {} 5040.00
+}
+#VER B 8 20210202 "Abonnemang A-tid VT 2021"
+{
+#TRANS 3012 {} -1050.00
+#TRANS 1511 {} 1050.00
+}
+#VER B 9 20210202 "R„nta"
+{
+#TRANS 1511 {} -27.00
+#TRANS 8400 {} 27.00
+}
+#VER B 10 20210203 "Turtle Pay avr„kning"
+{
+#TRANS 1930 {} 11130.00
+#TRANS 1511 {} -11130.00
+}
+#VER B 11 20210203 "Abonnemang D-tid VT 2021"
+{
+#TRANS 3012 {} -1800.00
+#TRANS 1511 {} 1800.00
+}
+#VER B 12 20210203 "Abonnemang A-tid VT 2021"
+{
+#TRANS 3012 {} -6753.00
+#TRANS 1511 {} 6753.00
+}
+#VER B 13 20210203 "Abonnemang B-tid VT 2021"
+{
+#TRANS 3012 {} -4950.00
+#TRANS 1511 {} 4950.00
+}
+#VER B 14 20210203 "Abonnemang A-tid VT 2021"
+{
+#TRANS 3012 {} -3327.00
+#TRANS 1511 {} 3327.00
+}
+#VER B 15 20210203 "Abonnemang A-tid VT 2021"
+{
+#TRANS 3012 {} -5040.00
+#TRANS 1511 {} 5040.00
+}
+#VER B 16 20210204 "Turtle Pay avr„kning"
+{
+#TRANS 1930 {} 21843.00
+#TRANS 1511 {} -21843.00
+}
+#VER B 17 20210204 "Abonnemang A-tid VT 2021"
+{
+#TRANS 3012 {} -9450.00
+#TRANS 1511 {} 9450.00
+}
+#VER B 18 20210205 "Turtle Pay avr„kning"
+{
+#TRANS 1930 {} 9450.00
+#TRANS 1511 {} -9450.00
+}
+#VER B 19 20210207 "Abonnemang B-tid VT 2021"
+{
+#TRANS 3012 {} -2640.00
+#TRANS 1511 {} 2640.00
+}
+#VER B 20 20210208 "Turtle Pay avr„kning"
+{
+#TRANS 1930 {} 2640.00
+#TRANS 1511 {} -2640.00
+}

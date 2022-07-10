@@ -1,0 +1,23 @@
+#FLAGGA 0
+#FORMAT PC8
+#SIETYP 4
+#PROGRAM "Turtle Pay Kundportal" 2021.1
+#GEN 20220207
+#FNAMN "Test Bolaget AB"
+#ORGNR 556000-0000
+#KPTYP BAS95
+#KONTO 1610 "Turtle Pay avr„kning"
+#KONTO 3031 "Anm„lningsavgift"
+#KONTO 2621 "Utg†ende moms 12 %"
+#VER T 1 20210922 "Turtle Pay Avr„kning"
+{
+#TRANS 1610 {} 0.00
+#TRANS 3031 {} -0.01
+#TRANS 2621 {} 0.01
+}
+#VER T 2 20210926 "Turtle Pay Avr„kning"
+{
+#TRANS 1610 {} 300.00
+#TRANS 3031 {} -267.86
+#TRANS 2621 {} -32.14
+}

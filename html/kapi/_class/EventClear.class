@@ -1,0 +1,129 @@
+<?php
+/*
+   EventCearClass
+ 
+*/
+
+class EventClearClass extends ActionPortal {
+
+	public function Run($data) {
+		
+		$actionMethod = 'action' . $data->_action;
+
+		$sql = "SELECT COUNT(*) principal FROM company_people ";
+		$sql .= "WHERE people_id = $data->_people_id AND company_id = $data->_company_id AND priv IN ('pr', 'sp') ";
+		$result = $this->_Get($sql);
+		if ($result['code'] == '1' && $result['principal'] == '1' ) {
+			echo $this->$actionMethod($data);
+		}
+		else {
+			$reply = new StdClass();
+			$reply->code = "8"; // not allowed
+			echo json_encode($reply);
+		}
+
+		// SELECT COUNT(*) principal FROM company_people WHERE people_id = 1 AND company_id = 1 AND priv = 'pr'
+
+	}
+
+	private function actionParticipantClear($data) {
+		/*
+			{
+				"_group" : "EventClear",
+				"_action" : "ParticipantClear",
+				"_company_id" : "69",
+				"_people_id" : "1",
+				"_event_id" : "398"
+			}
+		*/
+		
+		// Backa up file, for direct emergeny restore
+		$this->participantBackup($data->_company_id, $data->_event_id);
+		
+		$sql = "SELECT p.event_participant_id ";
+		$sql .= "FROM event_participant p, event_item_v4 i ";
+		$sql .= "WHERE p.event_item_id = i.event_item_id AND i.event_id = " . $data->_event_id;
+		$list = $this->_GetList($sql);
+		for ($i=0; $i<sizeof($list); $i++) {
+			$param = new stdClass();
+			$param->first_name = 'borttaget';
+			$param->last_name = 'borttaget';
+			$param->address = 'borttaget';
+			$param->postcode = 'bort';
+			$param->city = 'borttaget';
+			$param->mobile = 'borttaget';
+			$param->email = 'borttaget';
+			$param->personal_id_number = '000000000000';
+			$param->note = 'borttaget';
+			$param->date_of_birth = 'borttaget';
+			$res = $this->_Update('event_participant', 'event_participant_id', $list[$i]['event_participant_id'], $param);
+		
+		}
+
+		$paramEvent = new stdClass();
+		$paramEvent->event_status = 'r';
+		$res = $this->_Update('event_v4', 'base_event_id', $data->_event_id, $paramEvent);
+		
+		$reply = new stdClass();
+		$reply->code = '1';
+		$reply->counter = sizeof($list);
+		return json_encode($reply);
+	}
+
+	private function actionParticipantRestore($data) {
+		/*
+			{
+				"_group" : "EventClear",
+				"_action" : "ParticipantRestore",
+				"_company_id" : "69",
+				"_people_id" : "1",
+				"_event_id" : "398"
+			}
+		*/
+
+		$json = file_get_contents(PARTICIPANT_BACKUP_DIR . 'event-' . $data->_company_id . '-' . $data->_event_id . '.json');
+		$list = json_decode($json);
+
+		for ($i=0; $i<sizeof($list); $i++) {
+			$param = new stdClass();
+			$param->first_name = $list[$i]->first_name;
+			$param->last_name = $list[$i]->last_name;
+			$param->address = $list[$i]->address;
+			$param->postcode =$list[$i]->postcode;
+			$param->city = $list[$i]->city;
+			$param->mobile = $list[$i]->mobile;
+			$param->email = $list[$i]->email;
+			$param->personal_id_number = $list[$i]->personal_id_number;
+			$param->note =$list[$i]->note;
+			$param->date_of_birth = $list[$i]->date_of_birth;
+			$res = $this->_Update('event_participant', 'event_participant_id', $list[$i]->event_participant_id, $param);
+		}
+		$reply = new stdClass();
+		$reply->code = '1';
+		$reply->counter = sizeof($list);
+		return json_encode($reply);
+	}
+
+
+	private function participantBackup($companyId, $eventId) {
+		/*
+			Backup all participant info to a json-file
+		*/
+		$sql = "SELECT p.event_participant_id, p.first_name, p.last_name, p.address, p.postcode, p.city, p.mobile, p.email, p.personal_id_number, p.note, p.date_of_birth ";
+		$sql .= "FROM event_participant p, event_item_v4 i ";
+		$sql .= "WHERE p.event_item_id = i.event_item_id AND i.event_id = $eventId";
+		$list = $this->_GetList($sql);
+		
+		$fp = fopen(PARTICIPANT_BACKUP_DIR . 'event-' . $companyId . '-' . $eventId . '.json' , 'w');
+		fwrite($fp, json_encode($list));
+		fclose($fp);
+		
+	} 
+
+
+
+
+
+}
+
+

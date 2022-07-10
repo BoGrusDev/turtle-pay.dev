@@ -1,0 +1,684 @@
+<?php
+/*
+    TaxClass
+
+	Date: 2021-01-12
+
+	Handling to "kontrolluppgifter" to Skattemyndgiheter.
+	
+	Fow and external calls.
+	- TaxReportStatus - Return all that is processed
+	- TaxReportCreate
+
+    - Skapa XML-fil
+	- Skapa pDF-besked för the pople
+	
+	https://www.skatteverket.se/foretagochorganisationer/kontrolluppgifter/testtjanstochtekniskbeskrivning.4.233f91f71260075abe8800073614.html
+
+*/
+
+use setasign\Fpdi;
+
+//define('INVOICE_FOLDER',  '../finvoice/');
+
+class TaxClass extends ActionBase {
+
+	public function Run($data) {
+		$actionMethod = 'action' . $data->_action;
+		echo $this->$actionMethod($data);
+	}
+
+	private function actionCreate($data) {
+		/*
+			{
+				"_group" : "Tax",
+				"_action" : "Create",
+				"_income_year" : "2020"
+			}
+		*/
+
+		$reply = new stdClass();
+		
+		// -- Test account
+		$blockList = '1,4,34,1082,1043,1053';
+
+		// --
+		// -- Check if Report already is done.
+		//
+		$sql = "SELECT count(tax_reporting_id) AS check_counter FROM tax_reporting WHERE  income_year='$data->_income_year'";
+		$resultCheckCounter = $this->_Get($sql);
+		if ($resultCheckCounter['code'] == '1' &&  (int)$resultCheckCounter['check_counter'] == '0') {
+			// Continue
+		}
+		else {
+			$reply->code = '0';
+			$reply->denied_code = "reporting-already-done";
+			return json_encode($reply);
+		}
+		
+		// --
+		// -- Check if income year correct and contain any transations.
+		//
+		$sql = "SELECT count(t.btrans_id) AS check_counter ";
+        $sql .= "FROM btrans t, booking b, people p ";
+        $sql .= "WHERE t.prel = 'n' AND b.booking_date >= '" . $data->_income_year . "-01-01' ";
+		$sql .= "AND b.booking_date <= '" . $data->_income_year  . "-12-31' AND t.booking_id = b.booking_id AND t.people_id = p.people_id ";
+		$sql .= "AND p.people_id NOT IN ($blockList) ";
+		$resultCheckValid = $this->_Get($sql);
+		if ($resultCheckValid['code'] == '1' && (int)$resultCheckValid['check_counter'] > 0) {
+			// Continue
+		}
+		else {
+			$reply->code = '0';
+			$reply->denied_code = "reporting-nothing-to-report";
+			return json_encode($reply);
+		}
+
+	
+		// -
+		// - Get the interest income for each person 
+		// -
+		$reply->counter_income = $this->createInterestIncome($data->_income_year, $blockList);
+
+		// -
+		// - Get the interest expense for each person 
+		// -
+		$reply->counter_expense = $this->createInterestExpense($data->_income_year, $blockList);
+		
+		// --
+		// -- Disable Write off
+		//
+		$reply->counter_write_off = $this->disableWriteOff($data->_income_year);
+		
+		// --
+		// Create the XNL file to Tax autoritz and PDF for people
+		//
+		$reply->counter_created = $this->createReportFiles($data->_income_year);
+		$reply->report_file = 'tax-control-records-' . $data->_income_year  . '.xml';
+		$reply->code = '1';
+		return json_encode($reply); 
+	}
+
+	private function createInterestIncome($incomeYear, $blockList) {
+		 /*
+		
+        8300 - Ränteintäkter
+        8301 - Dröjsmålsränta
+
+		{
+			"_group" : "Tax",
+			"_action" : "InterestIncome",
+			"_income_year" : "2020"
+		}
+
+		tax_reporting_status = a on going, C is completed, P = reset
+
+		*/
+		
+		$sql = "SELECT p.people_id, p.personal_id_number, p.email, SUM(t.amount) AS TOTAL ";
+        $sql .= "FROM btrans t, booking b, people p ";
+        $sql .= "WHERE t.account_no IN ('8300', '8301') AND t.prel = 'n' AND b.booking_date >= '" . $incomeYear . "-01-01' ";
+		$sql .= "AND b.booking_date <= '" . $incomeYear . "-12-31' AND t.booking_id = b.booking_id AND t.people_id = p.people_id ";
+		$sql .= "AND p.people_id NOT IN ($blockList) ";
+        $sql .= "GROUP BY p.people_id, p.personal_id_number, p.email ";
+        $sql .= "HAVING TOTAL <= -100; ";
+        $result = $this->_GetList($sql);
+
+        // --
+        // Change negativ to possitiv (interset arestore  as negativ value)
+        for ($i = 0; $i < sizeof($result); $i++) {
+            $result[$i]['VALUE'] = (int)$result[$i]['TOTAL'] * -1;
+        }
+
+		$datetime = new DateTime();
+		$counterProcessed = 0;
+
+		for ($i = 0; $i < sizeof($result); $i++) {
+			// -- Check if exist in tax report table
+			$sql = "SELECT tax_reporting_id FROM tax_reporting ";
+			$sql .= "WHERE income_year = '$incomeYear' AND people_id = " .  $result[$i]['people_id'];
+			$resultTaxReport = $this->_Get($sql);
+			if ($resultTaxReport['code'] == '1') {
+				// exist
+			}
+			else {
+				// Add
+				$param = new stdClass();
+				$param->income_year = $incomeYear;
+				$param->people_id = $result[$i]['people_id'];
+				$param->interest_income = $result[$i]['VALUE'];
+				$param->email = $result[$i]['email'];
+				$param->created_date = $datetime->format('Y-m-d:h:m');
+				$replyInsert = $this->_Insert('tax_reporting', $param);
+				$counterProcessed++;
+			}
+		}
+		return $counterProcessed;
+	}
+
+	private function createInterestExpense($incomeYear, $blockList) {
+		/*
+			8300 - Ränteintäkter
+			8301 - Dröjsmålsränta
+			{
+			"_group" : "Tax",
+			"_action" : "InterestExpence",
+			"_income_year" : "2020"
+			}
+	   */
+	   
+	   	$sql = "SELECT p.people_id, p.personal_id_number, p.email, SUM(t.amount) AS TOTAL ";
+	   	$sql .= "FROM btrans t, booking b, people p ";
+	   	$sql .= "WHERE t.account_no IN ('8400') AND t.prel = 'n' AND b.booking_date >= '" . $incomeYear . "-01-01' ";
+	   	$sql .= "AND b.booking_date <= '" . $incomeYear . "-12-31' AND t.booking_id = b.booking_id AND t.people_id = p.people_id ";
+	   	$sql .= "AND p.people_id NOT IN ($blockList) ";
+	   	$sql .= "GROUP BY p.people_id, p.personal_id_number, p.email ";
+	   	$sql .= "HAVING TOTAL >= 100; ";
+	   	$result = $this->_GetList($sql);
+
+	   	$datetime = new DateTime();
+	   	$counterProcessed = 0;
+
+	   	for ($i = 0; $i < sizeof($result); $i++) {
+			// -- Check if exist in tax report table
+		   	$sql = "SELECT tax_reporting_id FROM tax_reporting ";
+		   	$sql .= "WHERE income_year = $incomeYear AND people_id = " .  $result[$i]['people_id'];
+		   	$resultTaxReporting = $this->_Get($sql);
+	   
+		   	if ($resultTaxReporting['code'] == '1' ) {
+				$param = new stdClass();
+				$param->interest_expense = $result[$i]['TOTAL'];
+				$replyUpdate = $this->_Update('tax_reporting', 'tax_reporting_id', $resultTaxReporting['tax_reporting_id'], $param);
+			   	$counterProcessed++;
+		   	}
+		   	else {
+			   // Add
+				$param = new stdClass();
+			   	$param->income_year = $incomeYear;
+			   	$param->people_id = $result[$i]['people_id'];
+				$param->interest_expense = $result[$i]['TOTAL'];
+				$param->email = $result[$i]['email'];
+			   	$param->created_date = $datetime->format('Y-m-d:h:m');
+			   	$replyInsert = $this->_Insert('tax_reporting', $param);
+			   	$counterProcessed++;
+		   	}
+		   }
+		   
+	   return $counterProcessed;
+
+   	}
+
+	private function disableWriteOff($incomeYear) {
+		
+		$sql = "SELECT people_id FROM booking WHERE booking_type = 'write-off' GROUP BY people_id";
+		$resultWriteOff = $this->_GetList($sql);
+
+		$sql = "SELECT tax_reporting_id, people_id FROM tax_reporting WHERE income_year = '$incomeYear'";
+		$resultTaxReporting = $this->_GetList($sql);
+
+		$counterProcessed = 0;
+
+		if (sizeof($resultWriteOff) > 0 && sizeof($resultTaxReporting) > 0) {
+			for ($i = 0; $i < sizeof($resultTaxReporting); $i++) {
+				for ($j = 0; $j < sizeof($resultWriteOff); $j++) {
+					if ($resultWriteOff[$j]['people_id'] == $resultTaxReporting[$i]['people_id']) {
+						$counterProcessed++;
+						$paramUpdate = new stdClass();
+						$paramUpdate->tax_reporting_status = 'w';
+						$this->_Update('tax_reporting', 'tax_reporting_id', $resultTaxReporting[$i]['tax_reporting_id'], $paramUpdate);
+					}
+				}
+			}
+		}
+
+		return $counterProcessed;
+		
+	}
+
+   	private function createReportFiles($incomeYear) {
+	
+		$reply = new stdClass();
+
+		$timeStamp = date("Y-m-d") . 'T' . date("H:i:s");
+
+		$sql = "SELECT tr.tax_reporting_id, tr.people_id, tr.interest_income, tr.interest_expense, tr.income_year, ";
+		$sql .= "p.personal_id_number, p.first_name, p.last_name, p.address, p.postcode, p.city, p.ocrno ";
+		$sql .=  "FROM tax_reporting tr, people p ";
+		$sql .= "WHERE tr.income_year = '$incomeYear' AND tr.people_id = p.people_id AND tr.tax_reporting_status = 'a'";
+		$sql .= "ORDER BY tr.tax_reporting_id";	 // tr.people_id
+		$result = $this->_GetList($sql);
+		$counterCreated = 0;
+
+		if (sizeof($result) < 1) {
+			return $counterCreated;
+		}
+	
+		$xmlFile = fopen('../internal-report/tax-control-records-' . $incomeYear . '.xml', 'w') or die("Unable to open file!");
+		
+		fwrite($xmlFile, '<?xml version="1.0" encoding="UTF-8" standalone="no"?>' . PHP_EOL);
+		fwrite($xmlFile, '<Skatteverket xmlns="http://xmls.skatteverket.se/se/skatteverket/ai/instans/infoForBeskattning/6.0"' . PHP_EOL);
+		fwrite($xmlFile, 'xmlns:gm="http://xmls.skatteverket.se/se/skatteverket/ai/gemensamt/infoForBeskattning/6.0" ' . PHP_EOL);
+		fwrite($xmlFile, 'xmlns:ku="http://xmls.skatteverket.se/se/skatteverket/ai/komponent/infoForBeskattning/6.0" ' . PHP_EOL);
+		fwrite($xmlFile, 'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" omrade="Kontrolluppgifter" ' . PHP_EOL);
+		fwrite($xmlFile, 'xsi:schemaLocation="http://xmls.skatteverket.se/se/skatteverket/ai/instans/infoForBeskattning/6.0 ' . PHP_EOL);
+		fwrite($xmlFile, 'http://xmls.skatteverket.se/se/skatteverket/ai/kontrolluppgift/instans/Kontrolluppgifter_6.0.xsd "> ' . PHP_EOL);
+
+		fwrite($xmlFile, '<ku:Avsandare>' . PHP_EOL);
+		fwrite($xmlFile, '<ku:Programnamn>KUfilsprogrammet</ku:Programnamn>' . PHP_EOL);
+		fwrite($xmlFile, '<ku:Organisationsnummer>165591016786</ku:Organisationsnummer>' . PHP_EOL);
+		fwrite($xmlFile, '<ku:TekniskKontaktperson>' . PHP_EOL);
+		fwrite($xmlFile, '<ku:Namn>Stellan Forsberg</ku:Namn>' . PHP_EOL);
+		fwrite($xmlFile, '<ku:Telefon>+46806220</ku:Telefon>' . PHP_EOL);
+		fwrite($xmlFile, '<ku:Epostadress>stellan.forsberg@turtle-pay.com</ku:Epostadress>' . PHP_EOL);
+		fwrite($xmlFile, '<ku:Utdelningsadress1>Box 24078</ku:Utdelningsadress1>' . PHP_EOL);
+		fwrite($xmlFile, '<ku:Postnummer>10450</ku:Postnummer>' . PHP_EOL);
+		fwrite($xmlFile, '<ku:Postort>Stockholm</ku:Postort>' . PHP_EOL);
+		fwrite($xmlFile, '</ku:TekniskKontaktperson>' . PHP_EOL);
+
+		fwrite($xmlFile, '<ku:Skapad>' . $timeStamp . '</ku:Skapad>' . PHP_EOL);
+		fwrite($xmlFile, '</ku:Avsandare>' . PHP_EOL);
+		fwrite($xmlFile, '<ku:Blankettgemensamt>' . PHP_EOL);
+		fwrite($xmlFile, '<ku:Uppgiftslamnare>' . PHP_EOL);
+		fwrite($xmlFile, '<ku:UppgiftslamnarePersOrgnr>165591016786</ku:UppgiftslamnarePersOrgnr>' . PHP_EOL);
+		fwrite($xmlFile, '<ku:Kontaktperson>' . PHP_EOL);
+		fwrite($xmlFile, '<ku:Namn>Stellan Forsberg</ku:Namn>' . PHP_EOL);
+		fwrite($xmlFile, '<ku:Telefon>+46806220</ku:Telefon>' . PHP_EOL);
+		fwrite($xmlFile, '<ku:Epostadress>stellan.forsberg@turtle-pay.com</ku:Epostadress>' . PHP_EOL);
+		fwrite($xmlFile, '<ku:Sakomrade>Skatteverket</ku:Sakomrade>' . PHP_EOL);
+		fwrite($xmlFile, '</ku:Kontaktperson>' . PHP_EOL);
+		fwrite($xmlFile, '</ku:Uppgiftslamnare>' . PHP_EOL);
+		fwrite($xmlFile, '</ku:Blankettgemensamt>' . PHP_EOL);
+	
+		//
+		// Start indivuduel report
+		//
+		for ($i = 0; $i < sizeof($result); $i++) {
+		//for ($i = 0; $i < 100; $i++) {
+
+			if ((int)$result[$i]['interest_income'] >= 100) {
+				$counterCreated++;
+				fwrite($xmlFile, '<ku:Blankett nummer="2336">' . PHP_EOL);
+				fwrite($xmlFile, '<ku:Arendeinformation>' . PHP_EOL);
+				fwrite($xmlFile, '<ku:Arendeagare>165591016786</ku:Arendeagare>' . PHP_EOL);
+				fwrite($xmlFile, '<ku:Period>' . $incomeYear . '</ku:Period>' . PHP_EOL);
+				fwrite($xmlFile, '</ku:Arendeinformation>' . PHP_EOL);
+				fwrite($xmlFile, '<ku:Blankettinnehall>' . PHP_EOL);
+				fwrite($xmlFile, '<ku:KU25>' . PHP_EOL);
+				fwrite($xmlFile, '<ku:Inkomstar faltkod="203">' . $incomeYear . '</ku:Inkomstar>' . PHP_EOL);
+				fwrite($xmlFile, '<ku:AvdragsgillRanta faltkod="540">' . $result[$i]['interest_income'] . '</ku:AvdragsgillRanta>' . PHP_EOL);
+				fwrite($xmlFile, '<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>' . PHP_EOL);
+				fwrite($xmlFile, '<ku:UppgiftslamnareKU25>' . PHP_EOL);
+				fwrite($xmlFile, '<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>' . PHP_EOL);
+				fwrite($xmlFile, '</ku:UppgiftslamnareKU25>' . PHP_EOL);
+				fwrite($xmlFile, '<ku:InkomsttagareKU25>' . PHP_EOL);
+				fwrite($xmlFile, '<ku:Inkomsttagare faltkod="215">' . $result[$i]['personal_id_number'] . '</ku:Inkomsttagare>' . PHP_EOL);
+				fwrite($xmlFile, '</ku:InkomsttagareKU25>' . PHP_EOL);
+				fwrite($xmlFile, '</ku:KU25>' . PHP_EOL);
+			}
+		
+			if ((int)$result[$i]['interest_expense'] >= 100) {
+				$counterCreated++;
+				fwrite($xmlFile, '<ku:Blankett nummer="2323">' . PHP_EOL);
+				fwrite($xmlFile, '<ku:Arendeinformation>' . PHP_EOL);
+				fwrite($xmlFile, '<ku:Arendeagare>165591016786</ku:Arendeagare>' . PHP_EOL);
+				fwrite($xmlFile, '<ku:Period>' . $incomeYear . '</ku:Period>' . PHP_EOL);
+				fwrite($xmlFile, '</ku:Arendeinformation>' . PHP_EOL);
+				fwrite($xmlFile, '<ku:Blankettinnehall>' . PHP_EOL);
+				fwrite($xmlFile, '<ku:KU20>' . PHP_EOL);
+				fwrite($xmlFile, '<ku:Inkomstar faltkod="203">' . $incomeYear . '</ku:Inkomstar>' . PHP_EOL);
+				fwrite($xmlFile, '<ku:Ranteinkomst faltkod="500">' . $result[$i]['interest_expense'] . '</ku:Ranteinkomst>' . PHP_EOL);
+				fwrite($xmlFile, '<ku:Specifikationsnummer faltkod="570">01</ku:Specifikationsnummer>' . PHP_EOL);
+				fwrite($xmlFile, '<ku:UppgiftslamnareKU20>' . PHP_EOL);
+				fwrite($xmlFile, '<ku:UppgiftslamnarId faltkod="201">165591016786</ku:UppgiftslamnarId>' . PHP_EOL);
+				fwrite($xmlFile, '</ku:UppgiftslamnareKU20>' . PHP_EOL);
+				fwrite($xmlFile, '<ku:InkomsttagareKU20>' . PHP_EOL);
+				fwrite($xmlFile, '<ku:Inkomsttagare faltkod="215">' . $result[$i]['personal_id_number'] . '</ku:Inkomsttagare>' . PHP_EOL);
+				fwrite($xmlFile, '</ku:InkomsttagareKU20>' . PHP_EOL);
+				fwrite($xmlFile, '</ku:KU20>' . PHP_EOL);
+			}
+		
+			fwrite($xmlFile, '</ku:Blankettinnehall>' . PHP_EOL);
+			fwrite($xmlFile, '</ku:Blankett>' . PHP_EOL);
+
+		
+			// $this->controllStatementCreatePdf((object) $result[$i]); 
+		
+			//}
+		}
+		// ---
+		// --- End individuellt 
+		// ---
+   		
+		fwrite($xmlFile, '</Skatteverket>' . PHP_EOL);
+
+		fclose($xmlFile);
+
+		return $counterCreated;
+
+			/*
+				$reply->code = '1';
+				$reply->number = $number; 
+				$reply->urlLink = 'http://turtle-pay.dev/internal-report/tax-control-records-' . $data->_income_year . '.xml';
+				return  json_encode($reply);
+			*/
+	}
+
+	private function actionStatementCreate($data) {
+		/*
+			Updated 2022-01-10
+			{
+				"_group" : "Tax",
+				"_action" : "StatementCreate",
+				"_income_year" : "2021"
+			}
+
+		*/
+		$sql = "SELECT tr.tax_reporting_id, tr.people_id, tr.interest_income, tr.interest_expense, tr.income_year, ";
+		$sql .= "p.personal_id_number, p.first_name, p.last_name, p.address, p.postcode, p.city, p.ocrno ";
+		$sql .=  "FROM tax_reporting tr, people p ";
+		$sql .= "WHERE tr.income_year = '$data->_income_year' AND tr.people_id = p.people_id AND tr.tax_reporting_status = 'a' AND created_status = 'n'" ;
+		$sql .= "ORDER BY tr.tax_reporting_id LIMIT 100";	 // tr.people_id
+		$result = $this->_GetList($sql);
+		$counterCreated = 0;
+		//echo sizeof($result); die('');
+		
+		if ( sizeof($result) > 0) {
+			for ($i = 0; $i < sizeof($result); $i++) {
+				if ($this->controllStatementCreatePdf((object) $result[$i])) {
+					$counterCreated++;
+					$param = new stdClass();
+					$param->created_status = 'y';
+					$this->_Update('tax_reporting', 'tax_reporting_id', $result[$i]['tax_reporting_id'], $param);
+				}
+				
+			}
+		}
+		$reply = new stdClass();
+		$reply->code = '1';
+		$reply->counter = $counterCreated;
+		echo json_encode($reply);
+	}
+
+
+	private function controllStatementCreatePdf($data) {
+
+        $data->filename = 'k' . $data->income_year . '-' . $data->ocrno . '.pdf';
+		$folder = INVOICE_FOLDER;
+
+		$font = 'Helvetica';
+		$extra = 0;
+
+		// Init PDF
+		$mall = "Service/blank.pdf";
+		require_once('fpdf181/fpdf.php');
+		require_once('ftpi/autoload.php');
+		$pdf = new Fpdi\Fpdi();
+		$pdf->AddFont('OCR-B','','ocrb.php');
+		$pdf->setSourceFile($mall);
+		$templateId = $pdf->importPage(1);
+		$size = $pdf->getTemplateSize($templateId);
+		$pdf->AddPage('P', array($size['width'], 310));
+		$pdf->useTemplate($templateId);
+
+		$pdf->SetXY(12, 9); // 18
+
+		$pdf->Image('faktura-logo.jpg', null,null,33,16); // 38 / 20
+		$pdf->SetFont($font,'I');
+		$pdf->SetFontSize(9);
+		$pdf->SetXY(12, 22);
+		$pdf->Write(14, utf8_decode('P.O. Box 24078'));
+		$pdf->SetXY(12, 27);
+		$pdf->Write(14, utf8_decode('SE-104 50 Stockholm'));
+
+
+		//$pdf->Image('faktura-logo.jpg', null,null,60,31);
+		$pdf->SetFont($font);
+
+		$pdf->SetFont($font);
+		$pdf->SetFontSize(14);
+		$pdf->SetXY(111, 1); // 2
+		$pdf->Write(16, utf8_decode('KONTROLLUPPGIFT'));
+
+		$pdf->SetFont($font,'B');
+		$pdf->SetFontSize(10);
+		$pdf->SetXY(111, 9); // 11
+		$pdf->Write(11,  utf8_decode('Inkomståret ' . $data->income_year));
+        $pdf->SetFont('');
+   
+		$pdf->SetFontSize(10);
+		$pdf->SetXY(111, 33); // 37
+		$pdf->Write(10, utf8_decode($data->first_name . ' ' . $data->last_name));
+		$pdf->SetXY(111, 38); // 42
+		$pdf->Write(10, utf8_decode($data->address));
+		$pdf->SetXY(111, 43); // 37
+		$pdf->Write(10, utf8_decode($data->postcode . ' ' . $data->city));
+
+        $pdf->SetFont('');
+		$pdf->SetFont($font);
+		$pdf->SetFontSize(10);
+	    $line = 66;
+
+		$pdf->SetXY(14, $line);
+		$pdf->Write(10, utf8_decode('Vi har lämnat följande ränteuppgifter till Skatteverket för inkomståret ' . $data->income_year));
+		
+        $line = $line + 12;
+
+        $pdf->SetFont($font,'B');
+		$pdf->SetFontSize(10);
+		$pdf->SetXY(14, $line); 
+		$pdf->Write(11, utf8_decode('Uppgiftslämnare'));
+		$pdf->SetFont('');
+		$pdf->SetFont($font);
+        $pdf->SetFontSize(10);
+		
+		$lineInfo = $line;
+		// -- Höger kolumn
+		if ((int)$data->interest_income >= 100) {
+        	$pdf->SetXY(80, $lineInfo); 
+			$pdf->Write(10, utf8_decode('Betald och för året avdragsgill ränteutgift: ' . $data->interest_income . ' kronor'));
+			$lineInfo = $lineInfo + 6;
+		}
+		if ((int)$data->interest_expense >= 100) {
+			$pdf->SetXY(80, $lineInfo); 
+			$pdf->Write(10, utf8_decode('Betald och för året skattepliktig ränteintäkt: ' . $data->interest_expense . ' kronor'));
+		}
+
+        $line = $line + 6;
+		$pdf->SetXY(14, $line); 
+		$pdf->Write(10, utf8_decode('Turtle Pay AB'));
+
+        $line = $line + 5;
+		$pdf->SetXY(14, $line); 
+		$pdf->Write(10, utf8_decode('Org.nr. 559101-6786'));
+
+		//
+		// ACTIVATE YEAR 2020
+		//
+        // -- $pdf->SetXY(80, $line); 
+		// $pdf->Write(10, utf8_decode('Betald och för året skattepliktig ränteinkomst: 0 kr'));
+
+        $line = $line + 5;
+		$pdf->SetXY(14, $line); 
+        $pdf->Write(10, utf8_decode('Tel. 08-806220'));
+        
+        $line = $line + 5;
+		$pdf->SetXY(14, $line); 
+		$pdf->Write(10, utf8_decode('info@turtle-pay.com'));
+
+		// $filename = $folder . $data->filename;
+		$filename = '../finvoice/' . $data->filename;
+		try {
+			$pdf->Output($filename,'F');
+			//echo $filename . ' - ';
+		}
+		catch(Exception $e) {
+			//echo 'Message: ' .$e->getMessage();
+			//die('psd-error');
+			$pdf->Close();
+			return false;
+		}
+		$pdf->Close();
+		return true;
+	}
+
+	
+    private function actionControlStatmentBulkEmail($data) {
+        /*
+        
+        8300 - Ränteintäkter
+        8301 - Dröjsmålsränta
+
+		 {
+			"_group" : "Tax",
+			"_action" : "ControlStatmentBulkEmail",
+			"_income_year" : "2020"
+		}
+		*/
+		
+		$reply = new stdClass();
+
+		$sql = "SELECT tr.tax_reporting_id, tr.people_id, tr.interest_income, tr.interest_expense, tr.income_year, tr.tax_reporting_status, ";
+		$sql .= "p.personal_id_number, p.first_name, p.last_name, p.address, p.postcode, p.city, p.ocrno, tr.email ";
+		$sql .= "FROM tax_reporting tr, people p ";
+		$sql .= "WHERE tr.income_year = '$data->_income_year' AND tr.people_id = p.people_id AND ";
+		$sql .= "tax_reporting_status = 'a' AND email_sent = 'n' ";
+		// $sql .= "AND tr.people_id = 58 ";;
+		$sql .= "ORDER BY tr.people_id ";
+		$result = $this->_GetList($sql);
+
+        //
+        // Start indivuduel email
+        //
+		$numberSend = 0;
+		$numberFaill = 0;
+        for ($i = 0; $i < sizeof($result); $i++) {
+			if ($this->controlStatmentBulkEmailSend((object) $result[$i], $data->_income_year)) {
+				$numberSend++;
+				$param = new stdClass();
+				$param->email_sent = 'y';
+				$resUpdate = $this->_Update('tax_reporting', 'tax_reporting_id', $result[$i]['tax_reporting_id'], $param);
+			}
+			else {
+				$numberFail++;
+			}
+        }
+        
+        $reply->code = '1';
+        $reply->number_sent = $numberSend; 
+		$reply->number_fail = $numberFaill;
+		 
+        return  json_encode($reply);
+    }
+
+	private function controlStatmentBulkEmailSend($data, $yearIncome) {
+		/*
+
+		Sen Controll Statment to People
+	
+		*/
+		$folder = INVOICE_FOLDER;
+		$data->filename = 'k' . $yearIncome . '-' . $data->ocrno . '.pdf';
+		//echo $data->filename;
+		$emailName = $data->first_name . ' ' . $data->last_name;
+	
+	
+		
+		//$email = 'stellan.forsberg@turtle-pay.com';
+		//$email = 'bo.grus@yahoo.com';
+		$email =  $data->email;
+			
+		$toSubject = 'Kontrolluppgifter ' . $yearIncome;
+		$html = '';
+		$html .="Hej,";
+		$html .="<br><br>";
+		$html .="Här kommer information över lämnade ränteuppgifter för inkomståret $yearIncome."; // fixas
+		$html .="<br><br>";
+		$html .="Se bifogad kontrolluppgift.";
+		$html .="<br><br>";
+		$html .="Mvh Turtle Pay Support";
+		$html .="<br><br><br>";
+
+		$html .= "Turtle Pay AB";
+		$html .="<br>";
+		$html .= "Box 24078";
+		$html .="<br>";
+		$html .= "104 50 Stockholm";
+		$html .="<br>";
+		$html .= "www.turtle-pay.com";
+		$html .="<br>";
+	
+		// echo $html;
+		// return true;
+
+		require_once 'PHPMailerAutoload.php';
+
+		$mail = new PHPMailer;
+		$mail->isSMTP();
+		//$mail->Host = 'postman.vmi.se';
+		//$mail->Host = 'exchange.s.thehostingplatform.com';
+		$mail->Host = 'smtp.gmail.com';
+		$mail->SMTPAuth = true;
+		$mail->Username = 'info.turtlepay@gmail.com';
+		$mail->Password = 'SegTp_2019';
+
+		$mail->CharSet = 'UTF-8';
+		$mail->From = 'info@turtle-pay.com';
+		$mail->FromName = 'Turtle Pay';
+	
+		$mail->addAddress($email, $emailName);
+		
+		$mail->addBCC('bo.grusell@turtle-pay.com');
+		$mail->addReplyTo('info@turtle-pay.com');
+		$mail->isHTML(true);
+		
+		// $mail->AddAttachment('../../finvoice/' . $data->filename);
+		 $mail->AddAttachment('../finvoice/' . $data->filename);
+		$mail->Subject = $toSubject;
+		
+		$mail->Body = $html;
+	
+		if (!$mail->send()) {
+			return false;
+		} 
+		else {
+			return true;
+		}
+	}
+
+	private function actionReportList($data) {
+		/*
+	   {
+		   "_group" : "Tax",
+		   "_action" : "ReportList",
+		   "_income_year" : "2020"
+	   }
+	   */
+
+		$sql = "SELECT tr.tax_reporting_id, tr.people_id, tr.interest_income, tr.interest_expense, tr.income_year, tr.tax_reporting_status, tr.created_status, ";
+		$sql .= "p.personal_id_number, p.first_name, p.last_name, p.address, p.postcode, p.city, p.ocrno, tr.email ";
+		$sql .= "FROM tax_reporting tr, people p ";
+		$sql .= "WHERE tr.income_year = '$data->_income_year' AND tr.people_id = p.people_id ";
+		$sql .= "ORDER BY tr.people_id ";
+		$result = $this->_GetList($sql);
+		$notCreated = 0;
+		//$status_a = 0;
+		for ($i = 0; $i < sizeof($result); $i++) {
+			if ($result[$i]['tax_reporting_status'] == 'a') {
+				$result[$i]['tax_reporting_status'] = 'Created';
+				//$status_a++;
+				if ($result[$i]['created_status'] == 'n') {
+					$notCreated++;
+				}
+			}
+			else if ($result[$i]['tax_reporting_status'] == 'w') {
+				$result[$i]['tax_reporting_status'] = 'Write off';
+			}
+		}
+		$reply = new stdClass();
+		$reply->result = $result;
+		//$reply->status_a = $status_a;
+		$reply->not_created = $notCreated;
+		return json_encode($reply);
+	}
+
+}

@@ -1,0 +1,63 @@
+#FLAGGA 0
+#FORMAT PC8
+#SIETYP 4
+#PROGRAM "Turtle Pay Kundportal" 2021.1
+#GEN 20211209
+#FNAMN "Brol”ten AB"
+#ORGNR 556436-4742
+#KPTYP BAS95
+#KONTO 8000 "R„nta"
+#KONTO 1686 "Turtle Pay avr„kning"
+#KONTO 6050 "Transaktionsavgift"
+#KONTO 3010 "Ridl„ger, ridkurs 12% "
+#KONTO 2620 "Utg†ende moms 12 %"
+#KONTO 2330 "Bank"
+#VER T 66 20211003 "Turtle Pay Avr„kning"
+{
+#TRANS 8000 {} 2.00
+#TRANS 1686 {} -2.00
+}
+#VER T 67 20211004 "Turtle Pay Avr„kning"
+{
+#TRANS 1686 {} 10736.50
+#TRANS 6050 {} 163.50
+#TRANS 3010 {} -9732.14
+#TRANS 2620 {} -1167.86
+}
+#VER T 68 20211005 "Turtle Pay Avr„kning"
+{
+#TRANS 1686 {} 5910.00
+#TRANS 6050 {} 90.00
+#TRANS 3010 {} -5357.14
+#TRANS 2620 {} -642.86
+}
+#VER T 69 20211006 "Turtle Pay Avr„kning"
+{
+#TRANS 1686 {} -16644.50
+#TRANS 2330 {} 16644.50
+}
+#VER T 70 20211007 "Turtle Pay Avr„kning"
+{
+#TRANS 1686 {} -6500.00
+#TRANS 3010 {} 5803.58
+#TRANS 2620 {} 696.42
+}
+#VER T 71 20211013 "Turtle Pay Avr„kning"
+{
+#TRANS 1686 {} 6402.50
+#TRANS 6050 {} 97.50
+#TRANS 3010 {} -5803.57
+#TRANS 2620 {} -696.43
+}
+#VER T 72 20211022 "Turtle Pay Avr„kning"
+{
+#TRANS 1686 {} 6107.00
+#TRANS 6050 {} 93.00
+#TRANS 3010 {} -5535.71
+#TRANS 2620 {} -664.29
+}
+#VER T 73 20211025 "Turtle Pay Avr„kning"
+{
+#TRANS 1686 {} -6009.50
+#TRANS 2330 {} 6009.50
+}

@@ -1,0 +1,81 @@
+<?php
+/*
+    Class RefundClass
+
+	Date: 2018-10-116
+
+	capi
+
+	Actions:
+		- Check
+		- (BankId SignCollect)
+		- Complete
+
+*/
+
+class RefundClass extends ActionOpen {
+
+	public function Run($data) {
+
+		$actionMethod = 'action' . $data->_action;
+		echo $this->$actionMethod($data);
+
+	}
+
+	public function actionStart($data) {
+		/*
+		{
+		     "_group" : "Refund",
+		     "_action" : "start",
+		     "_credit_id" : "12344410418",
+			 "refund_amount" : "100",
+		 	 "signature" : "test-redund-sign",
+		     "ocspResponse" : "test-response-resp",
+			 "sales_person_id" : "35"
+		}
+
+		*/
+
+		$json = json_encode($data);
+		$result = (object) json_decode($this->_RestApiCall($json));
+
+		// ---
+		// --- Event and Specification Block
+		// --- Get EventItemID used for the PDF specification
+		$param2 = new stdClass();
+		$param2->_group = "WebAppV2";
+		$param2->_action = "GetEventItemIdByCreditId";
+		$param2->_credit_id = $result->invoice->credit_id;
+		$resultJson = $this->_RestApiCall(json_encode($param2));
+		$eventItem = json_decode($resultJson);
+	
+		if ($eventItem->code == '1') {
+			$param = new stdClass();
+			$param->_group = "WebAppV2";
+			$param->_action = "EventSpecGet";
+			$param->_event_item_id = $eventItem->event_item_id;
+			$resultJson = $this->_RestApiCall(json_encode($param));
+			$result->invoice->spec = json_decode($resultJson);
+			$result->invoice->specOn = "y";
+		}
+		else {
+			$result->invoice->specOn = "n";
+		}
+
+		require_once 'FirstInvoicePdf.class';
+		$firstInvoice = new FirstInvoicePdfClass(FIRST_INVOICE_FOLDER);
+		$firstInvoice->Create($result->invoice);
+
+		$reply = new StdClass();
+		$reply->code = "1";
+		$reply->code = $result->code;
+
+		//$reply->email = $result->email;
+
+		$reply->invoice_filename = $result->invoice_filename;
+		$reply->denied_code = "";
+
+		return json_encode($reply);
+	}
+
+}

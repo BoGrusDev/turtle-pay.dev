@@ -1,0 +1,266 @@
+<?php
+
+require_once "UCTool.class";
+
+class TestClass extends ActionBase {
+
+	public function Run($data) {
+
+		$actionMethod = 'action' . $data->_action;
+		echo $this->$actionMethod($data);
+
+	}
+
+	private function actionMonthlyPayment($data) {
+
+        $this->_Settings();
+		print_r($this->Setting);
+        echo $this->_MonthlyPayment(1200, 19.5,12);
+
+        //$this->_Settings($approvement->company_id, $approvement->people_id);
+    }
+
+	private function actionTestBooking($data) {
+		/*
+		{
+			"_group" : "Test",
+			"_action" : "TestBooking",
+			"booking" : {
+				"booking_date" : "2018-11-01",
+				"booking_text" : "New credit",
+				"booking_type" : "new-credit",
+				"people_id"  : "24",
+				"company_id"  : "1",
+				"store_id"  : "9",
+				"sales_person_people_id" : "4",
+				"credit_id" : "123433321",
+				"refund_id" : "0",
+				"invoice_filename" : "",
+				"ocr_number" : "ocr",
+				"transaction" : [
+					{
+						"account_no" : "1380",
+						"amount" : "1000.00"
+					},
+					{
+						"account_no" : "2981",
+						"amount" : "-1000.00"
+					},
+					{
+						"account_no" : "2498",
+						"amount" : "-10.00"
+					},
+					{
+						"account_no" : "2981",
+						"amount" : "10.00"
+					},
+					{
+						"account_no" : "3595",
+						"amount" : "-10.00"
+					},
+					{
+						"account_no" : "",
+						"amount" : "10.00"
+					}
+				]
+			}
+		}
+
+		*/
+
+
+		//print_r($data);
+		$this->_Book($data);;
+
+	}
+
+	private function actionSettings($data) {
+		$this->_Settings();
+		print_r($this->Setting);
+
+	}
+
+
+	public function actionLoadUc($data) {
+		/*
+		{
+			"_group" : "Test",
+			"_action" : "LoadUc",
+			"_people_id" : "1"
+		}
+		*/
+		 
+        // --
+        // -- Get the last UCid on the person
+        $sql = "SELECT uc_id FROM uc ";
+		$sql .= "WHERE people_id = $data->_people_id ";
+		$sql .= "ORDER BY uc_id DESC";
+        $res = $this->_Get($sql);
+
+        if ($res['code'] == '1') {
+            $ucId = $res['uc_id'];
+		}
+		else {
+			$reply = new stdClass();
+			$reply->code = '0';
+			$reply->denied_code  = 'no-uc-exist-for-people';
+			return json_encode($reply);
+			die('');
+		}
+		
+		// --
+		// -- Load UC all data 
+		// --
+        $sql = "SELECT uc_item_id, uc_item, value FROM uc_item ";
+		$sql .= "WHERE uc_id = $ucId ";
+		$sql .= "ORDER BY uc_item_id";
+		$result = $this->_GetList($sql);
+        
+		return json_encode($result);
+	}
+
+
+	private function actionCalculateCreditLimit($data) {
+		/*
+			This function calculate the credit limit for a person.
+			It use the function actionLoadUc, that load last saved UC for the person
+			The function return the value of the new credit limit, if 0, means denied.
+			code = 0, means no UC find, code = 1 process OK
+		
+			{
+				"_group" : "Test",
+				"_action" : "CalculateCreditLimit",
+				"_people_id" : "1"
+			}
+		*/
+
+		$param = new stdClass();
+		$param->_people_id = $data->_people_id;
+		$reply = $this->actionLoadUc($param);	
+		$ucTag = json_decode($reply);
+		
+		$denied = false;
+		$deniedText = '';
+		for ($i=0; $i < sizeof($ucTag); $i++) {
+			// Has trustee
+			if ($ucTag[$i]->uc_item == 'W61109') {
+				$markCount = (int)$ucTag[$i]->value;
+				if ($markCount > 0) { 
+					$deniedText = 'has-marks';
+					$denied = true;
+					break;
+				}
+			} 
+			if ($ucTag[$i]->uc_item == 'W08018') {
+				if ($ucTag[$i]->value == "Y") {
+					$deniedText = 'has-trustee';
+					$denied = true;
+					break;
+				}
+			
+			} 
+
+		}
+
+		if ($denied) {
+			$reply = new stdClass();
+			$reply->code = '0';
+			$reply->credit_limit  = '0';
+			$reply->denied_code = $deniedText;
+			return json_encode($reply);
+			die('');
+		}
+
+		// Get the latest income
+		$income = 0;
+		for ($i=0; $i < sizeof($ucTag); $i++) {
+			if ($ucTag[$i]->uc_item == 'W49592') {
+				$income = (int)$ucTag[$i]->value;
+				break;
+			} 
+		}
+
+		$creditMatrix = array(
+			'25000'=>0, 
+			'70000'=>3000,
+			'100000'=>10000,
+			'150000'=>20000,
+			'250000'=>50000,
+			'400000'=>70000,
+			'600000'=>100000,
+			'800000'=>150000
+		);
+		$newCredit = 0;
+		foreach ($creditMatrix as $limit => $credit) {  
+			if ($income < (int)$limit) {
+				$newCredit = $credit;
+				break;
+			}  
+		}  
+		
+		echo $newCredit;
+		//print_r($creditMatrix);
+	}
+
+	private function actionGetFromUc($data) {
+		/*
+		{
+			"_group" : "Test",
+			"_action" : "GetFromUc",
+			"_personal_id_number" : "194701254023",
+			"_people_id" : "1"
+		}
+
+		196610081900
+		790
+
+		*/
+		$ucObj = new UcToolClass(DB_HOST, DB_NAME, DB_USER, DB_PASS, '');
+		$reply = $ucObj->getFromUC($data->_personal_id_number, $data->_people_id);
+		print_r($reply);
+
+	}
+
+	private function actionGetFromUcProd($data) {
+		/*
+
+		https://www.turtle-pay.com/b-api/
+
+		{
+			"_group" : "Test",
+			"_action" : "GetFromUcProd",
+			"_personal_id_number" : "196510107607",
+			"_people_id" : "39"
+		}
+
+		{
+			"_group" : "Test",
+			"_action" : "GetFromUcProd",
+			"_personal_id_number" : "200104048475",
+			"_people_id" : "841"
+
+		}
+
+		
+
+		*/
+		$ucObj = new UcToolClass(DB_HOST, DB_NAME, DB_USER, DB_PASS, '');
+		$reply = $ucObj->getFromUCProd($data->_personal_id_number, $data->_people_id);
+		print_r($reply);
+
+	}
+
+	private function actionSpar($data) {
+		/*
+		{
+			"_group" : "Test",
+			"_action" : "Spar",
+			"_personal_id_number" : ""
+		}
+		*/
+
+		$sparObj = $this->_Spar($data->_personal_id_number);
+		print_r($sparObj);
+	}
+
+}

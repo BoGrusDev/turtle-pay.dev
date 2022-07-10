@@ -1,0 +1,28 @@
+# For security reasons, Option followsymlinks cannot be overridden.
+#Options +FollowSymlinks
+Options +SymLinksIfOwnerMatch
+
+# Prevent Directoy listing 
+#Options -Indexes (move back)
+
+# Prevent Direct Access to files
+#<FilesMatch "\.(tpl|ini|log)">
+# Order deny,allow
+# Deny from all
+#</FilesMatch>
+
+# SEO URL Settings
+
+#RewriteCond %{HTTPS_HOST} ^bappnet.se
+#RewriteRule ^ http://bappnet.se%{REQUEST_URI} [L,R=301]
+
+
+
+RewriteEngine On
+#RewriteBase /
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_URI} !.*\.(ico|gif|jpg|jpeg|png|js|css)
+
+RewriteRule ^([^?]*) index.php?param=$1 [L,QSA]
+

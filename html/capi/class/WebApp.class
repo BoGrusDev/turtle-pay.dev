@@ -1,0 +1,34 @@
+<?php
+/*
+    Class WebAppClass
+
+	Date: 2019-07-12
+
+*/
+
+Class WebAppClass extends ActionOpen {
+
+	public function Run($data) {
+
+		$actionMethod = 'action' . $data->_action;
+		echo $this->$actionMethod($data);
+	}
+	
+	private function actionProgressInit($data) {
+		$json =  json_encode($data);
+		$result = $this->_RestApiCall($json);
+		return $result;
+	}
+
+	private function actionProgress($data) {
+		$json =  json_encode($data);
+		$result = $this->_RestApiCall($json);
+		return $result;
+	}
+
+	private function actionSetConfirmed($data) {
+		$json =  json_encode($data);
+		$result = $this->_RestApiCall($json);
+		return $result;
+	}
+}

@@ -1,0 +1,101 @@
+<?php
+/*
+    Class SettingClass
+
+	Date: 2018-10-05
+
+	Call:
+	{
+		"_action" : "Setting",
+		"_company_id" : "1"
+	}
+	{
+		"_action" : "SettingUpdate",
+		"_bankid" : "no",
+		"_company_id" : "1"
+		"_people_id" : "1"
+	}
+
+	Reply:
+*/
+
+class SettingClass extends ActionBase {
+
+	public function Run($data) {
+		$actionMethod = 'action' . $data->_action;
+		echo $this->$actionMethod($data);
+	}
+
+	private function actionGetGlobal($data) {
+		$sql = "SELECT * FROM setting WHERE setting_type = 's' ORDER BY setting_id DESC LIMIT 1";
+		$baseResult = $this->_Get($sql);
+		return json_encode($baseResult);
+		/*
+		if (!isset($data->_company_id)) {
+			$data->_company_id = null;
+		}
+		if (!isset($data->_people_id)) {
+			$data->_people_id = null;
+		}
+		$this->_Settings($data->_company_id, $data->_people_id);
+		$this->_Settings();
+		return json_encode($this->Setting);
+		*/
+	}
+
+	private function actionGetCompany($data) {
+		$sql = "SELECT * FROM setting WHERE setting_type = 'c' AND id = $data->_company_id AND status_setting = 'a' ORDER BY setting_id DESC LIMIT 1";
+		$companyResult = $this->_Get($sql);
+		$result = array();
+		foreach ($companyResult as $key => $value) {
+			if ($value != null) {
+				$result[$key] =  $value;
+			}
+		}
+		return json_encode($result);
+	}
+
+	private function actionGetPeople($data) {
+		$sql = "SELECT * FROM setting WHERE setting_type = 'p' AND id = $data->_people_id AND status_setting = 'a' ORDER BY setting_id DESC LIMIT 1";
+		$peopleResult = $this->_Get($sql);
+		$result = array();
+		foreach ($peopleResult as $key => $value) {
+			if ($value != null) {
+				$result[$key] =  $value;
+			}
+		}
+		return json_encode($result);
+	}
+
+	private function actionGlobalUpdate($data) {
+		$reply =  $this->_Insert("setting", $data);
+		return json_encode($reply);
+	}
+
+	private function actionCompanyUpdate($data) {
+
+		$newData = array();
+		//print_r($data);
+		foreach ($data as $key => $value) {
+			if (strlen($value) > 0) {
+				$newData[$key] =  $value;
+			}
+		}
+		$reply =  $this->_Insert("setting", $newData);
+		return json_encode($reply);
+	}
+
+	private function actionPeopleUpdate($data) {
+
+		$newData = array();
+		//print_r($data);
+		foreach ($data as $key => $value) {
+			if (strlen($value) > 0) {
+				$newData[$key] =  $value;
+			}
+		}
+		$reply =  $this->_Insert("setting", $newData);
+		return json_encode($reply);
+	}
+
+}

@@ -1,0 +1,1227 @@
+#FLAGGA 0
+#FORMAT PC8
+#SIETYP 4
+#PROGRAM "Turtle Pay Kundportal" 2021.1
+#GEN 20210409
+#FNAMN "T„by Tennisklubb"
+#ORGNR 816000-1809
+#KPTYP EUBAS97
+#KONTO 3012 "Abonnemang"
+#KONTO 1511 "Turtle Pay avr„kning"
+#KONTO 4000 "Transaktionsavgift"
+#KONTO 1930 "Bank"
+#KONTO 3035 "Vuxentr„ning"
+#KONTO 3015 "Juniortr„ning 1h"
+#KONTO 3016 "Juniortr„ning 2h"
+#KONTO 3022 "Minitennis"
+#KONTO 3017 "Juniortr„ning 3h"
+#VER B 21 20210302 "Abonnemang A-tid VT 2021"
+{
+#TRANS 3012 {} -630.00
+#TRANS 1511 {} 630.00
+}
+#VER B 22 20210302 "Abonnemang B-tid VT 2021"
+{
+#TRANS 3012 {} -3520.00
+#TRANS 1511 {} 3520.00
+}
+#VER B 23 20210303 "Turtle Pay avr„kning"
+{
+#TRANS 1930 {} 4150.00
+#TRANS 1511 {} -4150.00
+}
+#VER B 24 20210303 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 25 20210303 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 26 20210303 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 27 20210303 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 28 20210303 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 29 20210303 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 30 20210303 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 31 20210303 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 32 20210303 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 33 20210303 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 34 20210303 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 35 20210303 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 36 20210303 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 37 20210303 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 38 20210303 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -2610.00
+#TRANS 1511 {} 2610.00
+}
+#VER B 39 20210303 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 40 20210303 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 41 20210304 "Turtle Pay avr„kning"
+{
+#TRANS 1930 {} 51410.00
+#TRANS 1511 {} -51410.00
+}
+#VER B 42 20210304 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 43 20210304 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 44 20210304 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 45 20210304 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 46 20210304 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 47 20210304 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 48 20210304 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 49 20210304 "Juniortr„ning 2h/vecka VT-21"
+{
+#TRANS 3016 {} -5000.00
+#TRANS 1511 {} 5000.00
+}
+#VER B 50 20210304 "Juniortr„ning 2h/vecka VT-21"
+{
+#TRANS 3016 {} -5000.00
+#TRANS 1511 {} 5000.00
+}
+#VER B 51 20210304 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 52 20210304 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -2610.00
+#TRANS 1511 {} 2610.00
+}
+#VER B 53 20210304 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -2610.00
+#TRANS 1511 {} 2610.00
+}
+#VER B 54 20210304 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 55 20210304 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 56 20210304 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 57 20210304 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 58 20210304 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 59 20210304 "Juniortr„ning 2h/vecka VT-21"
+{
+#TRANS 3016 {} -5000.00
+#TRANS 1511 {} 5000.00
+}
+#VER B 60 20210305 "Turtle Pay avr„kning"
+{
+#TRANS 1930 {} 51510.00
+#TRANS 1511 {} -51510.00
+}
+#VER B 61 20210305 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 62 20210305 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 63 20210305 "Juniortr„ning 2h/vecka VT-21"
+{
+#TRANS 3016 {} -5000.00
+#TRANS 1511 {} 5000.00
+}
+#VER B 64 20210305 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 65 20210305 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 66 20210305 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 67 20210305 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 68 20210305 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 69 20210305 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 70 20210305 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 71 20210305 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 72 20210305 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 73 20210305 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 74 20210306 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 75 20210306 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 76 20210306 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 77 20210306 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 78 20210307 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 79 20210307 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 80 20210307 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 81 20210307 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 82 20210307 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 83 20210307 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 84 20210307 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 85 20210307 "Juniortr„ning 2h/vecka VT-21"
+{
+#TRANS 3016 {} -5000.00
+#TRANS 1511 {} 5000.00
+}
+#VER B 86 20210307 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 87 20210308 "Turtle Pay avr„kning"
+{
+#TRANS 1930 {} 81960.00
+#TRANS 1511 {} -81960.00
+}
+#VER B 88 20210308 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 89 20210308 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 90 20210308 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 91 20210308 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 92 20210308 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 93 20210308 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 94 20210308 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 95 20210308 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 96 20210308 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 97 20210308 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 98 20210308 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 99 20210308 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 100 20210308 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 101 20210308 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 102 20210308 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 103 20210308 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 104 20210308 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 105 20210308 "Juniortr„ning 2h/vecka VT-21"
+{
+#TRANS 3016 {} -5000.00
+#TRANS 1511 {} 5000.00
+}
+#VER B 106 20210308 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 107 20210308 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 108 20210308 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 109 20210308 "Juniortr„ning 2h/vecka VT-21"
+{
+#TRANS 3016 {} -5000.00
+#TRANS 1511 {} 5000.00
+}
+#VER B 110 20210308 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 111 20210308 "Minitennis VT-2021"
+{
+#TRANS 3022 {} -2070.00
+#TRANS 1511 {} 2070.00
+}
+#VER B 112 20210308 "Minitennis VT-2021"
+{
+#TRANS 3022 {} -2070.00
+#TRANS 1511 {} 2070.00
+}
+#VER B 113 20210308 "Minitennis VT-2021"
+{
+#TRANS 3022 {} -2070.00
+#TRANS 1511 {} 2070.00
+}
+#VER B 114 20210308 "Minitennis VT-2021"
+{
+#TRANS 3022 {} -2070.00
+#TRANS 1511 {} 2070.00
+}
+#VER B 115 20210308 "Juniortr„ning 2h/vecka VT-21"
+{
+#TRANS 3016 {} -5000.00
+#TRANS 1511 {} 5000.00
+}
+#VER B 116 20210308 "Minitennis VT-2021"
+{
+#TRANS 3022 {} -2070.00
+#TRANS 1511 {} 2070.00
+}
+#VER B 117 20210308 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 118 20210308 "Minitennis VT-2021"
+{
+#TRANS 3022 {} -2070.00
+#TRANS 1511 {} 2070.00
+}
+#VER B 119 20210308 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 120 20210308 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 121 20210308 "Minitennis VT-2021"
+{
+#TRANS 3022 {} -2070.00
+#TRANS 1511 {} 2070.00
+}
+#VER B 122 20210308 "Minitennis VT-2021"
+{
+#TRANS 3022 {} -2070.00
+#TRANS 1511 {} 2070.00
+}
+#VER B 123 20210309 "Turtle Pay avr„kning"
+{
+#TRANS 1930 {} 100920.00
+#TRANS 1511 {} -100920.00
+}
+#VER B 124 20210309 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 125 20210309 "Minitennis VT-2021"
+{
+#TRANS 3022 {} -2070.00
+#TRANS 1511 {} 2070.00
+}
+#VER B 126 20210309 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 127 20210309 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 128 20210309 "Minitennis VT-2021"
+{
+#TRANS 3022 {} -2070.00
+#TRANS 1511 {} 2070.00
+}
+#VER B 129 20210309 "Juniortr„ning 2h/vecka VT-21"
+{
+#TRANS 3016 {} -5000.00
+#TRANS 1511 {} 5000.00
+}
+#VER B 130 20210309 "Minitennis VT-2021"
+{
+#TRANS 3022 {} -2070.00
+#TRANS 1511 {} 2070.00
+}
+#VER B 131 20210309 "Minitennis VT-2021"
+{
+#TRANS 3022 {} -2070.00
+#TRANS 1511 {} 2070.00
+}
+#VER B 132 20210309 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 133 20210309 "Minitennis VT-2021"
+{
+#TRANS 3022 {} -2070.00
+#TRANS 1511 {} 2070.00
+}
+#VER B 134 20210309 "Minitennis VT-2021"
+{
+#TRANS 3022 {} -2070.00
+#TRANS 1511 {} 2070.00
+}
+#VER B 135 20210309 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 136 20210309 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 137 20210309 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 138 20210309 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 139 20210310 "Turtle Pay avr„kning"
+{
+#TRANS 1930 {} 39420.00
+#TRANS 1511 {} -39420.00
+}
+#VER B 140 20210310 "Juniortr„ning 2h/vecka VT-21"
+{
+#TRANS 3016 {} -5000.00
+#TRANS 1511 {} 5000.00
+}
+#VER B 141 20210310 "Juniortr„ning 3h/vecka VT-21"
+{
+#TRANS 3017 {} -5550.00
+#TRANS 1511 {} 5550.00
+}
+#VER B 142 20210310 "Juniortr„ning 3h/vecka VT-21"
+{
+#TRANS 3017 {} -5550.00
+#TRANS 1511 {} 5550.00
+}
+#VER B 143 20210310 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 144 20210310 "Juniortr„ning 3h/vecka VT-21"
+{
+#TRANS 3017 {} -5550.00
+#TRANS 1511 {} 5550.00
+}
+#VER B 145 20210310 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 146 20210310 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 147 20210310 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 148 20210310 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 149 20210310 "Juniortr„ning 2h/vecka VT-21"
+{
+#TRANS 3016 {} -5000.00
+#TRANS 1511 {} 5000.00
+}
+#VER B 150 20210310 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 151 20210310 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 152 20210310 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 153 20210310 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 154 20210310 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 155 20210310 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 156 20210310 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 157 20210310 "Abonnemang A-tid VT 2021"
+{
+#TRANS 3012 {} -7560.00
+#TRANS 1511 {} 7560.00
+}
+#VER B 158 20210310 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 159 20210310 "Juniortr„ning 2h/vecka VT-21"
+{
+#TRANS 3016 {} -5000.00
+#TRANS 1511 {} 5000.00
+}
+#VER B 160 20210310 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 161 20210310 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 162 20210310 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 163 20210310 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 164 20210311 "Turtle Pay avr„kning"
+{
+#TRANS 1930 {} 81770.00
+#TRANS 1511 {} -81770.00
+}
+#VER B 165 20210311 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 166 20210311 "Abonnemang A-tid VT 2021"
+{
+#TRANS 3012 {} -3990.00
+#TRANS 1511 {} 3990.00
+}
+#VER B 167 20210311 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 168 20210311 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 169 20210311 "Abonnemang A-tid VT 2021"
+{
+#TRANS 3012 {} -5040.00
+#TRANS 1511 {} 5040.00
+}
+#VER B 170 20210311 "Minitennis VT-2021"
+{
+#TRANS 3022 {} -2070.00
+#TRANS 1511 {} 2070.00
+}
+#VER B 171 20210311 "Minitennis VT-2021"
+{
+#TRANS 3022 {} -2070.00
+#TRANS 1511 {} 2070.00
+}
+#VER B 172 20210311 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 173 20210311 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 174 20210312 "Turtle Pay avr„kning"
+{
+#TRANS 1930 {} 24890.00
+#TRANS 1511 {} -24890.00
+}
+#VER B 175 20210312 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 176 20210312 "Juniortr„ning 2h/vecka VT-21"
+{
+#TRANS 3016 {} -5000.00
+#TRANS 1511 {} 5000.00
+}
+#VER B 177 20210312 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -2830.00
+#TRANS 1511 {} 2830.00
+}
+#VER B 178 20210312 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -1580.00
+#TRANS 1511 {} 1580.00
+}
+#VER B 179 20210312 "Abonnemang A-tid VT 2021"
+{
+#TRANS 3012 {} 5040.00
+#TRANS 1511 {} -5040.00
+}
+#VER B 180 20210312 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 181 20210312 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 182 20210312 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 183 20210312 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 184 20210312 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 185 20210313 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 186 20210313 "Minitennis VT-2021"
+{
+#TRANS 3022 {} -2070.00
+#TRANS 1511 {} 2070.00
+}
+#VER B 187 20210313 "Abonnemang B-tid VT 2021"
+{
+#TRANS 3012 {} -1870.00
+#TRANS 1511 {} 1870.00
+}
+#VER B 188 20210313 "Juniortr„ning 2h/vecka VT-21"
+{
+#TRANS 3016 {} -5000.00
+#TRANS 1511 {} 5000.00
+}
+#VER B 189 20210313 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 190 20210313 "Minitennis VT-2021"
+{
+#TRANS 3022 {} -2070.00
+#TRANS 1511 {} 2070.00
+}
+#VER B 191 20210313 "Minitennis VT-2021"
+{
+#TRANS 3022 {} -2070.00
+#TRANS 1511 {} 2070.00
+}
+#VER B 192 20210313 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 193 20210313 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 194 20210313 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 195 20210313 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 196 20210313 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 197 20210313 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -2610.00
+#TRANS 1511 {} 2610.00
+}
+#VER B 198 20210314 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 199 20210314 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 200 20210314 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 201 20210314 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 202 20210314 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 203 20210314 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 204 20210315 "Turtle Pay avr„kning"
+{
+#TRANS 1930 {} 75780.00
+#TRANS 1511 {} -75780.00
+}
+#VER B 205 20210315 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 206 20210315 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 207 20210315 "Juniortr„ning 3h/vecka VT-21"
+{
+#TRANS 3017 {} -5550.00
+#TRANS 1511 {} 5550.00
+}
+#VER B 208 20210315 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 209 20210315 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 210 20210315 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 211 20210315 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 212 20210315 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 213 20210315 "Minitennis VT-2021"
+{
+#TRANS 3022 {} -2070.00
+#TRANS 1511 {} 2070.00
+}
+#VER B 214 20210316 "Turtle Pay avr„kning"
+{
+#TRANS 1930 {} 29620.00
+#TRANS 1511 {} -29620.00
+}
+#VER B 215 20210316 "Minitennis VT-2021"
+{
+#TRANS 3022 {} -2070.00
+#TRANS 1511 {} 2070.00
+}
+#VER B 216 20210316 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 217 20210316 "Juniortr„ning 2h/vecka VT-21"
+{
+#TRANS 3016 {} -5000.00
+#TRANS 1511 {} 5000.00
+}
+#VER B 218 20210317 "Turtle Pay avr„kning"
+{
+#TRANS 1930 {} 10120.00
+#TRANS 1511 {} -10120.00
+}
+#VER B 219 20210317 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2430.00
+#TRANS 1511 {} 2430.00
+}
+#VER B 220 20210317 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 221 20210317 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 222 20210318 "Turtle Pay avr„kning"
+{
+#TRANS 1930 {} 8530.00
+#TRANS 1511 {} -8530.00
+}
+#VER B 223 20210318 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 224 20210318 "Minitennis VT-2021"
+{
+#TRANS 3022 {} -2070.00
+#TRANS 1511 {} 2070.00
+}
+#VER B 225 20210318 "Minitennis VT-2021"
+{
+#TRANS 3022 {} -2070.00
+#TRANS 1511 {} 2070.00
+}
+#VER B 226 20210318 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 227 20210319 "Turtle Pay avr„kning"
+{
+#TRANS 1930 {} 9760.00
+#TRANS 1511 {} -9760.00
+}
+#VER B 228 20210319 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 229 20210320 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 230 20210320 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 231 20210321 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} 3050.00
+#TRANS 1511 {} -3050.00
+}
+#VER B 232 20210321 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 233 20210321 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 234 20210321 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 235 20210321 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 236 20210322 "Turtle Pay avr„kning"
+{
+#TRANS 1930 {} 15420.00
+#TRANS 1511 {} -15420.00
+}
+#VER B 237 20210322 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 238 20210323 "Turtle Pay avr„kning"
+{
+#TRANS 1930 {} 2570.00
+#TRANS 1511 {} -2570.00
+}
+#VER B 239 20210323 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 240 20210323 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 241 20210324 "Turtle Pay avr„kning"
+{
+#TRANS 1930 {} 3050.00
+#TRANS 1511 {} -3050.00
+}
+#VER B 242 20210324 "Minitennis VT-2021"
+{
+#TRANS 3022 {} -2070.00
+#TRANS 1511 {} 2070.00
+}
+#VER B 243 20210324 "Minitennis VT-2021"
+{
+#TRANS 3022 {} -2070.00
+#TRANS 1511 {} 2070.00
+}
+#VER B 244 20210324 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -2180.00
+#TRANS 1511 {} 2180.00
+}
+#VER B 245 20210324 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -2400.00
+#TRANS 1511 {} 2400.00
+}
+#VER B 246 20210325 "Turtle Pay avr„kning"
+{
+#TRANS 1930 {} 11770.00
+#TRANS 1511 {} -11770.00
+}
+#VER B 247 20210325 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 248 20210325 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 249 20210325 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 250 20210325 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -6100.00
+#TRANS 1511 {} 6100.00
+}
+#VER B 251 20210326 "Turtle Pay avr„kning"
+{
+#TRANS 1930 {} 14290.00
+#TRANS 1511 {} -14290.00
+}
+#VER B 252 20210326 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+}
+#VER B 253 20210326 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 254 20210326 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -1750.00
+#TRANS 1511 {} 1750.00
+}
+#VER B 255 20210327 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -1830.00
+#TRANS 1511 {} 1830.00
+}
+#VER B 256 20210327 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 257 20210328 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 258 20210329 "Turtle Pay avr„kning"
+{
+#TRANS 1930 {} 15300.00
+#TRANS 1511 {} -15300.00
+}
+#VER B 259 20210329 "Minitennis VT-2021"
+{
+#TRANS 3022 {} -2070.00
+#TRANS 1511 {} 2070.00
+}
+#VER B 260 20210330 "Turtle Pay avr„kning"
+{
+#TRANS 1930 {} 2070.00
+#TRANS 1511 {} -2070.00
+}
+#VER B 261 20210330 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+}
+#VER B 262 20210331 "Turtle Pay avr„kning"
+{
+#TRANS 1930 {} 3050.00
+#TRANS 1511 {} -3050.00
+}

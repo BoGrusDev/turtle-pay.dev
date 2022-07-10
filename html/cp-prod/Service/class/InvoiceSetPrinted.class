@@ -1,0 +1,32 @@
+<?php
+/*
+    Class InvoiceSetPrinted
+
+	Date: 2018-10-04
+
+	Call:
+	{
+		"_action" : "InvoiceSetPrinted"
+	}
+
+	Reply:
+	{
+    	"code": "1"
+	}
+
+*/
+
+class InvoiceSetPrintedClass extends ActionBase {
+
+	public function Run($data) {
+
+		echo $this->invoiceSetPrinted($data);
+
+	}
+
+	private function invoiceSetPrinted($data) {
+		$result = $this->_Update("first_invoice", "invoice_filename", $data->_invoice_filename, $data);
+		return json_encode($result);
+	}
+
+}

@@ -1,0 +1,934 @@
+<?php
+/*
+    PeopleClass
+
+	Date: 2019-04-29
+	
+	Pågende script
+
+	{
+		"_group" : "Tdb",
+		"_action" : "PeopleImport",
+		"_competion_id" : "37766",
+		"_company_id" : "69",
+		"_event_id" : "487"
+	}	
+
+	{
+		"_group" : "Tdb",
+		"_action" : "PeopleImport",
+		"_competion_id" : "37766",
+		"_company_id" : "112",
+		"_event_id" : "493"
+	}	
+
+	https://app.equipe.com/organizers/515/meetings.json
+
+	https://app.equipe.com/meetings/39941/competitions.json
+
+	https://app.equipe.com/meetings/38323/people.json
+
+	https://app.equipe.com/meetings/38323/people/14/economies.json
+		https://app.equipe.com/meetings/39284/people/11/economies.json
+	
+
+	// Test bolaget
+	{
+		"_group" : "Tdb",
+		"_action" : "PeopleImport",
+		"_competion_id" : "38323",
+		"_company_id" : "69",
+		"_event_id" : "517"
+	}	
+
+	{
+    "_group" : "Tdb",
+    "_action" : "PeopleImport",
+    "_competion_id" : "38323",
+    "_company_id" : "112",
+    "_event_id" : "519"
+}	
+
+Current oktober 2
+{
+    "_group" : "Tdb",
+    "_action" : "PeopleImport",
+    "_competion_id" : "39284",
+    "_company_id" : "112",
+    "_event_id" : "537"
+}	
+
+
+*/
+
+class TdbClass extends ActionPortal {
+
+	public function Run($data) {
+
+		$actionMethod = 'action' . $data->_action;
+		echo $this->$actionMethod($data);
+
+	}
+
+	private function _RestApiTdb($param, $companyId) {
+		// Get APIKey form company
+		// SELECT ...
+		$apiKey = 'X-API-KEY';
+		$apiKeyValue = 'nL8K7FxWsp8z1q19UPw6SELn';
+		$tdbUrl = 'https://app.equipe.com/';
+
+		if ($companyId == '69') {
+			$apiKeyValue = 'nL8K7FxWsp8z1q19UPw6SELn';
+		}
+		else if ($companyId == '112') {
+			$apiKeyValue = 'nL8K7FxWsp8z1q19UPw6SELn';
+		}
+		else if ($companyId == '118') {
+			$apiKeyValue = '';
+		}
+
+		/*
+			$sql = "SELECT tdb_key FROM company WHERE company_id=$companyId";
+			$resKey = $this->_Get($sql);
+			$apiKeyValue = $resKey['tdb_key'];	
+		*/
+
+		// echo $tdbUrl . $param; die('');
+
+		$curl = curl_init($tdbUrl . $param);
+		curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+		// curl_setopt($curl,CURLOPT_SSL_VERIFYPEER, false);
+		curl_setopt($curl,CURLOPT_SSL_VERIFYPEER, false);
+		curl_setopt($curl, CURLOPT_HTTPHEADER, array(
+			"$apiKey : $apiKeyValue"
+		));
+		$result = curl_exec($curl);
+		if (curl_errno($curl)) {
+			$error_msg = curl_error($curl);
+			print_r($error_msg);
+			die('stop');
+		}
+		
+		curl_close($curl);
+		return json_decode($result);
+	}
+
+	private function actionCompetionsList($data) {
+		/*
+			Get the compentions for a organization and return all 
+			that today day no expieer
+
+			https://app.equipe.com/organizers/515/meetings.json
+
+			prodOn means get from API else get from local file
+
+			{
+				"_group" : "Tdb",
+				"_action" : "CompetionsList",
+				"_tdb_orgno" : "515",
+				"_company_id" : "69"
+			}	
+		*/
+		$prodOn = true;
+        $today = date('Y-m-d');
+
+		if ($prodOn) {
+			$list = $this->_RestApiTdb('organizers/' . $data->_tdb_orgno . '/meetings.json', $data->_company_id );
+		}
+		else {
+			$list = json_decode(file_get_contents("meetings.json")); 
+		}
+			
+        $reply = array();
+        for ($i=0; $i<sizeof($list); $i++) {
+            if (date($list[$i]->starts_on) > $today) {
+                $record = new stdClass();
+                $record->id = $list[$i]->id;
+                $record->name = $list[$i]->name;
+                $record->start_on = $list[$i]->starts_on;
+                $record->ends_on = $list[$i]->ends_on;
+                array_push($reply, $record);
+            }
+        }
+        return json_encode($reply);
+	}
+	
+    private function actionCompetion($data) {
+		/*
+			Get a list of all clsses for a special competion
+
+			https://app.equipe.com/meetings/37076/competitions.json
+			https://app.equipe.com/meetings/37076/competions.json
+	
+			prodOn means get from API else get from local file
+
+			{
+				"_group" : "Tdb",
+				"_action" : "Competion",
+				"_competion_id" : "37076",
+				"_company_id" : "69"
+			}
+		*/
+		$prodOn = true;
+      
+		if ($prodOn) {
+			$list = $this->_RestApiTdb('meetings/' . $data->_competion_id . '/competitions.json', $data->_company_id );
+		}
+		else {
+			$list = json_decode(file_get_contents("meeting.json")); 
+		}
+        $reply = array();
+        for ($i=0; $i<sizeof($list); $i++) {
+            $record = new stdClass();
+            $record->comp_no = $list[$i]->kq;
+            $record->klass = $list[$i]->klass;
+            $record->datum = $list[$i]->datum;
+            $record->anm = $list[$i]->anm;
+			$record->sta = $list[$i]->sta;
+			$record->anb = $list[$i]->anb;
+			$record->stb = $list[$i]->stb;
+			$record->eanma = $list[$i]->eanma;
+			$record->eanmb = $list[$i]->eanmb;
+			$record->clabb = $list[$i]->clabb;
+            array_push($reply, $record);
+        }
+
+        return json_encode($reply);
+
+	}
+
+	private function actionTdbEventCreate($data) {
+		
+		/*
+			{
+				"_group" : "Tdb",
+				"_action" : "TdbEventCreate",
+				"_company_id" : "69",
+				"event_name" : "Allhelgonahoppet",
+				"_competion_id" : "39941",
+				"_people_id" : "1"
+			}
+        */
+
+        $data->_template_id = 437; // Mall for TDB 437 (Test), prod ()
+
+		// -- 
+		// -- Create the url 
+		// --
+		$url =  strtolower($data->event_name);
+		$url = trim($url);
+		$url = str_replace("å","a",$url);
+		$url = str_replace("Å","a",$url);
+		$url = str_replace("ä","a",$url);
+		$url = str_replace("Ä","a",$url);
+		$url = str_replace("ö","o",$url);
+		$url = str_replace("Ö","o",$url);
+		$url = str_replace(' ', '-', $url); 
+		$url = preg_replace('/[^A-Za-z0-9\-]/', '', $url); 
+		$url = str_replace('----', '-', $url); 
+		$url = str_replace('---', '-', $url); 
+		$url = str_replace('--', '-', $url); 
+		
+		$eventName = $data->event_name;
+		$eventName = trim($eventName);
+
+		$sql = "SELECT known_as, wa_logo, wa_url FROM company WHERE company_id = $data->_company_id";
+		$companyInfo = $this->_GET($sql);
+
+		$sql = "SELECT * FROM event_v4 WHERE event_id= $data->_template_id";
+		$template = $this->_GET($sql);
+
+		// --
+		// -- Remove cells
+		unset($template['event_id']);
+		unset($template['code']);
+		unset($template['start_date']);
+		unset($template['end_date']);
+
+		unset($template['parent_on']);
+		unset($template['child_on']); 
+		unset($template['base_event_id']);
+		unset($template['inherit_event_id']);
+		unset($template['inherit_mobile_on']);
+		unset($template['inherit_infobox_1_on']);
+		unset($template['inherit_infobox_2_on']);
+		unset($template['inherit_part_on']); 
+
+		$template['event_name'] = $eventName;
+		$template['event_url'] = $url;
+		$template['wa_url'] = $companyInfo['wa_url'];
+		$template['create_date'] = Date('Y-m-d');
+		$template['note_on'] = 'y';
+		$template['note_label'] = 'Häst';
+		// echo $template['create_date']; die('');
+
+		$template['event_status'] = 'p';
+		$template['header_title'] = $companyInfo['known_as'];
+
+	
+		$template['header_image_on'] = 'n';
+		$template['company_id'] = $data->_company_id;
+
+		$introText = $template['intro_text'];
+		$introText = str_replace("'", "", $introText);
+		$introText = str_replace('"', '', $introText);
+		$template['intro_text'] = $introText;
+        
+		$template['ref'] = 'TDB - Anmälan';
+    
+		$reply = $this->_Insert("event_v4", $template);
+
+		$param = new stdClass();	
+		$param->base_event_id = $reply['id'];
+		$param->tdb_on = 'y';
+		$param->tdb_competion_no = $data->_competion_id;
+		$res = $this->_Update('event_v4', 'event_id',$reply['id'], $param);
+		
+        $eventId = $reply['id']; 
+
+        $param = new stdClass();
+        $param->_competion_id = $data->_competion_id;
+		$param->_company_id = $data->_company_id;
+        $selection = $this->actionCompetion($param);
+        $selection =  json_decode($selection); 
+		
+		$fees = array("anm", "sta", "anb", "stb", "eanma", "eanmb");
+        for ($i=0; $i<sizeof($selection); $i++) {
+            // anm, sta, anb, stb, eanma, eanmb
+			foreach ($fees as $fee) {
+				if (is_numeric($selection[$i]->$fee)) {
+					$value = $selection[$i]->$fee;
+				}
+				else {
+					$value = '0';
+				}
+				if ($value > 0) {
+					$selection[$i]->klass = str_replace('  ', ' ', $selection[$i]->klass);
+					$selection[$i]->klass = str_replace('   ', ' ', $selection[$i]->klass);
+					$selection[$i]->klass = str_replace('    ', ' ', $selection[$i]->klass);
+					$selection[$i]->clabb = trim($selection[$i]->clabb);
+					switch ($fee) {
+						case 'anm':
+							$textSelection = $selection[$i]->clabb . ' - ' . trim($selection[$i]->klass);
+							$externalId = trim($selection[$i]->clabb) . '-anm';
+							$textOption = 'Anmäld ' . $selection[$i]->clabb . ' - ' . trim($selection[$i]->klass);
+							$this->selectionOptionWrite($value, $textSelection, $textOption, $externalId, $eventId);
+							break;
+						case 'anb':	
+							$textSelection = $selection[$i]->clabb . 'B - ' . trim($selection[$i]->klass);
+							$externalId = trim($selection[$i]->clabb) . '-anm';
+							$textOption = 'Anmäld ' . $selection[$i]->clabb . 'B - ' . trim($selection[$i]->klass);
+							$this->selectionOptionWrite($value, $textSelection, $textOption, $externalId, $eventId);
+							break;
+						
+						case 'eanma':
+							$textSelection = $selection[$i]->clabb . ' - ' . trim($selection[$i]->klass) . ' (Efteranmälan)';
+							$externalId = trim($selection[$i]->clabb) . '-eanma';
+							$textOption = 'Efteranmälan ' . $selection[$i]->clabb . ' - ' . trim($selection[$i]->klass);
+							$this->selectionOptionWrite($value, $textSelection, $textOption, $externalId, $eventId);
+							break;
+
+						case 'eanmb':	
+							$textSelection = $selection[$i]->clabb . 'B- ' . trim($selection[$i]->klass) . ' (Efteranmälan)';
+							$externalId = trim($selection[$i]->clabb) . '-eanma';
+							$textOption = 'Efteranmälan ' . $selection[$i]->clabb . 'B - ' . trim($selection[$i]->klass);
+							$this->selectionOptionWrite($value, $textSelection, $textOption, $externalId, $eventId);
+							break;
+
+
+						default:
+							# code...Efteranmälan
+							break;
+					}
+				}	
+			}	
+		}
+		$textSelection = 'Rabatt';
+		$externalId = 'discount';
+		$textOption = 'Rabatt';
+		$this->selectionOptionWrite('0', $textSelection, $textOption, $externalId, $eventId);
+
+
+		$reply = $this->inheritOptionUpdate($eventId, $data->_company_id, $data->_people_id);
+		return json_encode($reply);
+	}
+
+	function selectionOptionWrite($value, $textSelection, $textOption, $externalId, $eventId ) {
+	
+		$paramSelection = new stdClass();
+		$paramSelection->event_id = $eventId;
+		$paramSelection->text = $textSelection; //  . ' (' . $selection[$i]->anm . 'kr)';
+		//$paramSelection->sortorder =  $;
+		$paramSelection->required_on = 'n';
+		$paramSelection->external_id = $externalId;
+	
+		$resSelection = $this->_Insert('event_selection_setting', $paramSelection);
+	
+		$currentSelectionId = $resSelection['id'];
+		$param = new stdClass();
+		$param->group_selection_setting_id = $currentSelectionId;
+		$this->_Update('event_selection_setting', 'event_selection_setting_id', $currentSelectionId, $param);
+
+		$paramOption = new stdClass();
+		$paramOption->event_selection_setting_id = $resSelection['id'];
+		$paramOption->text = $textOption;
+		$paramOption->value = '0';
+		$paramOption->sortorder = 100;
+		$paramOption->max_on = 'n';
+		$paramOption->max_number = 0;
+	
+		$paramOption->value_text = $value;
+		$resOption = $this->_Insert('event_option_setting', $paramOption);
+		
+	}
+
+    private function inheritOptionUpdate($eventIdMain, $companyId, $peopleId) {
+        
+		$paramInherit = new stdClass(); 
+        $paramInherit->_group = 'Event';
+        $paramInherit->_action = 'EventInherit';
+        $paramInherit->_company_id = $companyId;
+        $paramInherit->_people_id = $peopleId;
+        $paramInherit->_source_event_id = $eventIdMain;
+        $paramInherit->_ref = 'TDB - Betalning';
+        $paramInherit->_inherit_part = 'y';
+
+		$reply = json_decode($this->_RestApiCall(json_encode($paramInherit), KAPI_URL ));
+        
+		$eventId = $reply->id;
+		$paramEventUpdate = new stdClass();
+		$paramEventUpdate->note_on = 'y';
+		$paramEventUpdate->note_label = 'Häst';
+		$res = $this->_Update('event_v4', 'event_id', $eventId, $paramEventUpdate);
+
+        $sql = "SELECT event_selection_setting_id, text FROM event_selection_setting WHERE event_id = $eventId";
+        $selections = $this->_GetList($sql);
+        for ($i=0; $i<sizeof($selections); $i++) {
+            $sql = "SELECT event_option_setting_id, value, value_text FROM event_option_setting ";
+            $sql .= "WHERE event_selection_setting_id = " . $selections[$i]['event_selection_setting_id'];
+			// Only handle one option
+            $option = $this->_Get($sql);
+			$paramUpdate = new stdClass();
+			$paramUpdate->value = $option['value_text'];
+			// $paramUpdate->text = 'Betalning (' . $option['value_text'] . 'kr)';
+			$paramUpdate->text = $selections[$i]['text'] . ' (' . $option['value_text'] . 'kr)';
+            $replyUpdate = $this->_Update('event_option_setting', 'event_option_setting_id', $option['event_option_setting_id'], $paramUpdate);
+        } 
+
+		return $reply;		
+    }
+
+	private function actionPeopleImport($data) {
+		/*
+			Get ALL the people invold in the competions,
+			this include officials, refere,rider and payer.
+		
+			https://app.equipe.com/meetings/37076/people.json
+
+			prodOn means get from API else get from local file
+
+			{
+				"_group" : "Tdb",
+				"_action" : "PeopleImport",
+				"_competion_id" : "39941",
+				"_company_id" : "69",
+				"_event_id" : "554"
+			}	
+		*/
+		
+		
+		$sql = "SELECT tdb_competion_no FROM event_v4 WHERE event_id = $data->_event_id";
+		$resId = $this->_Get($sql);
+		$data->_competion_id = $resId['tdb_competion_no'];
+
+		
+		$log = array();
+		$logDiscount = array();
+		$logError = 'n';
+		$prodOn = true;
+        $logPrice = array();
+		if ($prodOn) {
+			$list = $this->_RestApiTdb('meetings/' . $data->_competion_id . '/people.json', $data->_company_id );
+		}
+		else {
+			$list = json_decode(file_get_contents("people.json")); 
+		}
+			
+		// echo json_encode($list); die('');
+		
+	
+		$people = array();
+		$riderName = array();
+		for ($i=0; $i<sizeof($list); $i++) {	
+			$riderNameRecord = new stdClass();
+			$riderNameRecord->rnr = $list[$i]->rnr;
+			$riderNameRecord->first_name = $list[$i]->first_name; // Ryttare
+			$riderNameRecord->last_name = $list[$i]->last_name; // Ryttare
+			// array_push($riderName, $riderNameRiderRecord);
+			$riderName[$list[$i]->rnr] = $riderNameRecord;
+		}
+		for ($i=0; $i<sizeof($list); $i++) {	
+			//if ($list[$i]->rnr == 39 ) {
+				$eco = $this->getEconomies($data->_competion_id, $list[$i]->rnr, $data->_company_id);
+				//print_r($eco); die('');
+				$list[$i]->eco = $eco;
+				if (sizeof($eco->economies) > 0) {
+					$eco->horse_num = array();
+					$eco->horse_name = array();
+					for ($j=0; $j<sizeof($eco->economies); $j++) {
+						$new = true;
+						if (sizeof($eco->horse_num) > 0) {
+							for ($k=0; $k<sizeof($eco->horse_num); $k++) {
+								if ($eco->horse_num[$k] == $eco->economies[$j]->horse_num) {
+									$new = false;
+								}
+							}
+						}
+						if ($new) {
+							array_push($eco->horse_num, $eco->economies[$j]->horse_num);
+							array_push($eco->horse_name, $eco->economies[$j]->horse_name);
+						}
+					}
+					
+					if (sizeof($eco->horse_num) > 0) {
+						for ($k=0; $k<sizeof($eco->horse_num); $k++) {
+
+							$horseName = $eco->horse_num[$k];
+							$record = new stdClass();
+							//$record->_rnr = $list[$i]->rnr;
+							
+							$record->rnr = $list[$i]->rnr;
+
+							$record->first_name = $list[$i]->first_name; // Ryttare
+							$record->last_name = $list[$i]->last_name; // Ryttare
+
+							$record->mobile = $list[$i]->cell_phone; 	
+							$record->invoice_recipient = $list[$i]->last_name . ' ' . $list[$i]->first_name;
+							$record->horse_name = $eco->horse_name[$k];
+							$record->horse_id = $eco->horse_num[$k];
+							$record->epost = $list[$i]->epost; 
+							$record->company = $list[$i]->company;
+							$record->option = array(); 
+							
+							for ($l=0; $l<sizeof($eco->economies); $l++) {
+								if ($record->horse_id == $eco->economies[$l]->horse_num ) {
+									if ($eco->economies[$l]->amount > 0 || $eco->economies[$l]->amount < 0) {
+										$optionRecord = new stdClass();
+										$optionRecord->fee_type = $eco->economies[$l]->fee_type;
+										$optionRecord->qty = $eco->economies[$l]->qty;
+										if ($eco->economies[$l]->fee_type == 'entry') {
+											$optionRecord->amount = $eco->economies[$l]->amount;
+											$optionRecord->competition_no = trim($eco->economies[$l]->competition_no) . '-anm';	
+											if( $eco->economies[$l]->rnr != $eco->economies[$l]->realrnr) {
+												$record->first_name = $riderName[$eco->economies[$l]->realrnr]->first_name; // Ryttare
+												$record->last_name = $riderName[$eco->economies[$l]->realrnr]->last_name; // Ryttare
+											}
+											array_push($record->option, $optionRecord);
+										}
+										else if ($eco->economies[$l]->fee_type == 'late_entry') {
+											$optionRecord->amount = $eco->economies[$l]->amount;
+											$optionRecord->competition_no = trim($eco->economies[$l]->competition_no) . '-eanma';	
+											if( $eco->economies[$l]->rnr != $eco->economies[$l]->realrnr) {
+												$record->first_name = $riderName[$eco->economies[$l]->realrnr]->first_name; // Ryttare
+												$record->last_name = $riderName[$eco->economies[$l]->realrnr]->last_name; // Ryttare
+											}
+											array_push($record->option, $optionRecord);
+										}
+										else if ($eco->economies[$l]->fee_type == 'meeting') {
+											$optionRecord->amount = $eco->economies[$l]->amount;
+											$optionRecord->competition_no = trim($eco->economies[$l]->competition_no) . '-meeting';
+											$record->first_name = $riderName[$eco->economies[$l]->realrnr]->first_name; // Ryttare
+											$record->last_name = $riderName[$eco->economies[$l]->realrnr]->last_name; // Ryttare
+											array_push($record->option, $optionRecord);
+										}									
+										else if ($eco->economies[$l]->fee_type == 'discount') {
+											$optionRecord->amount = $eco->economies[$l]->amount;
+											$optionRecord->competition_no = trim($eco->economies[$l]->competition_no) . 'discount';
+											//$record->first_name = $riderName[$eco->economies[$l]->realrnr]->first_name; // Ryttare
+											//$record->last_name = $riderName[$eco->economies[$l]->realrnr]->last_name; // Ryttare
+											/*
+												$logRecord = new stdClass();
+												$logRecord->rnr = $list[$i]->rnr;
+												$logRecord->first_name = $list[$i]->first_name;
+												$logRecord->last_name = $list[$i]->last_name;
+												$logRecord->horse_name = trim($horseName[$j]);
+												$logRecord->horse_id = $list[$i]->horse_ids[$j];
+												$logRecord->discount = $eco->economies[$k]->amount;
+												array_push($logDiscount, $logRecord);			
+												$logError = 'n';
+											*/
+											array_push($record->option, $optionRecord);
+										}
+										
+										/*
+										else if ($eco->economies[$l]->fee_type == 'prize_money') {
+
+											// $optionRecord->amount = $eco->economies[$k]->amount;
+											// $optionRecord->competition_no = $eco->economies[$k]->competition_no . 'discount';
+											$priceRecord = new stdClass();
+											$priceRecord->fee = $eco->economies[$l]->fee_type;
+											$priceRecord->first_name = $list[$i]->first_name;
+											$priceRecord->last_name = $list[$i]->last_name;
+											$priceRecord->horse_name =$eco->economies[$l]->horse_name;
+											$priceRecord->desc = $eco->economies[$l]->description;
+											$priceRecord->amount = $eco->economies[$l]->amount;
+											array_push($logPrice, $priceRecord);			
+											//print_r($priceRecord);
+											// print_r($logPrice);
+											//die('');
+										}
+										*/
+										else {
+											/*
+													echo "Fee not exits : " . $eco->economies[$k]->fee_type; die('');
+												
+												$logRecord = new stdClass();
+												$logRecord->message = "Fee type not exist";
+												$logRecord->people = $list[$i]; 
+												$logRecord->eco = $eco;
+												//$errorRecord->echoPayers = $ecoPayers;
+												array_push($log, $logRecord);		
+												$logError = 'y';
+												print_r($logRecord);
+												die('');
+											*/	
+										}
+										
+										
+									}
+								}
+							}
+							array_push($people, $record);
+						}
+						
+					}
+				}
+			//}
+		} // Double for trace
+		//echo json_encode($logPrice); 
+		//die('');
+		//echo json_encode($logDiscount); 
+		//die('');
+
+		//echo json_encode($riderName[86]); 
+		//die(''); 
+		//echo json_encode($people); 
+		//echo json_encode($list); 
+		//die(''); 
+
+		//if ($logError == 'y') { 
+			//echo json_encode($log);
+			//die('log');
+		//}
+		//else {
+		//echo json_encode($people);  
+		//die('');
+		//}
+		$peopleCounter = sizeof($people);
+		$people = $this->peoplePreChec($people, $data->_event_id) ;
+		
+		//echo json_encode($logDiscount);
+		//echo json_encode($people); 
+		//die('');
+
+		$reply = $this->peopleProcess($people, $data->_event_id, $data->_company_id);
+
+		$tdbLog = new stdClass();
+		$tdbLog->reply = 
+
+		$reply->code = '1';
+		$reply->total = $peopleCounter;
+		
+
+		$tdbLog = new stdClass();
+		$tdbLog->reply = $reply;
+		$tdbLog->people = $people;
+		$tdbLog->list = $list;
+
+		 
+		$logname = 'tdb-' . $data->_event_id . '-' .  date("Y-m-d") . time() . '.json'; 
+
+		$fp = fopen('tdb-log/' . $logname , 'w');
+		fwrite($fp, json_encode($tdbLog));
+		fclose($fp);
+
+		$param = new stdClass();
+		$param->tdb_last = date("Y-m-d H:i");
+		$this->_Update('event_v4', 'event_id', $data->_event_id, $param);
+		return json_encode($reply);
+
+	}
+
+	private function peoplePreChec($people, $eventId) {
+		// Return list of new
+		$peopleNew = array();
+		for ($i=0; $i<sizeof($people); $i++ ) {
+			//
+			// Check if exist
+			//
+			$peopleOption = $people[$i]->option;			
+			for ($j=0; $j<sizeof($people[$i]->option); $j++) {
+				// remove alerady booked
+				$sql = "SELECT p.event_participant_id ";
+				$sql .= "FROM event_participant p, event_item_v4 ei, event_option o, ";
+				$sql .= "event_selection_setting ss, event_option_setting os ";
+				$sql .= "WHERE "; 
+				$sql .= 'p.note = "' . $people[$i]->horse_name . '" AND '; 
+				// $sql .= 'p.first_name = "' . $people[$i]->first_name . '" AND '; 
+				// $sql .= 'p.last_name = "' . $people[$i]->last_name . '" AND '; 
+				$sql .= "p.event_item_id = ei.event_item_id AND ei.event_id = $eventId AND ";
+				$sql .= "p.event_participant_id = o.event_participant_id AND ";
+				$sql .= "o.event_option_setting_id = os.event_option_setting_id AND ";
+				$sql .= "ss.event_selection_setting_id = os.event_selection_setting_id AND ";
+				$sql .= "ss.external_id = '" . $people[$i]->option[$j]->competition_no . "' AND "; // . "' AND ";
+				$sql .= "o.value_text = " . $people[$i]->option[$j]->amount;
+				//echo $sql; // die('');
+				$resCheck = $this->_Get($sql);
+				if ($resCheck['code'] == '1') {
+					unset($peopleOption[$j]); 
+				}
+				else if ( $people[$i]->option[$j]->amount == 0) {
+					unset($peopleOption[$j]); 
+				}
+				
+			}
+			$people[$i]->option = array_values($peopleOption);
+			
+			if (sizeof($people[$i]->option) > 0) {
+				array_push($peopleNew, $people[$i]);	
+			}
+		}
+		//echo json_encode($peopleNew); 
+		return $peopleNew;
+	}
+
+	private function peopleProcess($people, $eventId, $companyId) {
+		$log = array();
+		$counter = 0;
+		$counterSkipped = 0;
+		// Get events selections
+		$sql = "SELECT o.event_option_setting_id, o.event_selection_setting_id, s.text, o.text, o.value, o.value_text, s.external_id ";
+		$sql .= "FROM event_option_setting o, event_selection_setting s ";
+		$sql .= "WHERE o.event_selection_setting_id = s.event_selection_setting_id ";
+		$sql .= "AND s.event_id = $eventId ";
+		$sql .= "ORDER BY o.event_selection_setting_id ";
+
+		$options = $this->_GetList($sql);
+		
+		//print_r($people);
+		//print_r($options); 
+		//die('');
+		for ($i=0; $i<sizeof($people); $i++ ) {
+			//
+			// Check if exist
+			//
+			/*
+				$peopleOption = $people[$i]->option;			
+				for ($j=0; $j<sizeof($people[$i]->option); $j++) {
+					// remove alerady booked
+					$sql = "SELECT p.event_participant_id ";
+					$sql .= "FROM event_participant p, event_item_v4 ei, event_option o, ";
+					$sql .= "event_selection_setting ss, event_option_setting os ";
+					$sql .= "WHERE "; 
+					$sql .= 'p.note = "' . $people[$i]->horse_name . '" AND '; 
+					$sql .= 'p.first_name = "' . $people[$i]->first_name . '" AND '; 
+					$sql .= 'p.last_name = "' . $people[$i]->last_name . '" AND '; 
+					$sql .= "p.event_item_id = ei.event_item_id AND ei.event_id = $eventId AND ";
+					$sql .= "p.event_participant_id = o.event_participant_id AND ";
+					$sql .= "o.event_option_setting_id = os.event_option_setting_id AND ";
+					$sql .= "ss.event_selection_setting_id = os.event_selection_setting_id AND ";
+					$sql .= "ss.external_id = '" . $people[$i]->option[$j]->competition_no . "' AND ";
+					$sql .= "o.value = " . $people[$i]->option[$j]->amount;
+					//echo $sql; die('');
+					$resCheck = $this->_Get($sql);
+				
+					if ($resCheck['code'] == '1') {
+						unset($peopleOption[$j]); 
+					}
+					//die('');
+			}
+
+			$people[$i]->option = array_values($peopleOption);
+			
+			if (sizeof($people[$i]->option) > 0) {
+			*/
+				$paramRequest = new stdClass();
+				$paramRequest->company_id = $companyId;
+				$paramRequest->approved_code = $this->createGUID();
+				$paramRequest->source = "se"; // server
+				$paramRequest->device = "api";
+				$paramRequest->denied_code = "tdb";
+				$paramRequest->invoice_request_status = 'c';
+				$resInvoiceRequest = $this->_Insert('invoice_request', $paramRequest);
+			
+				$counter++;
+				$paramEventItem = new stdClass();
+				$paramEventItem->event_id = $eventId;
+				$paramEventItem->approved_code = $paramRequest->approved_code;
+				$paramEventItem->people_id = '2'; // TDB-user
+				$paramEventItem->people_name = $people[$i]->invoice_recipient; // $people[$i]->last_name . ' ' . $people[$i]->first_name;
+				$paramEventItem->email = $people[$i]->epost;
+				$paramEventItem->referens = 'TDB anmälan';
+				// $paramEventItem->infobox_1 = trim($people[$i]->horse_name);
+				$paramEventItem->amount = '0';
+				$paramEventItem->event_item_status = 'c';
+				$resEventItem = $this->_Insert('event_item_v4', $paramEventItem);
+
+				if ($resEventItem['code'] == '1') {
+					$paramParticipant = new stdClass();
+					$paramParticipant->event_item_id = $resEventItem['id'];
+					$paramParticipant->first_name = $people[$i]->first_name;
+					$paramParticipant->last_name = $people[$i]->last_name;
+					$paramParticipant->note = $people[$i]->horse_name;
+					$paramParticipant->event_participant_status = 'c';
+					$resParticipant = $this->_Insert('event_participant', $paramParticipant);
+					$paramUpdate = new stdClass();
+					$paramUpdate->base_participant_id = $resParticipant['id'];
+					$this->_Update('event_participant', 'event_participant_id', $resParticipant['id'], $paramUpdate);
+
+					for ($j=0; $j<sizeof($people[$i]->option); $j++) {
+						$paramOption = new stdClass();
+						$paramOption->event_participant_id = $resParticipant['id'];
+						$paramOption->value = '0';
+						$paramOption->event_option_status = 'c';
+						
+						$isOk = false;
+						$isFound = false;
+						$firstOptionSettingId = 0; // only as a declaration
+						for ($k=0; $k<sizeof($options); $k++) {
+							if ($isOk == false) {
+								if ($options[$k]['external_id'] == $people[$i]->option[$j]->competition_no) {
+									$isFound = true;
+									$firstOptionSettingId = $options[$k]['event_option_setting_id'];
+									// echo $options[$k]['value_text'] . ' -- ' . $people[$i]->option[$j]->amount;
+									if ($options[$k]['value_text'] == $people[$i]->option[$j]->amount) {
+										$paramOption->event_option_setting_id = $options[$k]['event_option_setting_id'];
+										$paramOption->value_text = $people[$i]->option[$j]->amount;
+										$isOk = true;
+										// print_r($paramOption); echo "OK " . $isOk;
+									}										 
+									else if ($options[$k]['external_id'] == 'discount') {
+										$paramOption->event_option_setting_id = $options[$k]['event_option_setting_id'];
+										$paramOption->value_text = $people[$i]->option[$j]->amount;
+										$isOk = true;
+									}
+								}
+							}
+						}
+						if ($isFound == true && $isOk == false) {
+							$paramOption->value_text = $people[$i]->option[$j]->amount;
+							$paramOption->event_option_setting_id = $firstOptionSettingId;
+							$isOk = true;
+						}
+						
+						if ($isOk == true) {
+							//print_r($options);
+							$resOption = $this->_Insert('event_option', $paramOption);
+						}
+						else {
+							$logRecord = new stdClass();
+							if ($isFound == true) {
+								$logRecord->isFound = 'true';
+							}
+							else {
+								$logRecord->isFound = 'false';
+							}
+							$logRecord->people[$i] = $resEventItem['id'];
+							$logRecord->people = $people[$i];
+							$logRecord->message = 'External id no match';
+							array_push($log, $logRecord);
+						}
+					}
+				}
+				else {
+					print_r($paramEventItem);
+					print_r($resEventItem); 
+					print_r($log);
+					die('code not 0 - line 349');
+				}
+			//}
+			//else {
+			//	$counterSkipped++;
+			//}
+		}
+		$reply = new stdClass();
+		$reply->counter = $counter;
+		// $reply->skipped = $counterSkipped;
+		$reply->log = $log;
+		//print_r($reply); die('');
+		return $reply;
+	}
+
+	private function getEconomies($competionId, $peopleId, $companyId) {
+		// https://app.equipe.com/meetings/37076/people/7/economies.json
+
+		$res = $this->_RestApiTdb('meetings/' . $competionId . '/people/' . $peopleId . '/economies.json', $companyId );
+
+		return $res;
+	}
+
+    private function eventSelectionCopy($toEventId, $fromEventId) {
+	
+		//	private function actionEventSelectionCopy($data) {
+		// $toEventId = $data->toEventId;
+		// $fromEventId = $data->fromEventId;
+
+		$sql = "SELECT event_selection_setting_id, text, sortorder FROM event_selection_setting WHERE event_id = $fromEventId";
+		$selections = $this->_GetList($sql);
+		if (sizeof($selections) > 0) {
+			for ($i=0; $i<sizeof($selections); $i++) {
+				$paramSelection = new stdClass();
+				$paramSelection->event_id = $toEventId;
+				$paramSelection->text =  $selections[$i]['text'];
+				$paramSelection->sortorder =  $selections[$i]['sortorder'];
+				$resSelection = $this->_Insert('event_selection_setting', $paramSelection);
+				$fromSelectionId = $selections[$i]['event_selection_setting_id'];
+				$currentSelectionId = $resSelection['id'];
+
+				$param = new stdClass();
+				$param->group_selection_setting_id = $currentSelectionId;
+				$this->_Update('event_selection_setting', 'event_selection_setting_id', $currentSelectionId, $param);
+
+				$sql = "SELECT text, value, sortorder, max_on, max_number FROM event_option_setting WHERE event_selection_setting_id = " . $fromSelectionId;
+				$options = $this->_GetList($sql);
+				
+				if (sizeof($options) > 0) {
+					for ($j=0; $j<sizeof($options); $j++) {
+						$paramOption = new stdClass();
+						$paramOption->event_selection_setting_id = $currentSelectionId;
+						$paramOption->text = $options[$j]['text'];
+						$paramOption->value = $options[$j]['value'];
+						$paramOption->sortorder = $options[$j]['sortorder'];
+						$paramOption->max_on = $options[$j]['max_on'];
+						$paramOption->max_number = $options[$j]['max_number'];
+
+						$resOption = $this->_Insert('event_option_setting', $paramOption);
+					}
+				}
+			}
+		}
+
+		
+
+	}
+
+	function createGUID(){
+		// Return 2F8672B9-1BB8-2FFA-C56D-C5F8E8946FEF
+		if (function_exists('com_create_guid')){
+			return com_create_guid();
+		}	else{
+			mt_srand((double)microtime()*10000);//optional for php 4.2.0 and up.
+			$charid = strtoupper(md5(uniqid(rand(), true)));
+			$hyphen = chr(45);// "-"
+			//$uuid = chr(123)// "{"
+			$uuid =
+				substr($charid, 0, 8).$hyphen
+				.substr($charid, 8, 4).$hyphen
+				.substr($charid,12, 4).$hyphen
+				.substr($charid,16, 4).$hyphen
+				.substr($charid,20,12);
+			return $uuid;
+		}
+	}
+
+}

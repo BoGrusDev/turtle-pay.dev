@@ -1,0 +1,156 @@
+<?php
+
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+
+/*
+    SELECT t.people_id, p.personal_id_number, p.first_name, p.last_name, p.address, p.postcode, p.city, sum(t.amount) as
+people_sum FROM btrans t, people p WHERE t.trans_type = 'crediting' AND t.account_no = 2981 AND t.company_id = 112 AND
+t.people_id = p.people_id GROUP BY t.people_id, p.personal_id_number, p.first_name, p.last_name, p.address, p.postcode,
+p.city
+*/
+
+
+
+class ControlInfoClass extends ActionPortal {
+    
+    /*
+    {
+        "_group" : "ControlInfo",
+        "_action" : "_"
+        "_people_id" : "1",
+        "_user_id" : "1"
+        "_company_id" : "112",
+        "_date_from" :  "2021-01-01",
+        "_date_to" :  "2021-12-31",
+    }
+    */
+
+    private $companyId;
+    private $dateFrom;
+    private $dateTo;
+    private $peopleList;
+    private $report;
+
+	public function Run($data) {
+
+
+		$actionMethod = 'action' . $data->_action;
+        // Check priveliges
+
+		$sql = "SELECT COUNT(*) principal FROM company_people ";
+        $sql .= "WHERE people_id = $data->_people_id AND company_id = $data->_company_id AND priv IN ('su','pr','ac')";
+		//$sql .= "WHERE people_id = $data->_people_id AND company_id = $data->_company_id AND priv = 'pr'";
+		$result = $this->_Get($sql);
+		if ($result['code'] == '1' && $result['principal'] == '1' ) {
+			echo $this->$actionMethod($data);
+		}
+		else {
+			$reply = new StdClass();
+			$reply->code = "8"; // not allowed
+			echo json_encode($reply);
+		}
+	}
+
+	private function action_($data) {
+        $this->companyId = trim($data->_company_id);
+        $this->dateFrom = trim($data->_date_from);
+        $this->dateTo = trim($data->_date_to);
+        
+        // Get people list
+        $this->peopleList();
+
+        // If has copmapny addresss add it to the people
+        $this->peopleCompanyAddress();        
+        
+        // Create the csv file
+        $this->csvCreate();
+
+        //echo json_encode($this->peopleList);
+
+    }
+            
+    private function peopleList() {
+        /*
+            List of people that have price money paid out and the amount
+        */
+
+        $sql = "SELECT t.people_id, p.personal_id_number, p.first_name, p.last_name, p.address, p.postcode, p.city, sum(t.amount) as people_sum ";
+        $sql .= "FROM btrans t, people p ";
+        $sql .= "WHERE   t.trans_type = 'crediting' AND "; 
+        $sql .= "t.account_no = 2981 AND ";
+        $sql .= "t.company_id = 112 AND ";
+        $sql .= "t.prel = 'n' AND ";
+        $sql .= "t.people_id = p.people_id ";
+        $sql .= "GROUP BY t.people_id, p.personal_id_number, p.first_name, p.last_name, p.address, p.postcode, p.city";
+        $this->peopleList = $this->_GetList($sql);
+
+        // echo $sql; die('');
+    }
+
+    private function peopleCompanyAddress() {
+        /*
+            If person has company address connected, add it to the people record
+            The check check last event-item if it has a company address.
+        */
+        for ($i=0; $i<sizeof($this->peopleList); $i++) {
+            $sql = "SELECT people_company, people_company_address, people_company_postcode, people_company_city FROM event_item_v4 ";
+            $sql .= "WHERE people_id = " . $this->peopleList[$i]['people_id'] . " AND ";
+            $sql .= "people_company_on LIKE 'y'" ;
+            $sql .= "ORDER BY event_item_id DESC LIMIT 1";
+            $people = $this->_Get($sql);
+            if ($people['code'] == '1') {
+                $this->peopleList[$i]['company_on'] = 'y';
+                $this->peopleList[$i]['company_name'] = $people['people_company'];
+                $this->peopleList[$i]['company_address'] = $people['people_company_address'];
+                $this->peopleList[$i]['company_postcode'] = $people['people_company_postcode'];
+                $this->peopleList[$i]['company_city'] = $people['people_company_city'];
+            }
+            else {
+                $this->peopleList[$i]['company_on'] = 'n';
+            }
+        }
+    }
+
+    private function csvCreate() {
+
+		$csvFilename = 'kontroll-uppgift-' . $this->companyId . '.csv'; //  .  date("Y-m-d") . time() . '.json'; 
+		$file = fopen('../bilagor/' . $csvFilename , 'w');
+
+        fwrite($file, 'Personnr,Namn,Adress,Postnr,Ort,Företag,Företagsadress,Företags postadress,Utbetalt' . PHP_EOL);
+        //$header = 'Personnr;Namn;Adress;Postnr;Ort;Företag,Företagsadress;Företags postadress';
+        //fwrite($file, iconv( "UTF-8", "CP437", $header) . '\r\n');
+       
+        for ($i=0; $i<sizeof($this->peopleList); $i++) {
+            $info = $this->peopleList[$i]['personal_id_number'] . ',';
+            $info .= $this->_ReplaceComma($this->peopleList[$i]['last_name']) . ' ' . $this->_ReplaceComma($this->peopleList[$i]['first_name']) . ',';
+            $info .= $this->_ReplaceComma($this->peopleList[$i]['address']) . ',';
+            $info .= $this->peopleList[$i]['postcode'] . ',';
+            $info .= $this->_ReplaceComma($this->peopleList[$i]['city']) . ',';
+            if ($this->peopleList[$i]['company_on'] == 'y') {
+                $info .= $this->_ReplaceComma($this->peopleList[$i]['company_name']) . ',';
+                $info .= $this->_ReplaceComma($this->peopleList[$i]['company_address']) . ',';
+                $info .= $this->_ReplaceComma($this->peopleList[$i]['company_postcode']) . ' ' . $this->_ReplaceComma($this->peopleList[$i]['company_city']) . ',';
+            }
+            else {
+                $info .= ',,,';  
+            }
+            $info .= round($this->peopleList[$i]['people_sum'], 0);
+            fwrite($file, $info . PHP_EOL);
+            //fwrite($file, iconv( "UTF-8", "CP437", $info) . '\r\n');
+        }
+        
+        fclose($file);
+
+		//fwrite($file, iconv( "UTF-8", "CP437", $text) . $eol);
+
+    }
+
+    private function  _ReplaceComma($string) {
+        $string = str_replace(',' , '.', $string);
+        return $string;
+    }
+
+}

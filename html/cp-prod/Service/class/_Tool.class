@@ -1,0 +1,551 @@
+<?php
+/*
+    Class ToolClass
+
+
+*/
+
+class ToolClass extends ActionBase {
+
+	public function Run($data) {
+		$actionMethod = 'action' . $data->_action;
+		echo $this->$actionMethod($data);
+	}
+
+	public function actionGetBooking($data) {
+		/*
+			{
+				"_group" : "Tool",
+				"_action" : "GetBooking",
+				"_booking_id" : "837"
+			}
+		*/
+
+		//print_r($data);
+
+		$sql = "SELECT booking_text, booking_date, booking_type, prel, people_id, company_id, store_id, cr_id, sales_person_people_id, credit_id, refund_id, receipt_number, invoice_filename, ocrno, bank_account, period FROM booking ";
+		$sql .= "WHERE booking_id = $data->_booking_id ";
+		$booking = $this->_Get($sql);
+
+		unset($booking['code']);
+		if ($booking['people_id'] == null) {
+			unset($booking['people_id']);
+		}
+		if ($booking['company_id'] == null) {
+			unset($booking['company_id']);
+		}
+		if ($booking['store_id'] == null) {
+			unset($booking['store_id']);
+		}
+		if ($booking['cr_id'] == null) {
+			unset($booking['cr_id']);
+		}
+		if ($booking['sales_person_people_id'] == null) {
+			unset($booking['sales_person_people_id']);
+		}
+		if ($booking['credit_id'] == null) {
+			unset($booking['credit_id']);
+		}
+		if ($booking['refund_id'] == null) {
+			unset($booking['refund_id']);
+		}
+		if ($booking['receipt_number'] == null) {
+			unset($booking['receipt_number']);
+		}
+		if ($booking['invoice_filename'] == null) {
+			unset($booking['invoice_filename']);
+		}
+		if ($booking['ocrno'] == null) {
+			unset($booking['']);
+		}
+		if ($booking['bank_account'] == null) {
+			unset($booking['ocrno']);
+		}
+		if ($booking['bank_account'] == null) {
+			unset($booking['bank_account']);
+		}
+
+		$sql = "SELECT trans_type, account_no, amount, credit_id, people_id, company_id, prel ";
+		$sql .= "FROM btrans ";
+		$sql .= "WHERE booking_id = $data->_booking_id ";
+		$sql .= "ORDER BY btrans_id";
+
+		$trans = $this->_GetList($sql);
+
+		for ($i=0; $i < sizeof($trans); $i++) {
+			if ($trans[$i]['people_id'] == null) {
+				unset($trans[$i]['people_id']);
+			}
+			if ($trans[$i]['company_id'] == null) {
+				unset($trans[$i]['company_id']);
+			}
+			if ($trans[$i]['credit_id'] == null) {
+				unset($trans[$i]['credit_id']);
+			}
+		}
+
+		$booking['_trans'] = $trans ;
+
+		return json_encode($booking);
+	}
+
+	public function actionCreditBooking($data) {
+		/*
+			{
+				"_group" : "Tool",
+				"_action" : "CreditBooking",
+				"_booking_id" : "837",
+				"booking_date" : "2019-05-04";
+			}
+		*/
+		$param = new stdClass();
+		$param->_group = 'Tool';
+		$param->_action = "GetBooking";
+		$param->_booking_id = $data->_booking_id;
+		$booking = json_decode($this->actionGetBooking($param));
+
+		$booking->booking_text = "Credit Booking";
+    	$booking->booking_date = $data->booking_date;
+    	$booking->booking_type = "cr-booking";
+
+		for ($i=0; $i < sizeof($booking->_trans); $i++) {
+			if ($booking->_trans[$i]->amount < 0 ) {
+				$booking->_trans[$i]->amount = $booking->_trans[$i]->amount * -1;
+			}
+			else if ($booking->_trans[$i]->amount > 0 ) {
+				$booking->_trans[$i]->amount = -$booking->_trans[$i]->amount;
+			}
+			$booking->_trans[$i]->trans_type = 'cr-booking';
+		}
+
+		//print_r($booking);
+
+		$reply = $this->_bookNew($booking);
+
+		print_r($reply);
+
+	}
+
+	public function actionRemoveBooking($data) {
+		/*
+			{
+				"_group" : "Tool",
+				"_action" : "RemoveBooking",
+				"_booking_id" : "783"
+			}
+
+			// Set a booking to pre status x, means not used in any search
+		*/
+
+		$param = array ();
+		$param['prel'] = 'x';
+		$reply = $this->_Update('booking', 'booking_id', $data->_booking_id, $param);
+		$reply = $this->_Update('btrans', 'booking_id', $data->_booking_id, $param);
+
+		return json_encode($reply);
+	}
+
+	public function actionRestoreBooking($data) {
+		/*
+			{
+				"_group" : "Tool",
+				"_action" : "RestoreBooking",
+				"_booking_id" : "783",
+				"prel" : "y"
+			}
+
+			// Set a booking to pre status x, means not used in any search
+		*/
+
+		$param = array ();
+		$param['prel'] = $data->prel;
+		$reply = $this->_Update('booking', 'booking_id', $data->_booking_id, $param);
+		$reply = $this->_Update('btrans', 'booking_id', $data->_booking_id, $param);
+
+		return json_encode($reply);
+	}
+
+	public function actionRebookToVendor($data) {
+		/*
+			{
+				"_group" : "Tool",
+				"_action" : "RebookToVendor",
+				"_booking_id" : "366",
+				"booking_data" : "2019-05-05",
+				"_creddit_fee" : "y"
+			}
+		*/
+			$param = new stdClass();
+			$param->_group = 'Tool';
+			$param->_action = "GetBooking";
+			$param->_booking_id = $data->_booking_id;
+			$booking = json_decode($this->actionGetBooking($param));
+			$newTrans = array();
+			if ($booking->booking_type == "new-credit") {
+				//print_r($booking);
+				$booking->booking_text = "Rebook Credit";
+		    	$booking->booking_date = $data->booking_date;
+		    	$booking->booking_type = "rebook-credit";
+				for ($i=0; $i < sizeof($booking->_trans); $i++) {
+					if ($booking->_trans[$i]->account_no == "1380" &&  $booking->_trans[$i]->trans_type == 'new-credit') {
+						$booking->_trans[$i]->amount = -$booking->_trans[$i]->amount ;
+						$booking->_trans[$i]->trans_type  = "rebook-credit";
+						array_push($newTrans, $booking->_trans[$i]);
+					}
+					else if ($booking->_trans[$i]->account_no == "2981" && $booking->_trans[$i]->trans_type == 'new-credit') {
+						$booking->_trans[$i]->amount = $booking->_trans[$i]->amount * -1;
+						$booking->_trans[$i]->trans_type  = "rebook-credit";
+						array_push($newTrans, $booking->_trans[$i]);
+					}
+				}
+				unset($booking->_trans);
+				$booking->_trans = $newTrans;
+				$reply = $this->_bookNew($booking);
+
+				print_r($reply);
+				//print_r($booking);
+			}
+			else {
+				echo "Not new-credit - type";
+			}
+
+			/*
+
+
+
+			for ($i=0; $i < sizeof($booking->_trans); $i++) {
+				if ($booking->_trans[$i]->amount < 0 ) {
+					$booking->_trans[$i]->amount = $booking->_trans[$i]->amount * -1;
+				}
+				else if ($booking->_trans[$i]->amount > 0 ) {
+					$booking->_trans[$i]->amount = -$booking->_trans[$i]->amount;
+				}
+				$booking->_trans[$i]->trans_type = 'cr-booking';
+			}
+
+			//print_r($booking);
+
+			$reply = $this->_bookNew($booking);
+
+			//print_r($reply);
+			*/
+
+	}
+
+	public function actionRefundCredit($data) {
+		/*
+			{
+				"_group" : "Tool",
+				"_action" : "RefundCreditg",
+				"_booking_id" : "886",
+				"booking_date" : "2019-06-03";
+			}
+
+			Used for return dubbel invoices etc.
+		*/
+		$param = new stdClass();
+		$param->_group = 'Tool';
+		$param->_action = "GetBooking";
+		$param->_booking_id = $data->_booking_id;
+		$booking = json_decode($this->actionGetBooking($param));
+
+		$booking->booking_text = "Refund";
+    	$booking->booking_date = $data->booking_date;
+    	$booking->booking_type = "refund";
+
+		for ($i=0; $i < sizeof($booking->_trans); $i++) {
+			if ($booking->_trans[$i]->amount < 0 ) {
+				$booking->_trans[$i]->amount = $booking->_trans[$i]->amount * -1;
+			}
+			else if ($booking->_trans[$i]->amount > 0 ) {
+				$booking->_trans[$i]->amount = -$booking->_trans[$i]->amount;
+			}
+			if ($booking->_trans[$i]->trans_type == 'new-credit') {
+				$booking->_trans[$i]->trans_type = 'refund';
+			}
+		}
+
+		//print_r($booking);
+
+		$reply = $this->_bookNew($booking);
+
+		print_r($reply);
+
+	}
+
+	public function actionFixPeopleInvoiceEventItem($data) {
+		/*
+			{
+				"_group" : "Tool",
+				"_action" : "FixPeopleInvoiceEventItem",
+				"_credit_date" : "2019-08-01"
+			}
+
+			// Set a booking to pre status x, means not used in any search
+		*/
+
+		$sql = "SELECT i.invoice_event_item_id, c.people_id, CONCAT(p.last_name, ' ' ,p.first_name) AS people_name ";
+		$sql .= "FROM invoice_event_item i, credit c, people p ";
+		$sql .= "WHERE i.people_id IS NULL AND ";
+		$sql .= "i.referens = c.receipt_number AND c.company_id = i.company_id AND ";
+		$sql .= "i.invoice_event_item_status = 'c'  AND c.start_date > '" . $data->_credit_date . "' AND ";
+		$sql .= "p.people_id = c.people_id ";
+		$sql .= "ORDER BY i.invoice_event_item_code ASC ";
+		$result = $this->_GetList($sql);
+
+		//print_r($result);
+		//die('');
+
+		for ($i = 0; $i < sizeof($result); $i++) {
+			$param = array ();
+			$param['people_id'] = $result[$i]['people_id'];
+			$param['people_name'] = $result[$i]['people_name'];
+			//print_r($param);
+			$reply = $this->_Update('invoice_event_item', 'invoice_event_item_id', $result[$i]['invoice_event_item_id'], $param);
+			//print_r($reply); die('');
+		}
+		$reply = new stdClass();
+		$reply->number_of_updated = sizeof($result);
+		echo json_encode($reply);
+
+	}
+
+
+	public function actionFixPeopleInvoiceEventItem2($data) {
+		/*
+			{
+				"_group" : "Tool",
+				"_action" : "FixPeopleInvoiceEventItem2"
+			}
+
+			// Used for New event functionality
+		*/
+
+		$sql = "SELECT i.invoice_event_item_id, p.people_id, CONCAT(p.last_name, ' ' ,p.first_name) AS people_name ";
+		$sql .= "FROM invoice_event_item i, people p ";
+		$sql .= "WHERE i.people_id IS NULL AND i.invoice_event_item_status = 'c' and p.email = i.email ";
+		
+		$result = $this->_GetList($sql);
+
+		// print_r($result); die('');
+
+		for ($i = 0; $i < sizeof($result); $i++) {
+			$param = array ();
+			$param['people_id'] = $result[$i]['people_id'];
+			$param['people_name'] = $result[$i]['people_name'];
+			//print_r($param);
+			$reply = $this->_Update('invoice_event_item', 'invoice_event_item_id', $result[$i]['invoice_event_item_id'], $param);
+			//print_r($reply); die('');
+		}
+		$reply = new stdClass();
+		$reply->number_of_updated = sizeof($result);
+		echo json_encode($reply);
+
+	}
+
+	public function actionSpar($data) {
+	
+		$tidsstampel = date('Y-m-d') . 'T' . date('H:i:s') . ".000";
+		$soapUrl = "https://ext-ws.statenspersonadressregister.se/spar-webservice/SPARPersonsokningService/20160213/";
+		$xml_post_string  = "<?xml version='1.0' encoding='UTF-8'?>";
+		$xml_post_string  .= '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">xxx<Header />';
+		$xml_post_string  .= '<Body>';
+		$xml_post_string  .= '<SPARPersonsokningFraga xmlns="http://skatteverket.se/spar/instans/1.0">';
+		$xml_post_string  .= '<IdentifieringsInformation xmlns="http://skatteverket.se/spar/komponent/1.0">';
+
+		// Prod
+		$xml_post_string  .= '<KundNrLeveransMottagare>513610</KundNrLeveransMottagare>';
+		$xml_post_string  .= '<KundNrSlutkund>513610</KundNrSlutkund>';
+		$xml_post_string  .= '<OrgNrSlutkund>5591016786</OrgNrSlutkund>';
+		$xml_post_string  .= '<UppdragsId>27469</UppdragsId>';
+
+		$xml_post_string  .= '<SlutAnvandarId>Turtle Pay Spar</SlutAnvandarId>';
+		$xml_post_string  .= '<Tidsstampel>' . $tidsstampel . '</Tidsstampel>';
+		$xml_post_string  .= '</IdentifieringsInformation>';
+		$xml_post_string  .= '<PersonsokningFraga xmlns="http://skatteverket.se/spar/komponent/1.0">';
+		$xml_post_string  .= '<PersonId>';
+		$xml_post_string  .= '<FysiskPersonId>' . $data->_personal_id_number . '</FysiskPersonId>';
+		$xml_post_string  .= '</PersonId>';
+		$xml_post_string  .= '</PersonsokningFraga>';
+		$xml_post_string  .= '</SPARPersonsokningFraga>';
+		$xml_post_string  .= '</Body>';
+		$xml_post_string  .= '</Envelope>';
+
+		$headers = array(
+			"Content-type: text/xml;charset=\"utf-8\"",
+			"Accept: text/xml",
+			"Cache-Control: no-cache",
+			"Pragma: no-cache",
+			"Content-length: ".strlen($xml_post_string),
+		);
+
+		$ch = curl_init();
+		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 1);
+		curl_setopt($ch, CURLOPT_URL, $soapUrl);
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+		curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+		curl_setopt($ch, CURLOPT_POST, true);
+		curl_setopt($ch, CURLOPT_POSTFIELDS, $xml_post_string); // the SOAP request
+		curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+
+		// Security settings
+
+		// Prod
+		curl_setopt($ch, CURLOPT_SSLCERT, 'spar-cert.pem');
+		curl_setopt($ch, CURLOPT_SSLCERTPASSWD, 'Yap2018Rut');
+
+		//curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+		//curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+
+
+		$response = curl_exec($ch);
+
+		//echo '<pre>';
+		//print_r($response);
+		//die('');
+
+
+		$response =  str_replace("spako:","", $response);
+		$startPos =  strpos($response,'<SOAP-ENV:Body>') + 15;
+		$response = substr($response, $startPos);
+		$endPos =  strpos($response,'</SOAP-ENV:Body');
+		$response = substr($response, 0, $endPos);
+
+		//echo $response;
+
+		$xml = simplexml_load_string($response) ;
+		return json_encode($xml);
+	
+	}
+
+	private function actionGenerateCode ($data) {
+		/*
+		{
+			"_group" : "Tool",
+			"_action" : "GenerateCode",
+			"_invoice_event_id" : "54"
+		}
+		*/
+
+		$sql = "SELECT * FROM invoice_event_item WHERE invoice_event_id = $data->_invoice_event_id AND invoice_event_item_code IS NULL" ;
+		$items = $this->_GetList($sql);
+		for ($i = 0; $i < sizeof($items); $i++) {
+			$param = new stdclass();
+			$param->invoice_event_item_code = $this->_GUI();
+			$result = $this->_Update("invoice_event_item", "invoice_event_item_id", $items[$i]['invoice_event_item_id'], $param);
+		}
+		echo sizeof($items);
+	}
+
+	private function _GUI(){
+		// Return 2F8672B9-1BB8-2FFA-C56D-C5F8E8946FEF
+		if (function_exists('com_create_guid')){
+			return com_create_guid();
+		}	else{
+			if ((int) phpversion() < 7) {
+				mt_srand((double)microtime()*10000);//optional for php 4.2.0 and up.
+			}
+			else {
+				srand((int) microtime() * 1000000);
+			}
+			$charid = strtoupper(md5(uniqid(rand(), true)));
+			return $charid;
+		}
+	}
+
+	private function actionCompanyOcrnoCreate($data) {
+		/*
+		{
+			"_group" : "Tool",
+			"_action" : "CompanyOcrnoCreate",
+			"_company_id_number" : "5569261539"
+		}
+		*/
+		$ocrno = '4' . $data->_company_id_number;
+		$sum = 0;
+		for ($i=0; $i < strlen($ocrno); $i++) {
+		// Even
+			if ($i % 2 == 0) {
+				$res = $ocrno[$i] * 2;
+				//echo 'even: ' . $ocrno[$i] . ' ';
+			} else {
+				$res = $ocrno[$i];
+			}
+
+			if ($res > 9) {
+				$res = $res -9;
+			}
+			//echo $sum . '<br>';
+			$sum = $sum + $res;
+		}
+		//echo $sum . '<br>';
+		$nerast10 = ceil($sum / 10) * 10;
+		//echo $nerast10 . '<br>';
+		$checksum =  $nerast10 - $sum;
+		$ocr_number = $ocrno . $checksum; // 11
+		return $ocr_number;
+	}
+
+	private function actionCompanyOcrnoAll($data) {
+		/*
+		{
+			"_group" : "Tool",
+			"_action" : "CompanyOcrnoAll"
+			 8024213921
+		}
+		*/
+		$sql = "SELECT company_id, company_id_number, ocrno FROM company WHERE ocrno IS NULL ORDER BY company_id";
+		// $sql = "SELECT company_id, company_id_number, ocrno FROM company  ORDER BY company_id";
+		$list = $this->_GetList($sql);
+
+		//print_r($list);
+		//die('');
+
+		for ($j=0; $j<sizeof($list); $j++) {
+
+			/*
+			if (strlen(trim($list[$i]['company_id_number'])) == 10) {
+				// Contine
+			}
+			else {
+				echo $list[$i]['company_id'] . ' ';
+			}
+		}
+			die('');
+		{
+			*/
+			$ocrno = '4' . trim($list[$j]['company_id_number']);
+			$sum = 0;
+			for ($i=0; $i < strlen($ocrno); $i++) {
+			// Even
+				if ($i % 2 == 0) {
+					$res = (int) $ocrno[$i] * 2;
+					//echo 'even: ' . $ocrno[$i] . ' ';
+				} else {
+					$res = (int) $ocrno[$i];
+				}
+
+				if ($res > 9) {
+					$res = $res -9;
+				}
+				//echo $sum . '<br>';
+				$sum = $sum + $res;
+			}
+			//echo $sum . '<br>';
+			$nerast10 = ceil($sum / 10) * 10;
+			//echo $nerast10 . '<br>';
+			$checksum =  $nerast10 - $sum;
+			$ocr_number = $ocrno . $checksum; // 11
+			$param = new stdclass();
+			$param->ocrno = $ocr_number;
+			$res = $this->_Update('company', 'company_id', $list[$j]['company_id'], $param);
+			// print_r($res);
+			// print_r($list[$j]);
+
+			// die('');
+		}
+		echo 'ok';
+	}
+
+
+}

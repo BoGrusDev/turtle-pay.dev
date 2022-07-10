@@ -1,0 +1,227 @@
+<?php
+/*
+    CompanyClass
+
+	Date: 2018-10-22
+
+	Actions:
+		-
+
+	Call:
+
+*/
+
+class CompanyClass extends ActionBase {
+
+	public function Run($data) {
+		$actionMethod = 'action' . $data->_action;
+		echo $this->$actionMethod($data);
+	}
+
+	private function actionCompanyGet($data) {
+		/*
+		{
+			"_group" : "Company",
+			"_action" : "CompanyGet",
+			"_company_id" : "3",
+			"_token" : "123123123123"
+		}
+		*/
+		$sql = "SELECT company_id_number ,company_name, address, address_2, postcode, ";
+		$sql .= "postcode, city, phone, email_report, bank_account, company_status ";
+		$sql .= "FROM company ";
+		$sql .= "WHERE company_id = $data->_company_id";
+		$result = $this->_Get($sql);
+
+		return json_encode($result);
+	}
+
+	private function actionPeoplePrincipalList($data) {
+		/*
+		{
+			"_group" : "Company",
+			"_action" : "PeoplePrincipalList",
+			"_bankid" : "no",
+			"_personal_id_number" : "195711040054"
+		}
+		*/
+		$sql = "SELECT company_id, company_name FROM company WHERE principal_personal_id_number = '$data->_personal_id_number'";
+		$result = $this->_GetList($sql);
+		return json_encode($result);
+    }
+
+	private function actionGetValidContract($data) {
+		/*
+		// Not used but works
+		{
+			"_group" : "Company",
+			"_action" : "GetValidContract",
+			"_bankid" : "no"
+		}
+		*/
+		$sql = "SELECT * FROM company_contract WHERE enabled = 'y' ORDER BY company_contract_id DESC LIMIT 1";
+		$result = $this->_Get($sql);
+		return json_encode($result);
+	}
+
+	private function actionSignContract($data) {
+
+		/*
+		{
+			"_group" : "Company",
+			"_action" : "SignContract",
+			"company_id" : "3",
+			"people_id" : "1",
+			"personal_id_number" : "195711040054",
+			"company_contract_id" : "1",
+			"signature" : "s4010123092138012830214747127",
+		    "ocspResponse" : "o93479347937493479234"
+		}
+		*/
+		$result = $this->_Insert('company_sign', $data);
+		if ($result['code'] == "1" ) {
+		}
+		else {
+			$result['code'] = '0';
+			$result['denied_code'] = 'could_not_sign_company_contract';
+		}
+		return json_encode($result);
+	}
+
+	public function actionSalesPersonList($data) {
+
+		/*
+		{
+			"_group" : "Company",
+			"_action" : "SalespersonList",
+			"_company_id" : "1",
+			"_token" : "123123123123"
+		}
+		*/
+
+
+		$sql = "SELECT cp.cp_id, cp.people_id, cp.personal_id_number, CONCAT(p.first_name, ' ', p.last_name) AS people_name ";
+		$sql .= "FROM company_people cp, company c, people p ";
+		$sql .= "WHERE cp.company_id = $data->_company_id AND ";
+		$sql .= "cp.priv = 'sp' AND ";
+		$sql .= "cp.people_id = p.people_id AND ";
+		$sql .= "cp.company_id = c.company_id";
+		$result = $this->_GetList($sql);
+
+
+		return json_encode($result);
+	}
+
+	public function actionSalesPersonAdd($data) {
+		/*
+			{
+				"_group" : "Company",
+				"_action" : "SalesPersonAdd",
+				"company_id" : "1",
+				"personal_id_number" : "199507134709",
+				"_token" : "123123123123"
+			}
+
+			196204021155 Is sales person and principal_personal_id_number
+			193303110682 is customer
+			199507134709
+
+		*/
+		// Check if person exist
+		$sql = "SELECT people_id, CONCAT(first_name, ' ', last_name) AS people_name FROM people WHERE personal_id_number = '$data->personal_id_number'";
+		$result = $this->_Get($sql);
+
+		if ($result['code'] != "1") {
+			$peopleObj = $this->_Spar($data->personal_id_number);
+			if($peopleObj->status == "0") {
+				return '{"code":"0", "denied_code":"person_not_exist"}';
+			} else {
+				$this->_Settings();
+				//$peopleObj->people->credit_limit = $this->Setting->customer_credit_limit;
+
+				$peopleObj->people->people_status = 'p';
+				$resultInsert = $this->_Insert('people', $peopleObj->people);
+				if ($resultInsert['code'] == "1") {
+					$peopleId = $resultInsert['id'];
+					$sql = "SELECT people_id, CONCAT(first_name, ' ', last_name) AS people_name FROM people WHERE people_id = $peopleId";
+					$result = $this->_Get($sql);
+				} else {
+					return '{"code":"0", "denied_code":"people_cant_be_saved"}';
+				}
+			}
+		}
+
+		// Check if Persn has connectin to compay before if so set status to Active
+		$sql = "SELECT cp_id, priv FROM company_people ";
+		$sql .= "WHERE people_id = " . $result['people_id'] . " AND company_id = $data->company_id";
+		$resultConnected = $this->_Get($sql);
+			// Update staus to active
+		if ($resultConnected['code'] == "1") {
+			if ($resultConnected['priv'] == 'pe') {
+				$sql = "UPDATE company_people SET priv = 'sp' WHERE cp_id = ". $resultConnected['cp_id'];
+				$reply =  $this->_Query($sql);
+				$reply['people_id'] = $result['people_id'];
+				$reply['people_name'] = $result['people_name'];
+				$reply['cp_id'] = $resultConnected ['cp_id'];
+				return json_encode($reply);
+			}
+			// Already active sales person
+			else {
+				return '{"code":"0", "denied_code":"people_is_already_a_salesperson"}';
+			}
+		}
+		else {
+			$sql = "INSERT INTO company_people (company_id, personal_id_number , priv) ";
+			$sql .= "VALUES ($data->company_id,'$data->personal_id_number', 'sp')";
+			$reply = $this->_InsertSql($sql);
+			if($reply['code'] == "0" && $reply['denied_code'] == 'duplicated') {	// Dubblicated
+				$sql = "UPDATE company_people SET cp_status = 'a' WHERE company_id = $data->company_id AND personal_id_number = '$data->personal_id_number'";
+				$reply = $this->_Query($sql);
+			}
+			$this->SetCompanyPeople($data->personal_id_number);
+			$reply['people_name'] = $result['people_name'];
+			$reply['people_id'] = $result['people_id'];
+
+			return json_encode($reply);
+		}
+	}
+
+	public function actionSalesPersonSetStatus($data) {
+		/*
+			Status:
+				- a active
+				- r removed
+
+			{
+				"_group" : "Company",
+				"_action" : "SalespersonSetStatus",
+				"_cp_id" : "57",
+				"status" : "r",
+				"_token" : "123123123123"
+			}
+		*/
+		$sql = "UPDATE company_people SET priv = '$data->priv' WHERE cp_id = $data->_cp_id";
+		$reply =  $this->_Query($sql);
+		return json_encode($reply);
+	}
+
+	private function setCompanyPeople($personal_id_number) {
+		$res = $this->_Get("SELECT people_id FROM people WHERE personal_id_number = '$personal_id_number'");
+		if ($res['code'] == '1') {
+			$sql = "UPDATE company_people SET people_id = " . $res['people_id'] . " WHERE personal_id_number = '$personal_id_number'";
+			$this->_Query($sql);
+		}
+	}
+
+	private function actionUpdate($data) {
+
+		$result = $this->_Update("company", "company_id", $data->_company_id, $data);
+		return json_encode($result);
+
+	}
+
+	/*
+	// Get list principal
+		$sql = "SELECT company_id FROM company_principal WHERE personal_id_number = '" . $data->_personal_id_number . "' AND is_principal = 'y'
+	*/
+}

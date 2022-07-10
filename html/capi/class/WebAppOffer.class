@@ -1,0 +1,209 @@
+<?php
+/*
+    Class WebAppClass
+
+	Date: 2019-07-12
+
+*/
+
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+Class WebAppOfferClass extends ActionOpen {
+
+	public function Run($data) {
+
+		$actionMethod = 'action' . $data->_action;
+		echo $this->$actionMethod($data);
+	}
+    
+    private function actionWriteToLog($data) {
+		$json =  json_encode($data);
+		$result = $this->_RestApiCall($json);
+		return $result;
+	}
+
+	private function actionGetWaLog($data) {
+		$json =  json_encode($data);
+		$result = $this->_RestApiCall($json);
+		//print_r($result);
+		return $result;
+	}
+
+	private function actionCompleteOffer($data) {
+		$json =  json_encode($data);
+		$result = $this->_RestApiCall($json);
+
+		$data2 =  json_decode($result);
+
+		$param = new stdClass();
+		$param->_group = "WebAppOffer";
+		$param->_action = "GetBond";
+		$param->_bond_id = $data2->bond_id;
+		$bondJson = $this->_RestApiCall(json_encode($param));
+		
+		$bond = json_decode($bondJson);	
+		if ($bond->code == '1') {
+			// Remove param code
+			require_once 'BondPdf.class';
+			 
+			$bondPdf = new BondPdfClass(FIRST_INVOICE_FOLDER);
+			//$param = new stdClass();
+
+			$bond->text = $this->setBondParam($bond);
+
+			$reply = new stdClass();
+			if ($bondPdf->Create($bond)) {
+				
+				$paramEmail = new stdClass();
+				$paramEmail->filename = $bond->filename;
+				$paramEmail->first_name = $bond->first_name;
+				$paramEmail->people_name = $bond->people_name;
+				$paramEmail->email = $bond->email;
+				if ($this->actionEmailBond($paramEmail)) {
+					$reply = new stdClass();
+					$reply->code = '1';
+				}
+				else {
+					$reply->code = '0';
+					$reply->code = 'cant-send-email';
+				}
+			}
+			else {
+				$reply = new stdClass();
+				$reply->code = '0';
+				$reply->code = 'cant-create-bond';
+			}
+			return json_encode($reply);
+		}
+	}
+
+	private function actionReCreateOffer($data) {
+
+		/*
+			{
+				"_group" : "WebAppOffer",
+				"_action" : "ReCreateOffer",
+				"_bond_id" : "30010000103"
+			}
+
+		*/
+
+		// --- Get Bond
+		$param = new stdClass();
+		$param->_group = "WebAppOffer";
+		$param->_action = "GetBond";
+		$param->_bond_id = $data->_bond_id;
+		$bondJson = $this->_RestApiCall(json_encode($param));
+		
+		//print_r($bondJson);
+		$bond = json_decode($bondJson);	
+		if ($bond->code == '1') {
+			// Remove param code
+			require_once 'BondPdf.class';
+			 
+			$bondPdf = new BondPdfClass(FIRST_INVOICE_FOLDER);
+			//$param = new stdClass();
+
+			$bond->text = $this->setBondParam($bond);
+
+			$reply = new stdClass();
+			if ($bondPdf->Create($bond)) {
+				$reply->code = '1';
+			}
+			else {
+				$reply->code = '0';
+			}
+			return json_encode($reply);
+		}
+	}
+
+	private function setBondParam($param) {
+
+	
+		$text = [];
+		$text[] = 'Turtle Pay AB, 559101-6786 (Låntagaren) återbetalar det belopp';
+		$text[] = $param->people_name . ' ' . $param->personal_id_number . ' (Långivaren) inbetalat på denna avi '; 
+		$text[] = 'senast ' . $param->term . ' månader efter inbetalningen. Återbetalningen sker till av Långivaren ';
+		$text[] = 'uppgivet konto ' . $param->clearingno . "-" . $param->bank_accountno . '.';  
+		$text[] = '';
+
+		if ($param->repay_type == '1') {
+			$repay_text = 'kapitaliseras till skulden.' ; 
+		}
+		else {
+			$repay_text ="utbetalas till konto ovan.";
+		}
+
+		$text[] = 'Lånet löper med en årlig ränta om ' . $param->interest_rate . '%. Räntan erhålls månadsvis i efterskott genom att ';
+		$text[] = $repay_text;
+
+		$text[] = '';
+		$text[] = 'Se lånevillkor under följande länk www.turtle-pay.com/lanevillkor';
+		$text[] = '';
+		$text[] = 'Ange OCR-nummer ' . $param->ocrno . ' vid inbetalningen till bankgironr. 5258-0016.';
+		
+	
+		return $text;
+	}
+
+	public function actionEmailBond($data) {
+
+		/*
+			{
+				"_group" : "WebAppOffer",
+				"_action" : "EmailBond",
+				"filename" : "b30010000110",
+				"first_name" : "Bosse Grus",
+				"people_name" : "Bosse E Grusell",
+				"email" : "bo.grus@icloud.com"
+			}
+
+		*/
+
+		$toSubject = 'Ditt skuldebrev';
+
+		$html = '';
+		$html .= '<div style="width:780px; margin: 10px 2px; font-family: Helvetica,Arial,sans-serif, Verdana; padding:2px">';
+		$html .= '<p>Hej ' . $data->first_name . ',</p>';
+		
+		// $html .= '<p>Välkommen som långivare i Turtle-Pay!' . '</p>';
+		$html .= '<p>Se inbetalningsavi och skuldebrev som bifogats i detta e-postmeddelande.' . '</p>';
+		$html .= '<p>Du kan se alla dina transaktioner om du loggar på www.turtle-pay.com/logga-in med ditt BankID.' . '</p>';
+		$html .= '<p>Med vänlig hälsning' . '</p>';
+		$html .= '<p>Turtle Pay AB' . '</br>'; 
+		$html .= 'P.O. Box 24078' . '</br>';
+		$html .= 'SE-104 50 Stockholm' . '</br>';
+		$html .= 'Tel. 08-80 62 20' . '</br>';
+		$html .= 'www.turtle-pay.com'  . '</p>';
+
+		require 'PHPMailerAutoload.php';
+		$mail = new PHPMailer;
+		$mail->isSMTP();
+		$mail->Host = 'smtp.gmail.com';
+		$mail->SMTPAuth = true;
+		$mail->Username = 'info.turtlepay@gmail.com';
+		$mail->Password = 'SegTp_2019';
+		$mail->CharSet = 'UTF-8';
+		$mail->From = 'info@turtle-pay.com';
+		$mail->FromName = 'Turtle Pay';
+		$mail->addAddress($data->email, $data->people_name);
+		// $mail->addBCC('bo.grus@yahoo.com');
+		$mail->addBCC('stellan.forsberg@turtle-pay.com');
+		$mail->addReplyTo('info@turtle-pay.com');
+		$mail->isHTML(true);
+		$mail->AddAttachment(FIRST_INVOICE_FOLDER . $data->filename);
+		$mail->Subject = $toSubject;
+		//$mailInvoice->Body = $this->htmlInvoice . '<div style="width:100%; padding:20px 0 10px 0; text-align:center"><a href="' . DOCVIEW . 'o/' . $this->orderid . '.html"' . '" style="font-size:20px; font-weight:bold; color: green">Skriv ut</a>';
+		$mail->Body = $html;
+
+		if(!$mail->send()) {
+			// echo $mail->ErrorInfo;
+			return false;
+		} else {
+			return true;
+		}
+	}
+
+}

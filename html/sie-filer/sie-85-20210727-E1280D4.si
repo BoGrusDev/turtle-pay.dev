@@ -1,0 +1,301 @@
+#FLAGGA 0
+#FORMAT PC8
+#SIETYP 4
+#PROGRAM "Turtle Pay Kundportal" 2021.1
+#GEN 20210827
+#FNAMN "T„by Tennisklubb"
+#ORGNR 816000-1809
+#KPTYP BAS95
+#KONTO 1930 "Bank"
+#KONTO 1511 "Turtle Pay avr„kning"
+#KONTO 3037 "Serielagstr„ning"
+#KONTO 6542 "Transaktionsavgift"
+#KONTO 3010 "Medlemsavgift senior"
+#KONTO 3012 "Abonnemang"
+#KONTO 3035 "Vuxentr„ning"
+#KONTO 3015 "Juniortr„ning 1h"
+#VER B 504 20210701 "Turtle Pay avr„kning"
+{
+#TRANS 1930 {} 3510.00
+#TRANS 1511 {} -3510.00
+}
+#VER B 505 20210701 "Serielagstr„ning 2021"
+{
+#TRANS 3037 {} -1500.00
+#TRANS 1511 {} 1500.00
+#TRANS 1511 {} -15.00
+#TRANS 6542 {} 15.00
+}
+#VER B 506 20210702 "Turtle Pay avr„kning"
+{
+#TRANS 1930 {} 1485.00
+#TRANS 1511 {} -1485.00
+}
+#VER B 507 20210702 "Serielagstr„ning 2021"
+{
+#TRANS 3037 {} -750.00
+#TRANS 1511 {} 750.00
+#TRANS 1511 {} -7.50
+#TRANS 6542 {} 7.50
+}
+#VER B 508 20210703 "Medlemsavgift 2021"
+{
+#TRANS 3010 {} -400.00
+#TRANS 1511 {} 400.00
+#TRANS 1511 {} -4.00
+#TRANS 6542 {} 4.00
+}
+#VER B 509 20210703 "Abonnemang D-tid VT 2021"
+{
+#TRANS 3012 {} -1950.00
+#TRANS 1511 {} 1950.00
+#TRANS 1511 {} -19.50
+#TRANS 6542 {} 19.50
+}
+#VER B 510 20210704 "Vuxentr„ning VT-2021"
+{
+#TRANS 3035 {} -3050.00
+#TRANS 1511 {} 3050.00
+#TRANS 1511 {} -30.50
+#TRANS 6542 {} 30.50
+}
+#VER B 511 20210705 "Medlemsavgift 2021"
+{
+#TRANS 3010 {} -300.00
+#TRANS 1511 {} 300.00
+#TRANS 1511 {} -3.00
+#TRANS 6542 {} 3.00
+}
+#VER B 512 20210705 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -1800.00
+#TRANS 1511 {} 1800.00
+#TRANS 1511 {} -18.00
+#TRANS 6542 {} 18.00
+}
+#VER B 513 20210705 "Serielagstr„ning 2021"
+{
+#TRANS 3037 {} -1500.00
+#TRANS 1511 {} 1500.00
+#TRANS 1511 {} -15.00
+#TRANS 6542 {} 15.00
+}
+#VER B 514 20210705 "Medlemsavgift 2021"
+{
+#TRANS 3010 {} -400.00
+#TRANS 1511 {} 400.00
+#TRANS 1511 {} -4.00
+#TRANS 6542 {} 4.00
+}
+#VER B 515 20210706 "Turtle Pay avr„kning"
+{
+#TRANS 1930 {} 10048.50
+#TRANS 1511 {} -10048.50
+}
+#VER B 516 20210706 "Medlemsavgift 2021"
+{
+#TRANS 3010 {} 400.00
+#TRANS 1511 {} -400.00
+}
+#VER B 517 20210707 "Medlemsavgift 2021"
+{
+#TRANS 3010 {} -300.00
+#TRANS 1511 {} 300.00
+#TRANS 1511 {} -3.00
+#TRANS 6542 {} 3.00
+}
+#VER B 518 20210708 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -1960.00
+#TRANS 1511 {} 1960.00
+#TRANS 1511 {} -19.60
+#TRANS 6542 {} 19.60
+}
+#VER B 519 20210708 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -1960.00
+#TRANS 1511 {} 1960.00
+#TRANS 1511 {} -19.60
+#TRANS 6542 {} 19.60
+}
+#VER B 520 20210709 "Turtle Pay avr„kning"
+{
+#TRANS 1930 {} 3777.80
+#TRANS 1511 {} -3777.80
+}
+#VER B 521 20210709 "Medlemsavgift 2021"
+{
+#TRANS 3010 {} -900.00
+#TRANS 1511 {} 900.00
+#TRANS 1511 {} -9.00
+#TRANS 6542 {} 9.00
+}
+#VER B 522 20210709 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+#TRANS 1511 {} -25.70
+#TRANS 6542 {} 25.70
+}
+#VER B 523 20210709 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -2570.00
+#TRANS 1511 {} 2570.00
+#TRANS 1511 {} -25.70
+#TRANS 6542 {} 25.70
+}
+#VER B 524 20210709 "Medlemsavgift 2021"
+{
+#TRANS 3010 {} -400.00
+#TRANS 1511 {} 400.00
+#TRANS 1511 {} -4.00
+#TRANS 6542 {} 4.00
+}
+#VER B 525 20210712 "Turtle Pay avr„kning"
+{
+#TRANS 1930 {} 6375.60
+#TRANS 1511 {} -6375.60
+}
+#VER B 526 20210713 "Serielagstr„ning 2021"
+{
+#TRANS 3037 {} -750.00
+#TRANS 1511 {} 750.00
+#TRANS 1511 {} -7.50
+#TRANS 6542 {} 7.50
+}
+#VER B 527 20210714 "Turtle Pay avr„kning"
+{
+#TRANS 1930 {} 742.50
+#TRANS 1511 {} -742.50
+}
+#VER B 528 20210714 "Medlemsavgift 2021"
+{
+#TRANS 3010 {} -400.00
+#TRANS 1511 {} 400.00
+#TRANS 1511 {} -4.00
+#TRANS 6542 {} 4.00
+}
+#VER B 529 20210714 "Serielagstr„ning 2021"
+{
+#TRANS 3037 {} -750.00
+#TRANS 1511 {} 750.00
+#TRANS 1511 {} -7.50
+#TRANS 6542 {} 7.50
+}
+#VER B 530 20210714 "Medlemsavgift 2021"
+{
+#TRANS 3010 {} -300.00
+#TRANS 1511 {} 300.00
+#TRANS 1511 {} -3.00
+#TRANS 6542 {} 3.00
+}
+#VER B 531 20210715 "Turtle Pay avr„kning"
+{
+#TRANS 1930 {} 1435.50
+#TRANS 1511 {} -1435.50
+}
+#VER B 532 20210715 "Juniortr„ning 1h/vecka VT-21"
+{
+#TRANS 3015 {} -1960.00
+#TRANS 1511 {} 1960.00
+#TRANS 1511 {} -19.60
+#TRANS 6542 {} 19.60
+}
+#VER B 533 20210715 "Medlemsavgift 2021"
+{
+#TRANS 3010 {} -300.00
+#TRANS 1511 {} 300.00
+#TRANS 1511 {} -3.00
+#TRANS 6542 {} 3.00
+}
+#VER B 534 20210715 "Medlemsavgift 2021"
+{
+#TRANS 3010 {} -400.00
+#TRANS 1511 {} 400.00
+#TRANS 1511 {} -4.00
+#TRANS 6542 {} 4.00
+}
+#VER B 535 20210716 "Turtle Pay avr„kning"
+{
+#TRANS 1930 {} 2633.40
+#TRANS 1511 {} -2633.40
+}
+#VER B 536 20210716 "Medlemsavgift 2021"
+{
+#TRANS 3010 {} -400.00
+#TRANS 1511 {} 400.00
+#TRANS 1511 {} -4.00
+#TRANS 6542 {} 4.00
+}
+#VER B 537 20210716 "Serielagstr„ning 2021"
+{
+#TRANS 3037 {} -750.00
+#TRANS 1511 {} 750.00
+#TRANS 1511 {} -7.50
+#TRANS 6542 {} 7.50
+}
+#VER B 538 20210719 "Turtle Pay avr„kning"
+{
+#TRANS 1930 {} 1138.50
+#TRANS 1511 {} -1138.50
+}
+#VER B 539 20210719 "Medlemsavgift 2021"
+{
+#TRANS 3010 {} -300.00
+#TRANS 1511 {} 300.00
+#TRANS 1511 {} -3.00
+#TRANS 6542 {} 3.00
+}
+#VER B 540 20210720 "Turtle Pay avr„kning"
+{
+#TRANS 1930 {} 297.00
+#TRANS 1511 {} -297.00
+}
+#VER B 541 20210720 "Serielagstr„ning 2021"
+{
+#TRANS 3037 {} -750.00
+#TRANS 1511 {} 750.00
+#TRANS 1511 {} -7.50
+#TRANS 6542 {} 7.50
+}
+#VER B 542 20210721 "Turtle Pay avr„kning"
+{
+#TRANS 1930 {} 742.50
+#TRANS 1511 {} -742.50
+}
+#VER B 543 20210722 "Serielagstr„ning 2021"
+{
+#TRANS 3037 {} -750.00
+#TRANS 1511 {} 750.00
+#TRANS 1511 {} -7.50
+#TRANS 6542 {} 7.50
+}
+#VER B 544 20210723 "Turtle Pay avr„kning"
+{
+#TRANS 1930 {} 742.50
+#TRANS 1511 {} -742.50
+}
+#VER B 545 20210724 "Medlemsavgift 2021"
+{
+#TRANS 3010 {} -400.00
+#TRANS 1511 {} 400.00
+#TRANS 1511 {} -4.00
+#TRANS 6542 {} 4.00
+}
+#VER B 546 20210726 "Turtle Pay avr„kning"
+{
+#TRANS 1930 {} 396.00
+#TRANS 1511 {} -396.00
+}
+#VER B 547 20210726 "Medlemsavgift 2021"
+{
+#TRANS 3010 {} -300.00
+#TRANS 1511 {} 300.00
+#TRANS 1511 {} -3.00
+#TRANS 6542 {} 3.00
+}
+#VER B 548 20210727 "Turtle Pay avr„kning"
+{
+#TRANS 1930 {} 297.00
+#TRANS 1511 {} -297.00
+}

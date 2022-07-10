@@ -1,0 +1,78 @@
+<?php
+/*
+    Class MyPageClass
+
+	Date: 2018-10-10
+
+	bapi
+
+	Actions:
+		- Get
+		- Update
+
+	Call:
+	{
+		"_group" : "MyPage",
+		"_action" : "Get",
+		"_bankid" : "no",
+		"_people_id" : "4"
+	}
+
+	{
+		"_group" : "MyPage",
+		"_action" : "Update",
+		"_bankid" : "yes",
+		"_people_id" : "4",
+		"mobile": "0729427977",
+	 	"email": "stellan.forsberg@turtle-pay.com"
+	}
+
+*/
+
+class MyPageClass extends ActionOpen {
+
+	public function Run($data) {
+
+		$actionMethod = 'action' . $data->_action;
+		echo $this->$actionMethod($data);
+
+	}
+
+	private function actionGet($data) {
+
+		$json =  json_encode($data);
+		$result = $this->_RestApiCall($json);
+		return $result;
+	}
+
+	private function actionUpdate($data) {
+
+		$json =  json_encode($data);
+		$result = $this->_RestApiCall($json);
+		return $result;
+	}
+
+}
+
+/*
+	Reply:
+
+	Get:
+	{
+	    "personal_id_number": "196204021155",
+	    "name": "Stellan Arne Forsberg",
+	    "address": "GYLLENSTIERNSGATAN 15 LGH 1306",
+	    "postaddress": "11526 STOCKHOLM",
+	    "mobile": "0707639766",
+	    "email": "Stellan.forsberg@mondayrelations.se",
+	    "is_sp": "y",
+	    "people_status": "a",
+	    "code": "1",
+	    "bonus": "73.95"
+	}
+
+	{
+    	"code": "1"
+	}
+
+*/

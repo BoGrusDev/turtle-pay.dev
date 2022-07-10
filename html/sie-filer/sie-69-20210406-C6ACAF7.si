@@ -1,0 +1,24 @@
+#FLAGGA 0
+#FORMAT PC8
+#SIETYP 4
+#PROGRAM "Turtle Pay Kundportal" 2021.1
+#GEN 20210520
+#FNAMN "Test Bolaget AB"
+#ORGNR 556000-0000
+#KPTYP BAS95
+#KONTO 3008 "Turtle Pay App"
+#KONTO 1610 "Turtle Pay avr„kning"
+#KONTO 4000 "Transaktionsavgift"
+#KONTO 1900 "Bank"
+#VER T 200 20210406 "Turtle Pay App 432"
+{
+#TRANS 3008 {} -500.00
+#TRANS 1610 {} 500.00
+#TRANS 1610 {} -10.00
+#TRANS 4000 {} 10.00
+}
+#VER T 201 20210406 "Inbetalning Turte Pay"
+{
+#TRANS 1900 {} -46.00
+#TRANS 1610 {} 46.00
+}

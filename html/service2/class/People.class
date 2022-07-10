@@ -1,0 +1,140 @@
+<?php
+/*
+    UserClass
+
+	Date: 2019-04-29
+
+*/
+
+class PeopleClass extends ActionPublic {
+
+	public function Run($data) {
+		$peopleId = $this->_CheckToken($data->_token);
+		if ($peopleId) {
+			$data->_people_id = $peopleId;
+			$actionMethod = 'action' . $data->_action;
+			echo $this->$actionMethod($data);
+		} else {
+			$reply = new stdClass();
+			$reply->code = "9";
+			return json_encode($reply);
+		}
+	}
+
+	public function actionCheckpr($data) {
+		$result = $this->_RestApiCall(json_encode($data));
+		return $result;
+	}
+
+	public function actionDetails($data) {
+
+		/*
+		{
+	        "_group" : "People",
+	        "_action" : "Details"
+	        "_token" : "5F34603A2363CF7945DB0FD1459A0454"
+		}
+
+		*/
+		$reply = new stdClass();
+		$param = new stdClass();
+		$param->_group = "People";
+		$param->_action = "Details";
+		$param->_people_id = $data->_people_id;
+		$result = $this->_RestApiCall(json_encode($param));
+
+		return $result;
+	}
+
+	public function actionDetailsUpdate($data) {
+
+		$result = $this->_RestApiCall(json_encode($data));
+		return $result;
+	}
+
+	public function actionTrans($data) {
+
+		/*
+		{
+	        "_group" : "People",
+	        "_action" : "Trans"
+			"_date_from" : "2019-01-01",
+			"_date_to" : "2019-04-29",
+			"_people_id" : "175"
+		}
+
+		"_token" : "5F34603A2363CF7945DB0FD1459A0454",
+
+		*/
+		$reply = new stdClass();
+
+		$param = new stdClass();
+		$param->_group = "People";
+		$param->_action = "Trans";
+		$param->_date_from = $data->_date_from;
+		$param->_date_to = $data->_date_to;
+		$param->_people_id = $data->_people_id;
+		$result = $this->_RestApiCall(json_encode($param));
+
+		return $result;
+	}
+
+	public function actionInvoices($data) {
+
+		/*
+		{
+	        "_group" : "People",
+	        "_action" : "Invoices"
+			"_date_from" : "2019-01-01",
+			"_people_id" : "4"
+		}
+		// 175
+		"_token" : "5F34603A2363CF7945DB0FD1459A0454",
+
+		*/
+		//$data->_people_id = "4";
+
+		$reply = new stdClass();
+
+		$param = new stdClass();
+		$param->_group = "People";
+		$param->_action = "Invoices";
+		$param->_people_id = $data->_people_id;
+		$result = $this->_RestApiCall(json_encode($param));
+
+		return $result;
+	}
+
+	private function actionBudgetGet($data) {
+		$result = $this->_RestApiCall(json_encode($data));
+		return $result;
+	}
+
+	private function actionBudgetNew($data) {
+		$data->budget_id = $data->_people_id;
+		$result = $this->_RestApiCall(json_encode($data));
+		return $result;
+	}
+
+	private function actionBudgetUpdate($data) {
+		$result = $this->_RestApiCall(json_encode($data));
+		return $result;
+	}
+
+	private function actionKycGet($data) {
+		$result = $this->_RestApiCall(json_encode($data));
+		return $result;
+	}
+
+	private function actionKycUpdate($data) {
+		$result = $this->_RestApiCall(json_encode($data));
+		return $result;
+	}
+
+	private function actionKycInsert($data) {
+		$result = $this->_RestApiCall(json_encode($data));
+		return $result;
+	}
+
+
+}

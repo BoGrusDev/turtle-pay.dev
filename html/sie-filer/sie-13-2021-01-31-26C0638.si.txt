@@ -1,0 +1,14 @@
+#FLAGGA 0
+#FORMAT PC8
+#SIETYP 4
+#PROGRAM "Turtle Pay Kundportal" 2021.1
+#GEN 20210326
+#FNAMN "Djurg†rdens ridskola"
+#ORGNR 556035-3376
+#KPTYP BAS95
+#KONTO 1651 "Turtle Pay avr„kning"
+#KONTO 6570 "Transaktionsavgift"
+#KONTO 3000 "Lektioner"
+#KONTO 2631 "Utg†ende moms 6 %"
+#KONTO 8420 "R„nta"
+#KONTO 1930 "Bank"

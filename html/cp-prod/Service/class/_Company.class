@@ -1,0 +1,338 @@
+<?php
+/*
+    CompanyClass
+
+	Date: 2018-10-22
+
+	Actions:
+		-
+
+	Call:
+
+*/
+
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+class CompanyClass extends ActionBase {
+
+	public function Run($data) {
+		$actionMethod = 'action' . $data->_action;
+		echo $this->$actionMethod($data);
+	}
+
+	private function actionCompanyGet($data) {
+		/*
+		{
+			"_group" : "Company",
+			"_action" : "CompanyGet",
+			"_company_id" : "3"
+		}
+		*/
+		$sql = "SELECT * FROM company WHERE company_id = $data->_company_id";
+		$result = $this->_Get($sql);
+
+		return json_encode($result);
+	}
+
+	private function actionWaInfo($data) {
+		/*
+		{
+			"_group" : "Company",
+			"_action" : "WaStoreList",
+			"_company_id" : "3"
+		}
+		*/
+		$reply = new stdClass();
+		$sql = "SELECT store_id, store_name FROM store WHERE company_id = $data->_company_id";
+		$reply->store = $this->_GetList($sql);
+		
+		$sql = "SELECT p.people_id, CONCAT(p.last_name, ', ' , p.first_name) AS people_name ";
+		$sql .= "FROM people p, company_people c ";
+		$sql .= "WHERE c.company_id = $data->_company_id AND p.people_id = c.people_id AND ";
+		$sql .= "c.priv IN ('pr','sp') ";
+		$sql .= "ORDER BY people_name";
+		$reply->sp = $this->_GetList($sql);
+	
+		return json_encode($reply);
+	}
+
+	private function actionCompanyUpdate($data) {
+
+		$result = $this->_Update("company", "company_id", $data->_company_id, $data);
+		return json_encode($result);
+
+	}
+
+	private function actionCompanyInsert($data) {
+
+		if (strlen($data->company_id_number) == 10) {
+			$ocrno = '4' . $data->company_id_number;
+			$sum = 0;
+			for ($i=0; $i < strlen($ocrno); $i++) {
+			// Even
+				if ($i % 2 == 0) {
+					$res = $ocrno[$i] * 2;
+					//echo 'even: ' . $ocrno[$i] . ' ';
+				} else {
+					$res = $ocrno[$i];
+				}
+
+				if ($res > 9) {
+					$res = $res -9;
+				}
+				//echo $sum . '<br>';
+				$sum = $sum + $res;
+			}
+			//echo $sum . '<br>';
+			$nerast10 = ceil($sum / 10) * 10;
+			//echo $nerast10 . '<br>';
+			$checksum =  $nerast10 - $sum;
+			$data->ocrno = $ocrno . $checksum; // 11
+		}
+
+		$result = $this->_Insert("company", $data);
+		return json_encode($result);
+	}
+
+	private function actionCompanyList() {
+		$sql = "SELECT * FROM company ORDER BY company_name";
+		return json_encode($this->_GetList($sql));
+	}
+
+	private function actionStoreList($data) {
+		$sql = "SELECT * FROM store WHERE company_id = $data->_company_id ORDER BY store_name";
+		return json_encode($this->_GetList($sql));
+	}
+
+	private function actionStoreInsert($data) {
+		$result = $this->_Insert("store", $data);
+		return json_encode($result);
+	}
+
+	private function actionStoreUpdate($data) {
+		$result = $this->_Update("store", "store_id", $data->_store_id, $data);
+		return json_encode($result);
+
+	}
+
+	private function actionGetValidContract($data) {
+		/*
+		// Not used but works
+		{
+			"_group" : "Company",
+			"_action" : "GetValidContract",
+			"_bankid" : "no"
+		}
+		*/
+		$sql = "SELECT * FROM company_contract WHERE enabled = 'y' ORDER BY company_contract_id DESC LIMIT 1";
+		$result = $this->_Get($sql);
+		return json_encode($result);
+	}
+
+	private function actionSignContract($data) {
+
+		/*
+		{
+			"_group" : "Company",
+			"_action" : "SignContract",
+			"_bankid" : "no",
+			"company_id" : "3",
+			"people_id" : "1",
+			"personal_id_number" : "195711040054",
+			"company_contract_id" : "1",
+			"signature" : "s4010123092138012830214747127",
+		    "ocspResponse" : "o93479347937493479234"
+		}
+		*/
+		$result = $this->_Insert('company_sign', $data);
+		if ($result['code'] == "1" ) {
+		}
+		else {
+			$result['code'] = '0';
+			$result['denied_code'] = 'could_not_sign_company_contract';
+		}
+		return json_encode($result);
+	}
+
+	public function actionPeopleList($data) {
+
+		/*
+		{
+			"_group" : "Company",
+			"_action" : "PeopleList",
+			"_company_id" : "5"
+		}
+		*/
+
+		$sql = "SELECT cp.cp_id, cp.people_id, cp.personal_id_number, cp.priv, CONCAT(p.first_name, ' ', p.last_name) AS people_name ";
+		$sql .= "FROM company_people cp, company c, people p ";
+		$sql .= "WHERE cp.company_id = $data->_company_id AND ";
+		$sql .= "cp.people_id = p.people_id AND ";
+		$sql .= "cp.company_id = c.company_id";
+		$result = $this->_GetList($sql);
+
+		//echo $sql; die('');
+
+		return json_encode($result);
+	}
+
+	public function actionPeopleInsert($data) {
+		/*
+			{
+				"_group" : "Company",
+				"_action" : "PeopleInsert",
+				"company_id" : "5",
+				"personal_id_number" : "195711040054"
+			}
+
+		*/
+
+		$sql = "SELECT cp_id FROM company_people ";
+		$sql .= "WHERE personal_id_number = " . $data->personal_id_number  . " AND company_id = $data->company_id";
+		$resultConnected = $this->_Get($sql);
+		if ($resultConnected['code'] == "1") {
+			return '{"code":"0", "denied_code":"people_exist"}';
+		}
+
+		// Check if person exist
+		$sql = "SELECT people_id, CONCAT(first_name, ' ', last_name) AS people_name FROM people WHERE personal_id_number = '$data->personal_id_number'";
+		$result = $this->_Get($sql);
+
+		if ($result['code'] == "0") {
+			$peopleObj = $this->_Spar($data->personal_id_number);
+			if($peopleObj->status == "0") {
+				return '{"code":"0", "denied_code":"people_not_exist"}';
+			} else {
+				$this->_Settings();
+				$peopleObj->people->people_status = 'p';
+				$resultInsert = $this->_Insert('people', $peopleObj->people);
+				if ($resultInsert['code'] == "1") {
+					$peopleId = $resultInsert['id'];
+					$sql = "SELECT people_id, CONCAT(first_name, ' ', last_name) AS people_name FROM people WHERE people_id = $peopleId";
+					$result = $this->_Get($sql);
+				} else {
+					return '{"code":"0", "denied_code":"people_cant_be_saved"}';
+				}
+			}
+		}
+
+		$sql = "INSERT INTO company_people (company_id, personal_id_number , people_id,  priv) ";
+		$sql .= "VALUES ($data->company_id,'$data->personal_id_number',". $result['people_id'] . ", '$data->priv')";
+		$reply = $this->_InsertSql($sql);
+
+		return json_encode($reply);
+
+	}
+
+	public function actionPeopleUpdate($data) {
+		/*
+			Status:
+				- a active
+				- r removed
+
+			{
+				"_group" : "Company",
+				"_action" : "PeopleUpdate",
+				"_cp_id" : "99",
+				"priv" : "pe"
+			}
+		*/
+		$sql = "UPDATE company_people SET priv = '$data->priv' WHERE cp_id = $data->_cp_id";
+		$reply =  $this->_Query($sql);
+		return json_encode($reply);
+	}
+
+	private function actionUpdate($data) {
+
+		$result = $this->_Update("company", "company_id", $data->_company_id, $data);
+		return json_encode($result);
+
+	}
+
+	public function actionTransList($data) {
+		/*
+			{
+				"_group" : "Company",
+				"_action" : "TransList",
+				"_company_id" : "5"
+
+			}
+		*/
+		// Should be moved to Config and Settings
+		//$this->FirstInvoiceUrl = 'http://localhost/TurtlePay/f-invoice/';
+
+		$sql = "SELECT t.btrans_id, t.booking_id, b.booking_date, t.trans_type, ";
+		$sql .= "t.account_no, t.amount ";
+		$sql .= "FROM btrans t ";
+		$sql .= "LEFT JOIN booking b ON t.booking_id = b.booking_id ";
+		$sql .= "WHERE t.company_id =  $data->_company_id AND ";
+		$sql .= "(t.account_no = '2981' ) ";
+		$sql .= "AND t.prel IN ('y','n') AND b.prel IN ('y','n') ";
+		$sql .= "ORDER BY b.booking_date, t.btrans_id";
+		// OR t.account_no='3593' OR t.account_no='2498'
+		$list = $this->_GetList($sql);
+
+		$balance = 0;
+		for ($i=0; $i < sizeof($list); $i++) {
+			$balance = $balance + (float)$list[$i]['amount'];
+			$list[$i]['balance'] = number_format($balance, 2);
+
+		}
+		/*
+		//echo $sql;
+		$balance = 0;
+		$balance_bonus = 0;
+		$amount_1380 = 0;
+		$amount_1680 = 0;
+		$amount_2380 = 0;
+		$result = array();
+		foreach ($list as $item) {
+			$listItem = array();
+			$listItem['trans_id'] =  $item['trans_id'];
+			//$listItem['ver_id'] =  $item['ver_id'];
+			$listItem['trans_date'] =  $item['trans_date'];
+			$listItem['trans_text'] =  $item['trans_text'];
+			$listItem['company_name'] =  $item['company_name'];
+			$listItem['store_name'] =  $item['store_name'];
+			//$listItem['account_no'] =  $item['account_no'];
+			if ($item['account_no'] == '1380') {
+				$listItem['amount_1380'] =  number_format($item['amount'], 2);
+				$balance = $balance + (float)$item['amount'];
+				$amount_1380 = $amount_1380 + (float)$item['amount'];
+				$listItem['extra'] = '<a style="font-size: 11px; color:blue" id="button-first-invoice" target="_blank" href="' . $this->FirstInvoiceUrl . $item['invoice_filename'] . '">Open Invoice</a>';
+			}
+			else if ($item['account_no'] == '1680') {
+				$listItem['amount_1680'] =  number_format($item['amount'], 2);
+				$balance = $balance +  (float)$item['amount'];
+				$amount_1680 = $amount_1680 + (float)$item['amount'];
+			}
+			else if ($item['account_no'] == '2380') {
+				$listItem['amount_2380'] =  number_format($item['amount'], 2);
+				$balance_bonus = $balance_bonus +  (float)$item['amount'];
+				$listItem['trans_text'] = 'Bonus in';
+				$amount_2380 = $amount_2380 + (float)$item['amount'];
+			}
+			$listItem['balance'] = number_format($balance, 2);
+			$listItem['balance_bonus'] = number_format($balance_bonus, 2);
+			$result[] = $listItem;
+		*/
+
+
+
+		return json_encode($list);
+	}
+
+	public function actionSignInfo($data) {
+		$sql = "SELECT CONCAT(p.last_name, ', ', p.first_name) AS people_name, cc.contract_no ";
+		$sql .= "FROM company_sign cs, people p, company_contract cc ";
+		$sql .= "WHERE ";
+		$sql .= "cs.company_id = $data->_company_id AND ";
+		$sql .= "cs.people_id = p.people_id AND ";
+		$sql .= "cs.company_contract_id =  cc.company_contract_id ";
+		$result = $this->_GetList($sql);
+		//echo $sql; die('');
+		return json_encode($result);
+	}
+}
