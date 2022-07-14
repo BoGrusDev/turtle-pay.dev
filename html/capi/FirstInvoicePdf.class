@@ -12,29 +12,34 @@ use setasign\Fpdi;
 
 class FirstInvoicePdfClass {
 
+	private $folder;
+	private $mall;
+	private $invoice;  
+	private $font;
+	private	$extra;
+	private $mallFirstPage;
 
 	public function __construct($folder, $mall = "") {
 		$this->folder = $folder;
         $this->mall = "fakturamall.pdf";;
+		$this->font = 'Helvetica';
+		$this->mallFirstPage = "fakturamall.pdf";
 	}
 
 	public function Create($invoice) {
 
-		$font = 'Helvetica';
-		$extra = 0;
+		$this->extra = 0;
 		if ($invoice->returnInvoice == "y") {
-			$extra = 5;
+			$this->extra = 5;
 		}
 
-		//$mall = "fakt1bg.pdf";
-		$mall = "fakturamall.pdf";
-		//call the FPDF library
+		// Init
 		require('fpdf181/fpdf.php');
 		require_once('ftpi/autoload.php');
-		$pdf = new Fpdi\Fpdi();
 
-		$pdf->AddFont('OCR-B','','ocrb.php');
-		$pdf->setSourceFile($mall);
+		$this->pdf = new Fpdi\Fpdi();
+		$this->pdf->AddFont('OCR-B','','ocrb.php');
+		$this->pdf->setSourceFile($this->mallFirstPage);
 		$templateId = $pdf->importPage(1);
 		// get the size of the imported page
 		$size = $pdf->getTemplateSize($templateId);
