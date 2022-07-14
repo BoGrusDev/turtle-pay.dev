@@ -238,20 +238,25 @@ class InvoiceRequest2Class extends ActionBase {
 		if ($this->Setting->first_invoice_start_fee > 0 ) {
 			$bankidText .= "\rUppläggningsavgift " . $this->Setting->first_invoice_start_fee  . " kr"; // Fix for naming
 		}
-		$bankidText .= "\rAviavgift <AdminFee> kr\r\rKvittoreferens _ReceiptNumber_\r \rMöjlig delbetalning\rLägsta månadsbelopp\r" . $this->Setting->repayment_term . " mån - ca <MonthlyPayment> kronor";
+		$bankidText .= "\rAviavgift <AdminFee> kr\r\rKvittoreferens _ReceiptNumber_\r ";
+		if ($data->amount > $this->Setting->installment_limit) {
+			$bankidText .= "\rMöjlig delbetalning\rLägsta månadsbelopp\r" . $this->Setting->repayment_term . " mån - ca <MonthlyPayment> kronor";
+			$bankidText = str_replace('<MonthlyPayment>' ,$monthlyPaymentTotal, $bankidText);
+   			$bankidText .= "\r(Årsränta " . $this->Setting->customerInterest . '%, aviavg. 29 kr)';
+		}
 
 		$bankidText = str_replace('<RequestAmount>' , number_format($data->amount, 2), $bankidText);
-
    		$bankidText = str_replace('<Companyname>' , $shopInfoObj->company_name, $bankidText);
    		$bankidText = str_replace('<Storename>' , $shopInfoObj->store_name, $bankidText);
    		//$bankidText = str_replace('<FirstFee>' , $this->Setting->first_invoice_fee, $bankidText);
    		$bankidText = str_replace('<AdminFee>' , $this->Setting->first_invoice_fee, $bankidText);
-   		$bankidText = str_replace('<MonthlyPayment>' ,$monthlyPaymentTotal, $bankidText);
-   		$reply->bankid_text = $bankidText . "\r(Årsränta " . $this->Setting->customerInterest . '%, aviavg. 29 kr';
+
+		$reply->bankid_text = $bankidText; // . "\r(Årsränta " . $this->Setting->customerInterest . '%, aviavg. 29 kr';
+
 		if ($this->Setting->administration_fee > 0) {
 			$reply->bankid_text .= ", adm.avg " . $this->Setting->administration_fee . " kr/mån";
 		}
-		$reply->bankid_text .= ")";
+		// $reply->bankid_text .= ")";
 		$reply->bankid_text .= "\r\rJag godkänner Turtle Pays villkor\roch integritetspolicy";
 
 		// Update Invoice request with the approved code
