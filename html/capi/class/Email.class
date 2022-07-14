@@ -45,6 +45,14 @@ class EmailClass extends ActionOpen {
 		$result = $this->_RestApiCall($json);
 		$invoiceObj = json_decode($result);
 
+		// Get Installment Limit
+		$paramInstallmentLimit = new stdClass();
+		$paramInstallmentLimit->_group = "WebAppV4";
+		$paramInstallmentLimit->_action = "GetInstallmentLimit";
+		$resInstallmentLimit = json_decode($this->_RestApiCall(json_encode($paramInstallmentLimit)));
+		$invoiceObj->installmentLimit = $resInstallmentLimit->installment_limit;
+	
+
 		// print_r($invoiceObj); die('');
 
 		$toSubject = 'Faktura ' . $invoiceObj->company_name . ', ' . $invoiceObj->shop_name;
@@ -99,7 +107,7 @@ class EmailClass extends ActionOpen {
 					$htmlInvoice .= '<tr><td colspan="2">&nbsp;</td></tr>';
 
 					$totalValue = str_replace(',' , '', $invoiceObj->total);
-					if ((float)$totalValue > 100) {
+					if ((float)$totalValue > $invoiceObj->installmentLimit) {
 						$htmlInvoice .= '<tr><td colspan="2"><strong>' . "Ta't lugnt! Betala i din egen takt" . '</strong></td></tr>';
 
 						$htmlInvoice .= '<tr><td colspan="2">Du kan istället betala valfritt belopp under ' . $invoiceObj->monthly_no . ' månader, </td></tr>';

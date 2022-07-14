@@ -45,6 +45,14 @@ class EmailClass extends ActionOpen {
 		$result = $this->_RestApiCall($json);
 		$invoiceObj = json_decode($result);
 
+		// Get Installment Limit
+		$paramInstallmentLimit = new stdClass();
+		$paramInstallmentLimit->_group = "WebAppV4";
+		$paramInstallmentLimit->_action = "GetInstallmentLimit";
+		$resInstallmentLimit = json_decode($this->_RestApiCall(json_encode($paramInstallmentLimit)));
+		$invoiceObj->installmentLimit = $resInstallmentLimit->installment_limit;
+	
+
 		// print_r($invoiceObj); die('');
 
 		$toSubject = 'Faktura ' . $invoiceObj->company_name . ', ' . $invoiceObj->shop_name;
@@ -99,7 +107,7 @@ class EmailClass extends ActionOpen {
 					$htmlInvoice .= '<tr><td colspan="2">&nbsp;</td></tr>';
 
 					$totalValue = str_replace(',' , '', $invoiceObj->total);
-					if ((float)$totalValue > 100) {
+					if ((float)$totalValue > $invoiceObj->installmentLimit) {
 						$htmlInvoice .= '<tr><td colspan="2"><strong>' . "Ta't lugnt! Betala i din egen takt" . '</strong></td></tr>';
 
 						$htmlInvoice .= '<tr><td colspan="2">Du kan istället betala valfritt belopp under ' . $invoiceObj->monthly_no . ' månader, </td></tr>';
@@ -131,41 +139,16 @@ class EmailClass extends ActionOpen {
 		require 'PHPMailerAutoload.php';
 		$mail = new PHPMailer;
 		$mail->isSMTP();
-		// Turtle Pay
-		
 
+		$mail->Host = 'smtp.net.vmi.se';
+        $mail->SMTPAuth = true;
+        $mail->Username = 'turtlepaycom';
+        $mail->Password = 'Kajk48Vaa'; // SegTp@2022';
+        $mail->CharSet = 'UTF-8';
+        $mail->Port = 465; // 465
+        $mail->SMTPSecure = 'ssl';
+		
 		/*
-		if (ENV_TYPE == 'prod') {
-			$mail->Host = 'smtp.gmail.com';
-			$mail->SMTPAuth = true;
-			$mail->Username = 'info.turtlepay@gmail.com';
-			$mail->Password = 'SegTp_2019';
-			$mail->CharSet = 'UTF-8';
-			$mail->From = 'info@turtle-pay.com';
-			$mail->FromName = 'TurtlePay';
-			$mail->addReplyTo('info@turtle-pay.com');
-			$mail->addAddress($invoiceObj->email);
-			$mail->addBCC('bo.grusell@turtle-pay.com');
-		}
-		else {
-			$mail->Host = 'mail.grus.zone';
-			$mail->SMTPAuth = true;
-			$mail->Username = 'demo@grus.zone';
-			$mail->Password = 'Test@2021';
-			$mail->CharSet = 'UTF-8';
-			$mail->From = 'demo@grus.zone';
-			$mail->FromName = 'Demo - TurtlePay';
-			$mail->Port = 465;
-			//$mail->SMTPDebug = 1; 
-			$mail->SMTPSecure = 'ssl';
-			$mail->addReplyTo('demo@grus.zone');
-			$mail->addAddress($invoiceObj->email);
-			$mail->addBCC('bo.grus@yahoo.com');
-		}
-		
-		// $mail->addBCC('bo.grus@yahoo.com');
-		*/
-		
 		$mail->Host = 'mail.turtle-shop.se';
 		$mail->Port = 465;
 		$mail->SMTPSecure = 'ssl';
@@ -173,15 +156,15 @@ class EmailClass extends ActionOpen {
 		$mail->Username = 'info@turtle-shop.se';
 		$mail->Password = 'SegTp@2022';
 		$mail->CharSet = 'UTF-8';
+		*/
+
+
 		$mail->From = 'info@turtle-pay.com';
 		$mail->FromName = 'Turtle Pay';
 		$mail->addReplyTo('info@turtle-pay.com');
-		$mail->addAddress($invoiceObj->email);
+		$mail->addAddress($invoiceObj->email, $invoiceObj->name);
 		//$mail->addBCC('bo.grusell@turtle-pay.com');
 		$mail->addBCC('info@turtle-shop.se');
-
-
-
 
 		 // Add for notify invoice 20200913
 		if ($invoiceObj->noti_invoice_on == 'y' ) {

@@ -144,8 +144,13 @@ class InvoiceRequestConfirmClass extends ActionOpen {
 			$result->invoice->specOn = "n";
 		}
 
-		
-
+		// Get Installment Limit
+		$paramInstallmentLimit = new stdClass();
+		$paramInstallmentLimit->_group = "WebAppV4";
+		$paramInstallmentLimit->_action = "GetInstallmentLimit";
+		$resInstallmentLimit = json_decode($this->_RestApiCall(json_encode($paramInstallmentLimit)));
+		$result->invoice->installmentLimit = $resInstallmentLimit->installment_limit;
+	
 		require_once 'FirstInvoicePdf.class';
 		$firstInvoice = new FirstInvoicePdfClass(FIRST_INVOICE_FOLDER);
 		$firstInvoice->Create($result->invoice);
@@ -159,12 +164,7 @@ class InvoiceRequestConfirmClass extends ActionOpen {
 		$reply->invoice_filename = $result->invoice_filename;
 
 		echo json_encode($reply);
-
-		//echo json_decode($result);
-
 	}
-
-	// Test Invoice
 
 	private function actionReCreateFaktura($data) {
 
@@ -204,7 +204,7 @@ class InvoiceRequestConfirmClass extends ActionOpen {
 			$resultJson = $this->_RestApiCall(json_encode($param));
 			$res = json_decode($resultJson);
 
-			 print_r($resultJson);
+			 //print_r($resultJson);
 			// die('');
 
 			if ($res->participant_on == 'y') {
@@ -222,8 +222,15 @@ class InvoiceRequestConfirmClass extends ActionOpen {
 			$invoice->specOn = "n";
 		}
 		
-		// echo json_encode($invoice);
-		// die('');
+		// Get Installment Limit
+		$paramInstallmentLimit = new stdClass();
+		$paramInstallmentLimit->_group = "WebAppV4";
+		$paramInstallmentLimit->_action = "GetInstallmentLimit";
+		$resInstallmentLimit = json_decode($this->_RestApiCall(json_encode($paramInstallmentLimit)));
+		$invoice->installmentLimit = $resInstallmentLimit->installment_limit;
+
+		//echo json_encode($invoice);
+		//die('');
 
 		require_once 'FirstInvoicePdf.class';
 		$firstInvoice = new FirstInvoicePdfClass(FIRST_INVOICE_FOLDER);

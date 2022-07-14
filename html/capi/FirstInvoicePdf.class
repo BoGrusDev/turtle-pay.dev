@@ -23,9 +23,6 @@ class FirstInvoicePdfClass {
 		$font = 'Helvetica';
 		$extra = 0;
 		if ($invoice->returnInvoice == "y") {
-			//$invoice->return_date = '2018-06-15';
-			//$invoice->return_amount = '-300.00';
-			//$invoice->total = '1929.00 kr';
 			$extra = 5;
 		}
 
@@ -498,7 +495,7 @@ class FirstInvoicePdfClass {
 			}
 			
 			$totalValue = str_replace(',' , '', $invoice->total);
-			if ((float)$totalValue > 100) {
+			if ((float)$totalValue > $invoice->installmentLimit) {
 				$pdf->SetFont($font,'B');
 				$pdf->SetFontSize(11);
 				$pdf->SetXY(20, 126 + $extra); // 121

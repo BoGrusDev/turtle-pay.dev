@@ -23,9 +23,6 @@ class FirstInvoicePdfClass {
 		$font = 'Helvetica';
 		$extra = 0;
 		if ($invoice->returnInvoice == "y") {
-			//$invoice->return_date = '2018-06-15';
-			//$invoice->return_amount = '-300.00';
-			//$invoice->total = '1929.00 kr';
 			$extra = 5;
 		}
 
@@ -295,7 +292,7 @@ class FirstInvoicePdfClass {
 						}
 					}
 				}
-				else {
+				else if ($invoice->spec->tdb_on == 'n') {
 					//echo '<pre>';
 					//print_r($invoice->spec->participant);
 					//die('');
@@ -355,6 +352,63 @@ class FirstInvoicePdfClass {
 						}
 					}
 				} 
+				else if ($invoice->spec->tdb_on == 'y') {
+					$pdf->SetFont($font,'B');
+					$pdf->SetFontSize(8);
+					$specRow = -1 + $extra; // Fix
+					for ($i=0; $i < sizeof($invoice->spec->participant); $i++) {
+						$specRow = $specRow + 4;
+						$pdf->SetFont($font,'B');
+						$pdf->SetFontSize(8);
+						$pdf->SetXY(20, 102 + $specRow);
+						$pdf->Write(10, utf8_decode($invoice->spec->participant[$i]->first_name . ' ' . $invoice->spec->participant[$i]->last_name));
+						$rowText = '';
+						
+						$columnCounter = 0;
+						for ($j=0; $j < sizeof($invoice->spec->participant[$i]->option); $j++) {
+							// $columnCounter++;
+							if ($columnCounter > 1) {
+								$rowText = rtrim($rowText, ', ');
+								$pdf->SetFont('');
+								$pdf->SetFont($font);
+								$pdf->SetFontSize(7);
+								$specRow = $specRow + 3;
+								$pdf->SetXY(20, 102 + $specRow);
+								$pdf->Write(10, utf8_decode($rowText));
+								$rowText = '';
+								$columnCounter = 0;
+							}
+
+							if ($invoice->spec->participant[$i]->option[$j]->option_text == 'Ej vald') {
+								// skip
+							}
+							else {
+								$columnCounter++;
+								$rowText .= $invoice->spec->participant[$i]->option[$j]->option_text . ', ';
+							}
+						
+						}
+						$rowText = rtrim($rowText, ', ');
+						$pdf->SetFont('');
+						$pdf->SetFont($font);
+						$pdf->SetFontSize(7);
+						$specRow = $specRow + 3;
+						$pdf->SetXY(20, 102 + $specRow);
+						$pdf->Write(10, utf8_decode($rowText));
+
+						$note = trim($invoice->spec->participant[$i]->note);
+						if (strlen($note) > 0) {
+							$specRow = $specRow + 3; 
+							$rowText = $invoice->spec->participant[$i]->note; //  . ', ';
+							//$rowText = rtrim($rowText, ', ');
+							$pdf->SetFont('');
+							$pdf->SetFont($font);
+							$pdf->SetFontSize(7);
+							$pdf->SetXY(20, 102 + $specRow);
+							$pdf->Write(10, utf8_decode($rowText));
+						}
+					}
+				}
 				
 				
 				/*
@@ -441,7 +495,7 @@ class FirstInvoicePdfClass {
 			}
 			
 			$totalValue = str_replace(',' , '', $invoice->total);
-			if ((float)$totalValue > 100) {
+			if ((float)$totalValue > $invoice->installmentLimit) {
 				$pdf->SetFont($font,'B');
 				$pdf->SetFontSize(11);
 				$pdf->SetXY(20, 126 + $extra); // 121

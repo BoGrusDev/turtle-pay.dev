@@ -98,16 +98,15 @@ class InvoiceRequestConfirmClass extends ActionOpen {
 		*/
 
 		$json = json_encode($data);
-		$result = (object) json_decode($this->_RestApiCall($json));
+		$result = json_decode($this->_RestApiCall($json));
 
-		// 2022-02 CHECK id code = 1
-		// els
-
+		if ($result->code == '0') {
+			echo json_encode($result);
+			die('');
+		}
+		
 		$result->invoice->people_company_on = 'n'; // NEW 2021-07-03
-		//print_r($result);
-		//die('');
-
-
+		
 		// --- Get EventItemID used for the PDF specification
 		$param2 = new stdClass();
 		$param2->_group = "WebAppV4";
@@ -119,7 +118,6 @@ class InvoiceRequestConfirmClass extends ActionOpen {
 		if ($eventItem->code == '2') { 
 			// From App Return orgnr
 			$result->invoice->spec = $eventItem;
-			
 		} 
 		else if ($eventItem->code == '1') {
 			$param = new stdClass();
@@ -146,6 +144,13 @@ class InvoiceRequestConfirmClass extends ActionOpen {
 			$result->invoice->specOn = "n";
 		}
 
+		// Get Installment Limit
+		$paramInstallmentLimit = new stdClass();
+		$paramInstallmentLimit->_group = "WebAppV4";
+		$paramInstallmentLimit->_action = "GetInstallmentLimit";
+		$resInstallmentLimit = json_decode($this->_RestApiCall(json_encode($paramInstallmentLimit)));
+		$result->invoice->installmentLimit = $resInstallmentLimit->installment_limit;
+	
 		require_once 'FirstInvoicePdf.class';
 		$firstInvoice = new FirstInvoicePdfClass(FIRST_INVOICE_FOLDER);
 		$firstInvoice->Create($result->invoice);
@@ -159,12 +164,7 @@ class InvoiceRequestConfirmClass extends ActionOpen {
 		$reply->invoice_filename = $result->invoice_filename;
 
 		echo json_encode($reply);
-
-		//echo json_decode($result);
-
 	}
-
-	// Test Invoice
 
 	private function actionReCreateFaktura($data) {
 
@@ -172,7 +172,7 @@ class InvoiceRequestConfirmClass extends ActionOpen {
 			{
 				"_group" : "InvoiceRequestConfirm",
 				"_action" : "ReCreateFaktura",
-				"_invoice_id" : "1598"
+				"_invoice_id" : "10308"
 			}
 
 		*/
@@ -200,11 +200,12 @@ class InvoiceRequestConfirmClass extends ActionOpen {
 			$param->_group = "WebAppV4";
 			$param->_action = "EventSpecGet";
 			$param->_event_item_id = $eventItem->event_item_id;
+			// $param->_credit_id = 12344420734;
 			$resultJson = $this->_RestApiCall(json_encode($param));
 			$res = json_decode($resultJson);
 
-			echo json_encode($param);
-			die('');
+			 //print_r($resultJson);
+			// die('');
 
 			if ($res->participant_on == 'y') {
 				$invoice->people_company_on = $res->people_company_on; // NEW 2021-07-03
@@ -221,6 +222,16 @@ class InvoiceRequestConfirmClass extends ActionOpen {
 			$invoice->specOn = "n";
 		}
 		
+		// Get Installment Limit
+		$paramInstallmentLimit = new stdClass();
+		$paramInstallmentLimit->_group = "WebAppV4";
+		$paramInstallmentLimit->_action = "GetInstallmentLimit";
+		$resInstallmentLimit = json_decode($this->_RestApiCall(json_encode($paramInstallmentLimit)));
+		$invoice->installmentLimit = $resInstallmentLimit->installment_limit;
+
+		//echo json_encode($invoice);
+		//die('');
+
 		require_once 'FirstInvoicePdf.class';
 		$firstInvoice = new FirstInvoicePdfClass(FIRST_INVOICE_FOLDER);
 		$firstInvoice->Create($invoice);
