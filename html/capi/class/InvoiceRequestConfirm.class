@@ -234,7 +234,7 @@ class InvoiceRequestConfirmClass extends ActionOpen {
 
 		require_once 'FirstInvoicePdf.class';
 		$firstInvoice = new FirstInvoicePdfClass(FIRST_INVOICE_FOLDER);
-		$firstInvoice->Create($invoice);
+		$firstInvoice->_($invoice);
 	}
 
 
