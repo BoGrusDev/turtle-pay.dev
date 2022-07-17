@@ -72,12 +72,6 @@ class InvoiceRequestConfirmClass extends ActionOpen {
 		$data->_action = "CheckInvoice";
 		$json =  json_encode($data);
 		$result = json_decode($this->_RestApiCall($json));
-		/*
-		if ($result->code == '1') {
-			$data->_bankid_text = str_replace('_ReceiptNumber_', $data->receipt_number, $data->_bankid_text );
-			$result = $this->_BankIDSignInit($data);
-		}
-		*/
 		echo json_encode($result);
 
 	}
@@ -153,7 +147,7 @@ class InvoiceRequestConfirmClass extends ActionOpen {
 	
 		require_once 'FirstInvoicePdf.class';
 		$firstInvoice = new FirstInvoicePdfClass(FIRST_INVOICE_FOLDER);
-		$firstInvoice->Create($result->invoice);
+		$firstInvoice->_($result->invoice);
 		//$firstInvoice->Create($invoice);
 		$reply = new StdClass();
 
@@ -229,12 +223,9 @@ class InvoiceRequestConfirmClass extends ActionOpen {
 		$resInstallmentLimit = json_decode($this->_RestApiCall(json_encode($paramInstallmentLimit)));
 		$invoice->installmentLimit = $resInstallmentLimit->installment_limit;
 
-		//echo json_encode($invoice);
-		//die('');
-
 		require_once 'FirstInvoicePdf.class';
 		$firstInvoice = new FirstInvoicePdfClass(FIRST_INVOICE_FOLDER);
-		$firstInvoice->Create($invoice);
+		$firstInvoice->_($invoice);
 	}
 
 

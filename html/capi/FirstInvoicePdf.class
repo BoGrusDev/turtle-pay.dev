@@ -12,616 +12,594 @@ use setasign\Fpdi;
 
 class FirstInvoicePdfClass {
 
+	private $setting;
 
-	public function __construct($folder, $mall = "") {
-		$this->folder = $folder;
-        $this->mall = "fakturamall.pdf";;
+	private $invoice;  
+	private	$extra;
+	private $pageNo;
+	private $totalPages;
+	private $refundAll;
+	
+
+	public function __construct($folder) {
+		$this->setting = new stdClass();
+		$this->setting->folder = $folder;
+        $this->setting->mallFirstPage = "fakturamall.pdf";;
+		$this->setting->mallContinuePage = "empty.pdf";;
+		$this->setting->font = 'Helvetica';
+		$this->setting->maxRowsPageOne = 60;
+		$this->setting->maxRowsContinuePageOne = 204;
+		$this->pageNo = 1;
 	}
 
-	public function Create($invoice) {
-
-		$font = 'Helvetica';
-		$extra = 0;
-		if ($invoice->returnInvoice == "y") {
-			$extra = 5;
-		}
-
-		//$mall = "fakt1bg.pdf";
-		$mall = "fakturamall.pdf";
-		//call the FPDF library
+	public function _($invoice) {
+		$this->invoice = $invoice;
 		require('fpdf181/fpdf.php');
 		require_once('ftpi/autoload.php');
-		$pdf = new Fpdi\Fpdi();
+		$this->pdf = new Fpdi\Fpdi();
+		$this->pdf->AddFont('OCR-B','','ocrb.php');
+		$this->firstPageAdd();
 
-		$pdf->AddFont('OCR-B','','ocrb.php');
-		$pdf->setSourceFile($mall);
-		$templateId = $pdf->importPage(1);
-		// get the size of the imported page
-		$size = $pdf->getTemplateSize($templateId);
-		$pdf->AddPage('P', array($size['width'], 310));
-		//$pdf->AddPage('P', array($size['width'], $size['height']));
-		$pdf->useTemplate($templateId);
-
-		$pdf->SetFont($font);
-
-		$pdf->SetFontSize(16);
-		$pdf->SetXY(18, 4);
-		$pdf->Write(16, utf8_decode($invoice->company_name));
-
-		$pdf->SetFont($font,'I');
-		$pdf->SetFontSize(9);
-		$pdf->SetXY(18, 11);
-		$pdf->Write(14, 'i samarbete med Turtle Pay');
-		$pdf->SetXY(18, 15);
-		$pdf->Write(14, utf8_decode('P.O. Box 24078, SE-104 50 Stockholm'));
-
-		//$pdf->Image('faktura-logo.jpg', null,null,60,31);
-		$pdf->SetFont($font);
-		$pdf->SetFontSize(14);
-		$pdf->SetXY(116, 0);
-		$pdf->Write(16, 'FAKTURA');
-
-		$pdf->SetFont($font,'B');
-		$pdf->SetFontSize(9);
-		$pdf->SetXY(116, 8);
-		$pdf->Write(11, 'Utskriftsdatum');
-		$pdf->SetFont('');
-		$pdf->SetFont($font);
-		$pdf->SetFontSize(10);
-		$pdf->SetXY(116, 13);
-		$pdf->Write(10, $invoice->date);
-
-		$pdf->SetFont($font,'B');
-		$pdf->SetFontSize(9);
-		$pdf->SetXY(116, 17);
-		$pdf->Write(11, utf8_decode('Förfallodatum'));
-		$pdf->SetFont('');
-		$pdf->SetFont($font);
-		$pdf->SetFontSize(10);
-		$pdf->SetXY(116, 22);
-		$pdf->Write(10, $invoice->duedate);
-
-		if($invoice->people_company_on == 'y') {
-			
-			$pdf->SetFontSize(10);
-			$pdf->SetXY(116, 33);
-			$pdf->Write(10, utf8_decode($invoice->name));
-			$pdf->SetXY(116, 38);
-			$pdf->Write(10, utf8_decode($invoice->spec->people_company));
-			$pdf->SetXY(116, 43);
-			$pdf->Write(10, utf8_decode($invoice->spec->people_company_address));
-			$pdf->SetXY(116, 48);
-			$pdf->Write(10, utf8_decode($invoice->spec->people_company_postcode . ' ' . $invoice->spec->people_company_city));
-
+		if ($this->invoice->spec->tdb_on == 'y') {
+			$this->fakturaTdb();
 		}
 		else {
-			$pdf->SetFontSize(10);
-			$pdf->SetXY(116, 33);
-			$pdf->Write(10, utf8_decode($invoice->name));
-			$pdf->SetXY(116, 38);
-			$pdf->Write(10, utf8_decode($invoice->address));
-			$pdf->SetXY(116, 43);
-			$pdf->Write(10, utf8_decode($invoice->postaddress));
-		}
-		$pdf->SetFont($font,'B');
-		$pdf->SetFontSize(11);
-		$pdf->SetXY(18, 68);
-		$pdf->SetFillColor(220,220,220);
-		$pdf->Cell(184,9,'   Specifikation','BTLR',0,'L',true);
-		//$pdf->Write(10, utf8_decode('Specifikation'));
-
-		$pdf->SetFont('');
-		$pdf->SetFont($font);
-		$pdf->SetFontSize(10);
-		$pdf->SetXY(20, 76);
-		$pdf->Write(10, utf8_decode('Transaktionsdatum'));  // Inköpsdatum
-		//$pdf->SetXY(50, 76);
-		//$pdf->Write(10, utf8_decode('Butik'));
-		
-		$pdf->SetXY(20, 96);
-		$pdf->Write(10, utf8_decode('Kvittoreferens'));
-		$pdf->SetXY(50, 96);
-		$pdf->Write(10, utf8_decode($invoice->receipt_number));
-		
-		if ($invoice->spec->has_vat == 'y') {
-			$pdf->SetFontSize(8);
-			$pdf->SetXY(20, 100);
-			$pdf->Write(10, utf8_decode('(varav moms (' . $invoice->spec->vat . '%), ' . $invoice->spec->vat_amount . ' kr, momsreg.nr. SE' . $invoice->spec->company_id_number . '01)'));
-			$pdf->SetFont('');
-			$pdf->SetFont($font);
-			$pdf->SetFontSize(10);
+			$this->fakturaStandard();
 		}
 
-		if ($invoice->spec_type == '1') {
-			//$pdf->SetXY(20, 104);
-			//$pdf->Write(10, utf8_decode('Specifikation:'));
-			$pdf->SetXY(20, 109);
-			$pdf->Write(10, utf8_decode($invoice->spec));
-		}
-
-		$pdf->SetXY(20, 81);
-		$pdf->Write(10, $invoice->purchase_date);
-		$pdf->SetXY(50, 81);
-		$pdf->Write(10, utf8_decode($invoice->company_name));
-		
-			$pdf->SetFontSize(8);
-			$pdf->SetXY(50, 85);
-			$pdf->Write(10, utf8_decode('(Org.nr. ' . $invoice->spec->company_id_number . ')'));
-			$pdf->SetFont('');
-			$pdf->SetFont($font);
-			$pdf->SetFontSize(10);
-		
-		$refundAll = false;
-		if ($invoice->returnInvoice == "y") {
-			$invoice->credit_amount = $invoice->prev_amount;
-			$pdf->SetXY(114, 81);
-			$pdf->Write(10, utf8_decode('Returbelopp'));
-			$pdf->SetXY(154, 81);
-			$pdf->Write(10, utf8_decode('-' . $invoice->refund_amount)); //  + ' kr';
-			if ($invoice->refund_all == 'y') {
-				$refundAll = true;
-
-				$pdf->SetXY(114, 86); // 91
-				$pdf->Write(10, utf8_decode('Totalt (kr)'));
-				$pdf->SetXY(154, 86); // 91
-				$pdf->Write(10, utf8_decode($invoice->total)); //  + ' kr';
-
-				$pdf->SetXY(114, 91); // 101
-				$pdf->Write(10, utf8_decode('OCR-nummer'));
-				$pdf->SetXY(154, 91); // 101
-				$pdf->Write(10, utf8_decode($invoice->ocrno));
-			}
-
-		}
-		$pdf->SetXY(114, 76); // 81
-		$pdf->Write(10, utf8_decode('Köpesumma'));
-		$pdf->SetXY(154, 76); // 81
-		$pdf->Write(10, utf8_decode($invoice->credit_amount)); //  + ' kr';
-
-		$pdf->SetXY(50, 89); // 86
-		$pdf->Write(10, utf8_decode($invoice->shop_name));
-
-		if ($refundAll == false) {
-			if ($invoice->start_fee > 0) {
-				$pdf->SetXY(114, 81 + $extra); //86
-				$pdf->Write(10, utf8_decode('Uppläggningsavgift'));
-				$pdf->SetXY(154, 81 + $extra); // 86
-				$pdf->Write(10, utf8_decode($invoice->start_fee)); // + ' kr';
-				$extra = $extra + 5;
-			}
-
-			$pdf->SetXY(114, 81 + $extra); // 86
-			$pdf->Write(10, utf8_decode('Aviavgift'));
-			$pdf->SetXY(154, 81 + $extra); // 86
-			$pdf->Write(10, utf8_decode($invoice->fee)); // + ' kr';
-
-			//$pdf->SetFont($font,'B');
-
-		}
-
-
-		if ($refundAll == false) {
-			$pdf->SetFont($font,'B');
-			$pdf->SetXY(114, 86 + $extra); // 91
-			$pdf->Write(10, utf8_decode('Totalt (kr)'));
-			$pdf->SetXY(154, 86 + $extra); // 91
-			$pdf->Write(10, utf8_decode($invoice->total)); //  + ' kr';
-			$pdf->SetFont('');
-			$pdf->SetFont($font);
-			$pdf->SetFontSize(10);
-
-			$pdf->SetXY(114, 91 + $extra); // 96
-			$pdf->Write(10, utf8_decode('Bankgiro'));
-
-			$pdf->SetXY(154, 91 + $extra); // 96
-			$pdf->Write(10, '5258-0016');
-
-			$pdf->SetXY(114, 96 + $extra); // 101
-			$pdf->Write(10, utf8_decode('OCR-nummer'));
-			$pdf->SetXY(154, 96 + $extra); // 101
-			$pdf->Write(10, utf8_decode($invoice->ocrno));
-
-			$pdf->SetXY(114, 101 + $extra); // 106
-			$pdf->Write(10, utf8_decode('Betalning oss tillhanda'));
-			$pdf->SetXY(154, 101 + $extra); // 106
-			$pdf->Write(10, utf8_decode($invoice->duedate));
-
-			// ---
-			// --- Specifikation 
-			// ---
-			
-			if (!isset($invoice->specOn) || $invoice->specOn == "n") {
-				// do nothing
-			}
-			else if ($invoice->specOn == "y") {
-				// Set the header
-				
-				
-				if (sizeof($invoice->spec->participant[0]->option) <= 2 && $invoice->spec->tdb_on == 'n') {
-
-					$pdf->SetFont($font,'B');
-					$pdf->SetFontSize(8);
-					$pdf->SetXY(20, 112 + $extra);
-					$pdf->Write(10, utf8_decode('Namn'));
-				
-					$pdf->SetFont('');
-					$pdf->SetFont($font);
-					$pdf->SetFontSize(8);
-
-					for ($i=0; $i < sizeof($invoice->spec->participant); $i++) {
-						$plusRow = ($i + 1) * 4;
-						$pdf->SetXY(20, 112 + $extra + $plusRow);
-						$pdf->Write(10, utf8_decode($invoice->spec->participant[$i]->first_name . ' ' . $invoice->spec->participant[$i]->last_name));
-						
-					} 
-
-					$pdf->SetFont($font,'B');
-					$pdf->SetFontSize(8);
-					// -- Write Option header
-					for ($i=0; $i < sizeof($invoice->spec->participant[0]->option); $i++) {
-						$plusCol = ($i) * 42; // 34
-						$pdf->SetXY( 70 + $plusCol, 112 + $extra );
-						$pdf->Write(10, utf8_decode($invoice->spec->participant[0]->option[$i]->sel_label));
-					} 
-					// Check if has note
-					$hasNote = false;
-					for ($i=0; $i < sizeof($invoice->spec->participant); $i++) {
-						if (strlen($invoice->spec->participant[$i]->note) > 1) {
-							$hasNote = true;
-						}
-					}
-					if ($hasNote) {
-						$plusCol = (sizeof($invoice->spec->participant[0]->option)) * 42; // 34
-						$pdf->SetXY( 70 + $plusCol, 112 + $extra);
-						$pdf->Write(10, utf8_decode($invoice->spec->note_label));
-					}
-					$pdf->SetFont('');
-					$pdf->SetFont($font);
-					$pdf->SetFontSize(8);
-					for ($i=0; $i < sizeof($invoice->spec->participant); $i++) {
-						$plusRow = ($i + 1) * 4;
-						for ($j=0; $j < sizeof($invoice->spec->participant[$i]->option); $j++) {
-							$plusCol = ($j) * 42; // 34
-							$pdf->SetXY( 70 + $plusCol, 112 + $extra + $plusRow );
-							$pdf->Write(10, utf8_decode($invoice->spec->participant[$i]->option[$j]->option_text));
-						} 
-						if (strlen($invoice->spec->participant[$i]->note) > 0) {
-							$plusCol = (sizeof($invoice->spec->participant[$i]->option)) * 42; // 34
-							$pdf->SetXY( 70 + $plusCol, 112 + $extra + $plusRow );
-							$pdf->Write(10, utf8_decode($invoice->spec->participant[$i]->note));
-						}
-					}
-				}
-				else if ($invoice->spec->tdb_on == 'n') {
-					//echo '<pre>';
-					//print_r($invoice->spec->participant);
-					//die('');
-					$pdf->SetFont($font,'B');
-					$pdf->SetFontSize(8);
-					$specRow = -1 + $extra; // Fix
-					for ($i=0; $i < sizeof($invoice->spec->participant); $i++) {
-						$specRow = $specRow + 4;
-						$pdf->SetFont($font,'B');
-						$pdf->SetFontSize(8);
-						$pdf->SetXY(20, 102 + $specRow);
-						$pdf->Write(10, utf8_decode($invoice->spec->participant[$i]->first_name . ' ' . $invoice->spec->participant[$i]->last_name));
-						$rowText = '';
-						
-						$columnCounter = 0;
-						for ($j=0; $j < sizeof($invoice->spec->participant[$i]->option); $j++) {
-							// $columnCounter++;
-							if ($columnCounter > 6) {
-								$rowText = rtrim($rowText, ', ');
-								$pdf->SetFont('');
-								$pdf->SetFont($font);
-								$pdf->SetFontSize(7);
-								$specRow = $specRow + 3;
-								$pdf->SetXY(20, 102 + $specRow);
-								$pdf->Write(10, utf8_decode($rowText));
-								$rowText = '';
-								$columnCounter = 0;
-							}
-
-							if ($invoice->spec->participant[$i]->option[$j]->option_text == 'Ej vald') {
-								// skip
-							}
-							else {
-								$columnCounter++;
-								$rowText .= $invoice->spec->participant[$i]->option[$j]->option_text . ', ';
-							}
-						
-						}
-						$rowText = rtrim($rowText, ', ');
-						$pdf->SetFont('');
-						$pdf->SetFont($font);
-						$pdf->SetFontSize(7);
-						$specRow = $specRow + 3;
-						$pdf->SetXY(20, 102 + $specRow);
-						$pdf->Write(10, utf8_decode($rowText));
-
-						$note = trim($invoice->spec->participant[$i]->note);
-						if (strlen($note) > 0) {
-							$specRow = $specRow + 3; 
-							$rowText = $invoice->spec->participant[$i]->note; //  . ', ';
-							//$rowText = rtrim($rowText, ', ');
-							$pdf->SetFont('');
-							$pdf->SetFont($font);
-							$pdf->SetFontSize(7);
-							$pdf->SetXY(20, 102 + $specRow);
-							$pdf->Write(10, utf8_decode($rowText));
-						}
-					}
-				} 
-				else if ($invoice->spec->tdb_on == 'y') {
-					$pdf->SetFont($font,'B');
-					$pdf->SetFontSize(8);
-					$specRow = -1 + $extra; // Fix
-					for ($i=0; $i < sizeof($invoice->spec->participant); $i++) {
-						$specRow = $specRow + 4;
-						$pdf->SetFont($font,'B');
-						$pdf->SetFontSize(8);
-						$pdf->SetXY(20, 102 + $specRow);
-						$pdf->Write(10, utf8_decode($invoice->spec->participant[$i]->first_name . ' ' . $invoice->spec->participant[$i]->last_name));
-						$rowText = '';
-						
-						$columnCounter = 0;
-						for ($j=0; $j < sizeof($invoice->spec->participant[$i]->option); $j++) {
-							// $columnCounter++;
-							if ($columnCounter > 1) {
-								$rowText = rtrim($rowText, ', ');
-								$pdf->SetFont('');
-								$pdf->SetFont($font);
-								$pdf->SetFontSize(7);
-								$specRow = $specRow + 3;
-								$pdf->SetXY(20, 102 + $specRow);
-								$pdf->Write(10, utf8_decode($rowText));
-								$rowText = '';
-								$columnCounter = 0;
-							}
-
-							if ($invoice->spec->participant[$i]->option[$j]->option_text == 'Ej vald') {
-								// skip
-							}
-							else {
-								$columnCounter++;
-								$rowText .= $invoice->spec->participant[$i]->option[$j]->option_text . ', ';
-							}
-						
-						}
-						$rowText = rtrim($rowText, ', ');
-						$pdf->SetFont('');
-						$pdf->SetFont($font);
-						$pdf->SetFontSize(7);
-						$specRow = $specRow + 3;
-						$pdf->SetXY(20, 102 + $specRow);
-						$pdf->Write(10, utf8_decode($rowText));
-
-						$note = trim($invoice->spec->participant[$i]->note);
-						if (strlen($note) > 0) {
-							$specRow = $specRow + 3; 
-							$rowText = $invoice->spec->participant[$i]->note; //  . ', ';
-							//$rowText = rtrim($rowText, ', ');
-							$pdf->SetFont('');
-							$pdf->SetFont($font);
-							$pdf->SetFontSize(7);
-							$pdf->SetXY(20, 102 + $specRow);
-							$pdf->Write(10, utf8_decode($rowText));
-						}
-					}
-				}
-				
-				
-				/*
-				if (sizeof($invoice->spec->participant[0]->option) <= 3) {
-
-					$pdf->SetFont($font,'B');
-					$pdf->SetFontSize(8);
-					$pdf->SetXY(20, 112 + $extra);
-					$pdf->Write(10, utf8_decode('Namn'));
-				
-					$pdf->SetFont('');
-					$pdf->SetFont($font);
-					$pdf->SetFontSize(8);
-
-					for ($i=0; $i < sizeof($invoice->spec->participant); $i++) {
-						$plusRow = ($i + 1) * 4;
-						$pdf->SetXY(20, 112 + $extra + $plusRow);
-						$pdf->Write(10, utf8_decode($invoice->spec->participant[$i]->first_name . ' ' . $invoice->spec->participant[$i]->last_name));
-						
-					} 
-
-					$pdf->SetFont($font,'B');
-					$pdf->SetFontSize(8);
-					// -- Write Option header
-					for ($i=0; $i < sizeof($invoice->spec->participant[0]->option); $i++) {
-						$plusCol = ($i) * 34;
-						$pdf->SetXY( 70 + $plusCol, 112 + $extra );
-						$pdf->Write(10, utf8_decode($invoice->spec->participant[0]->option[$i]->sel_label));
-					} 
-					$pdf->SetFont('');
-					$pdf->SetFont($font);
-					$pdf->SetFontSize(8);
-					for ($i=0; $i < sizeof($invoice->spec->participant); $i++) {
-						$plusRow = ($i + 1) * 4;
-						for ($j=0; $j < sizeof($invoice->spec->participant[$i]->option); $j++) {
-							$plusCol = ($j) * 34;
-							$pdf->SetXY( 70 + $plusCol, 112 + $extra + $plusRow );
-							$pdf->Write(10, utf8_decode($invoice->spec->participant[$i]->option[$j]->option_text));
-						} 
-					}
-				}
-				else {
-				
-					$pdf->SetFont($font,'B');
-					$pdf->SetFontSize(8);
-					for ($i=0; $i < sizeof($invoice->spec->participant); $i++) {
-						$plusRow = ($i + 1) * 7;
-						$pdf->SetFont($font,'B');
-						$pdf->SetFontSize(8);
-						$pdf->SetXY(20, 102 + $extra + $plusRow);
-						$pdf->Write(10, utf8_decode($invoice->spec->participant[$i]->first_name . ' ' . $invoice->spec->participant[$i]->last_name));
-						$rowText = '';
-					
-						for ($j=0; $j < sizeof($invoice->spec->participant[$i]->option); $j++) {
-							//if (sizeof($invoice->spec->participant[$i]->option) <= 4) {
-							//	$rowText .= $invoice->spec->participant[0]->option[$j]->sel_label . ': ' . $invoice->spec->participant[$i]->option[$j]->option_text . ', ';
-							//} 
-							//else {
-								$rowText .= $invoice->spec->participant[$i]->option[$j]->option_text . ', ';
-							//}
-						}
-						
-						if (strlen($invoice->spec->participant[$i]->note) > 0) {
-							$rowText .= $invoice->spec->participant[$i]->note . ', ';
-						}
-						
-						
-						$rowText = rtrim($rowText, ', ');
-						$pdf->SetFont('');
-						$pdf->SetFont($font);
-						$pdf->SetFontSize(7);
-						$pdf->SetXY(20, 102 + $extra + $plusRow + 3);
-						$pdf->Write(10, utf8_decode($rowText));
-					}
-				//} 
-				*/
-			}
-
-			if ($invoice->returnInvoice == "y" || $invoice->start_fee > 0) {
-				$extra += 30;
-			}
-			else {
-				$extra += 35;
-			}
-			
-			$totalValue = str_replace(',' , '', $invoice->total);
-			if ((float)$totalValue > $invoice->installmentLimit) {
-				$pdf->SetFont($font,'B');
-				$pdf->SetFontSize(11);
-				$pdf->SetXY(20, 126 + $extra); // 121
-				$pdf->Write(10, utf8_decode("Ta't lugnt!  Betala i din egen takt"));
-				$pdf->SetFont('');
-				$pdf->SetFont($font);
-				$pdf->SetFontSize(10);
-
-				$pdf->SetXY(20, 131 + $extra); // 126
-				$pdf->Write(10, utf8_decode('Du kan istället betala valfritt belopp under ' .  $invoice->monthly_no . ' månader, dock lägst '));
-
-			
-				$pdf->SetXY(124, 131 + $extra); // 126
-				$pdf->SetFont($font,'B');
-				$pdf->Write(10, utf8_decode( $invoice->monthly_payment_total . ' kronor'));
-				$pdf->SetFont('');
-				$pdf->SetFont($font);
-				$pdf->SetFontSize(10);
-
-				$len = strlen($invoice->monthly_payment_total);
-				if ($len <= 2) {
-					// under 100
-					$posPlus = 0;
-				}
-				else if ($len == 3) {
-					// over 99 and under 1000
-					$posPlus = 2;
-				}
-				else if ($len >= 4) {
-					// over 1000
-					$posPlus = 5;
-				}
-
-				$pdf->SetXY(140 + $posPlus, 131 + $extra); // 126
-				$pdf->Write(10, utf8_decode(' senast ' . $invoice->duedate . '.'));
-
-				$interestText = "Räntefritt " . $invoice->grace_days . " dagar, ränta " . $invoice->interest . "%, aviavg. 29 kr";
-				if ($invoice->admin_fee > 0) {
-					$interestText .= ', adm.avg. ' . $invoice->admin_fee . ' kr/mån';
-				}
-				$interestText .= ".";
-
-				$effectiveText = "(Effektivränta på 10,000kr " . $invoice->effective_rate . "%, totalkost. 12mån " . number_format($invoice->effective_total) . "kr)"; // effective_rate
-				
-				$pdf->SetXY(20, 136 + $extra);
-				$pdf->Write(10, utf8_decode($interestText));
-
-				$pdf->SetFont($font);
-				$pdf->SetFontSize(8);
-				$pdf->SetXY(96, 136 + $extra);
-				$pdf->Write(10, utf8_decode($effectiveText));
-
-				$pdf->SetFont($font);
-				$pdf->SetFontSize(10);
-
-			}
-
-			$pdf->SetXY(20, 141 + $extra); // 136
-			$pdf->Write(10, utf8_decode('Ange fakturans OCR-nummer vid inbetalningen. Se villkor på följande länk: www.turtle-pay.com/villkor.'));
-
-			//$pdf->SetXY(20, 141 + $extra);
-			//$pdf->Write(10, utf8_decode('Se villkor på följande länk: www.turtle-pay.com/villkor.'));
-
-			$pdf->SetXY(20, 146 + $extra);
-			$pdf->Write(10, utf8_decode('Förseningsavgift och dröjsmålsränta kan tillkomma vid sen betalning.'));
-		}
-
-		$pdf->Line(18,190,201,190);
-		$pdf->SetFontSize(8);
-		$pdf->SetXY(18, 188);
-		$pdf->Write(10, utf8_decode('Turtle Pay AB'));
-		$pdf->SetXY(42, 188);
-		$pdf->Write(10, utf8_decode('Org nr: 559101-6786'));
-		$pdf->SetXY(74, 188);
-		$pdf->Write(10, utf8_decode('P.O. Box 24078'));
-		$pdf->SetXY(100, 188);
-		$pdf->Write(10, utf8_decode('SE-104 50 Stockholm'));
-		$pdf->SetXY(140, 188);
-		$pdf->Write(10, utf8_decode('Telefon 08-80 62 20'));
-		//$pdf->SetXY(140, 188);
-		//$pdf->Write(10, utf8_decode('Öppet vardagar 9-16'));
-		$pdf->SetXY(172, 188);
-		$pdf->Write(10, utf8_decode('info@turtle-pay.com'));
-
-		if ($refundAll == false) {
-			$pdf->SetFontSize(8);
-			$pdf->SetXY(20, 230);
-			$pdf->Write(10, utf8_decode($invoice->name));
-			$pdf->SetXY(20, 234);
-			$pdf->Write(10, utf8_decode($invoice->address));
-			$pdf->SetXY(20, 238);
-			$pdf->Write(10, utf8_decode($invoice->postaddress));
-
-			$pdf->SetFontSize(12);
-			//$pdf->SetXY(134, 218);
-			$pdf->SetXY(90, 238);
-			$pdf->Write(12, utf8_decode('Fyll i valfritt belopp'));
-
-			// Write the OCR
-			//$pdf->SetFont('OCRB10PitchBT-Regular');
-			$pdf->SetFont('OCR-B','',12);
-			//$pdf->SetFontSize(10);
-
-			$pdf->SetXY(12, 272);
-			$pdf->Write(10, utf8_decode('#'));
-
-			$pdf->SetXY(49, 272);
-
-			$pdf->Write(10, utf8_decode($invoice->ocrno . ' #'));
-
-			$pdf->SetXY(167, 272);
-			$pdf->Write(10, utf8_decode('52580016#42#'));
-		}
-		$filename = $this->folder . $invoice->invoice_filename;
+		// Crteate the PDF-file
+		$filename = $this->setting->folder . $this->invoice->invoice_filename;
 		try {
-			$pdf->Output($filename,'F');
+			$this->pdf->Output($filename,'F');
 		}
 		catch(Exception $e) {
 			echo 'Message: ' .$e->getMessage();
 		}
 	}
 
+	private function firstPageAdd() {
+		$this->pdf->setSourceFile($this->setting->mallFirstPage);
+		$templateId = $this->pdf->importPage($this->pageNo);
+		$size = $this->pdf->getTemplateSize($templateId);
+		$this->pdf->AddPage('P', array($size['width'], 310));
+		$this->pdf->useTemplate($templateId);
+		$this->pdf->SetFont($this->setting->font);
+		$this->extra = 0;
+		if ($this->invoice->returnInvoice == "y") {
+			$this->extra = 5;
+		}
+	}
+
+	private function fakturaStandard() {
+
+		//echo json_encode($this->invoice); die('');
+
+		$this->totalPages = 1;
+		$this->_headerWrite();
+		$this->_specHeader();
+		if (!isset($this->invoice->specOn) || $this->invoice->specOn == "n") {
+			// do nothing (no specification)
+		}
+		else {
+			//echo sizeof($this->invoice->spec->participant[0]->option); die(''); 
+			if (sizeof($this->invoice->spec->participant[0]->option) <= 2) {
+				// Short version, max 3 selections
+				$this->pdf->SetFont($this->setting->font,'B');
+				$this->pdf->SetFontSize(8);
+				$this->pdf->SetXY(20, 112 + $this->extra);
+				$this->pdf->Write(10, utf8_decode('Namn'));
+			
+				$this->pdf->SetFont('');
+				$this->pdf->SetFont($this->setting->font);
+				$this->pdf->SetFontSize(8);
+	
+				for ($i=0; $i < sizeof($this->invoice->spec->participant); $i++) {
+					$plusRow = ($i + 1) * 4;
+					$this->pdf->SetXY(20, 112 + $this->extra + $plusRow);
+					$this->pdf->Write(10, utf8_decode($this->invoice->spec->participant[$i]->first_name . ' ' . $this->invoice->spec->participant[$i]->last_name));
+					
+				} 
+				$this->pdf->SetFont($this->setting->font,'B');
+				$this->pdf->SetFontSize(8);
+	
+				for ($i=0; $i < sizeof($this->invoice->spec->participant[0]->option); $i++) {
+					$plusCol = ($i) * 42; // 34
+					$this->pdf->SetXY( 70 + $plusCol, 112 + $this->extra );
+					$this->pdf->Write(10, utf8_decode($this->invoice->spec->participant[0]->option[$i]->sel_label));
+				} 
+				// Check if has note
+				$hasNote = false;
+				for ($i=0; $i < sizeof($this->invoice->spec->participant); $i++) {
+					if (strlen($this->invoice->spec->participant[$i]->note) > 1) {
+						$hasNote = true;
+					}
+				}
+				if ($hasNote) {
+					$plusCol = (sizeof($this->invoice->spec->participant[0]->option)) * 42; // 34
+					$this->pdf->SetXY( 70 + $plusCol, 112 + $this->extra);
+					$this->pdf->Write(10, utf8_decode($this->invoice->spec->note_label));
+				}
+				$this->pdf->SetFont('');
+				$this->pdf->SetFont($this->setting->font);
+				$this->pdf->SetFontSize(8);
+				for ($i=0; $i < sizeof($this->invoice->spec->participant); $i++) {
+					$plusRow = ($i + 1) * 4;
+					for ($j=0; $j < sizeof($this->invoice->spec->participant[$i]->option); $j++) {
+						$plusCol = ($j) * 42; // 34
+						$this->pdf->SetXY( 70 + $plusCol, 112 + $this->extra + $plusRow );
+						$this->pdf->Write(10, utf8_decode($this->invoice->spec->participant[$i]->option[$j]->option_text));
+					} 
+					if (strlen($this->invoice->spec->participant[$i]->note) > 0) {
+						$plusCol = (sizeof($this->invoice->spec->participant[$i]->option)) * 42; // 34
+						$this->pdf->SetXY( 70 + $plusCol, 112 + $this->extra + $plusRow );
+						$this->pdf->Write(10, utf8_decode($this->invoice->spec->participant[$i]->note));
+					}
+				}
+			}
+			else  {
+				// More the 3 selections
+				$this->pdf->SetFont($this->setting->font,'B');
+				$this->pdf->SetFontSize(8);
+				$specRow = -1 + $this->extra; // Fix
+				for ($i=0; $i < sizeof($this->invoice->spec->participant); $i++) {
+					$specRow = $specRow + 4;
+					$this->pdf->SetFont($this->setting->font,'B');
+					$this->pdf->SetFontSize(8);
+					$this->pdf->SetXY(20, 102 + $specRow);
+					$this->pdf->Write(10, utf8_decode($this->invoice->spec->participant[$i]->first_name . ' ' . $this->invoice->spec->participant[$i]->last_name));
+					$rowText = '';
+				
+					$columnCounter = 0;
+					for ($j=0; $j < sizeof($this->invoice->spec->participant[$i]->option); $j++) {
+						if ($columnCounter > 6) {
+							$rowText = rtrim($rowText, ', ');
+							$this->pdf->SetFont('');
+							$this->pdf->SetFont($this->setting->font);
+							$this->pdf->SetFontSize(7);
+							$specRow = $specRow + 3;
+							$this->pdf->SetXY(20, 102 + $specRow);
+							$this->pdf->Write(10, utf8_decode($rowText));
+							$rowText = '';
+							$columnCounter = 0;
+						}
+	
+						if ($this->invoice->spec->participant[$i]->option[$j]->option_text == 'Ej vald') {
+							// skip
+						}
+						else {
+							$columnCounter++;
+							$rowText .= $this->invoice->spec->participant[$i]->option[$j]->option_text . ', ';
+						}
+					
+					}
+					$rowText = rtrim($rowText, ', ');
+					$this->pdf->SetFont('');
+					$this->pdf->SetFont($this->setting->font);
+					$this->pdf->SetFontSize(7);
+					$specRow = $specRow + 3;
+					$this->pdf->SetXY(20, 102 + $specRow);
+					$this->pdf->Write(10, utf8_decode($rowText));
+	
+					$note = trim($this->invoice->spec->participant[$i]->note);
+					if (strlen($note) > 0) {
+						$specRow = $specRow + 3; 
+						$rowText = $this->invoice->spec->participant[$i]->note; //  . ', ';
+						//$rowText = rtrim($rowText, ', ');
+						$this->pdf->SetFont('');
+						$this->pdf->SetFont($this->setting->font);
+						$this->pdf->SetFontSize(7);
+						$this->pdf->SetXY(20, 102 + $specRow);
+						$this->pdf->Write(10, utf8_decode($rowText));
+					}
+				}
+			} 
+		}
+		$this->_installmentWrite();
+		$this->_footerWrite();
+		$this->_bankgiroCard();
+	}
+
+	private function fakturaTdb() {
+		// If spec on separate pages
+
+		// Calculate total rows
+		$totalRows = sizeof($this->invoice->spec->participant) * 6;
+		for ($i=0; $i < sizeof($this->invoice->spec->participant); $i++) {
+			$totalRows +=  (sizeof($this->invoice->spec->participant[$i]->option) * 4);
+		}
+		if ($totalRows <= $this->setting->maxRowsPageOne) {
+			$this->totalPages = 1;
+			$currentRow = 93;
+		}
+		else {
+			$this->totalPages = ceil($this->totalPages = $totalRows / $this->setting->maxRowsContinuePageOne) + 1;
+		}
+		$this->_headerWrite();
+		$this->_specHeader();
+		$this->_installmentWrite();
+		$this->_footerWrite();
+		$this->_bankgiroCard();
+		// Se specifikation på nästa sida.
+	
+		if ($this->totalPages > 1) {
+			$this->pdf->SetFont('');
+			$this->pdf->SetFont($this->setting->font);
+			$this->pdf->SetFontSize(10);
+			$this->pdf->SetXY(20, 100);
+			$this->pdf->Write(10, utf8_decode('Se specifikation på nästa sida.'));
+			$this->_continuePageAdd();
+			$this->_headerWrite();
+			$this->_specHeaderContine();
+			$currentRow = 68;
+			// Fortsättning från föregående sida
+		}
+	
+		$this->pdf->SetFont($this->setting->font,'B');
+		$this->pdf->SetFontSize(8);
+		for ($i=0; $i < sizeof($this->invoice->spec->participant); $i++) {
+			//for ($i=0; $i < 6; $i++) {
+			if ($this->totalPages > 1) {
+			// Check if nned page break
+				$nextPartRows = $currentRow + 6 + (sizeof($this->invoice->spec->participant[$i]->option) * 4);
+				if ($nextPartRows > $this->setting->maxRowsContinuePageOne + 68) {
+					// New page
+					// echo $currentRow;
+					$this->pdf->SetFont('');
+					$this->pdf->SetFont($this->setting->font);
+					$this->pdf->SetFontSize(10);
+					$this->pdf->SetXY(20, 278);
+					$this->pdf->Write(10, utf8_decode('Fortsättning på nåsta sida.'));
+					// Fortsättning från föregående sida
+					$this->_continuePageAdd();
+					$this->_headerWrite();
+					$this->_specHeaderContine();
+					$currentRow = 68;
+				}
+			}
+			$currentRow = $currentRow + 6;
+			$this->pdf->SetFont($this->setting->font,'B');
+			$this->pdf->SetFontSize(9);
+			$this->pdf->SetXY(20, $currentRow);
+			$partHeader = $this->invoice->spec->participant[$i]->first_name . ' ' . $this->invoice->spec->participant[$i]->last_name . ' - ' . $this->invoice->spec->participant[$i]->note;
+			$this->pdf->Write(10, utf8_decode($partHeader));
+		
+			$this->pdf->SetFont('');
+			$this->pdf->SetFont($this->setting->font);
+			$this->pdf->SetFontSize(8);
+			
+			if (sizeof($this->invoice->spec->participant[$i]->option) > 0) {
+				$currentRow = $currentRow - 1;
+				for ($j=0; $j < sizeof($this->invoice->spec->participant[$i]->option); $j++) {
+					if ($this->invoice->spec->participant[$i]->option[$j]->option_text == 'Ej vald') {
+						// Skip
+					}
+					else {
+						$currentRow = $currentRow + 4;
+						$this->pdf->SetXY(20, $currentRow);
+						$this->pdf->Write(12, utf8_decode($this->invoice->spec->participant[$i]->option[$j]->option_text));
+					}
+				}
+			}
+		}	
+	}
+
+	private function _headerWrite() {
+		$this->pdf->SetFontSize(16);
+		$this->pdf->SetXY(18, 4);
+		$this->pdf->Write(16, utf8_decode($this->invoice->company_name));
+		$this->pdf->SetFont($this->setting->font,'I');
+		$this->pdf->SetFontSize(9);
+		$this->pdf->SetXY(18, 11);
+		$this->pdf->Write(14, 'i samarbete med Turtle Pay');
+		$this->pdf->SetXY(18, 15);
+		$this->pdf->Write(14, utf8_decode('P.O. Box 24078, SE-104 50 Stockholm'));
+		$this->pdf->SetFont($this->setting->font);
+		
+		$this->pdf->SetFontSize(14);
+		$this->pdf->SetXY(116, 0);
+		$this->pdf->Write(16, 'FAKTURA');
+		$this->pdf->SetFont($this->setting->font,'B');
+		
+		$this->pdf->SetFontSize(9);
+		$this->pdf->SetXY(116, 8);
+		$this->pdf->Write(11, 'Utskriftsdatum');
+		$this->pdf->SetFont('');
+		$this->pdf->SetFont($this->setting->font);
+		$this->pdf->SetFontSize(10);
+		$this->pdf->SetXY(116, 13);
+		$this->pdf->Write(10, $this->invoice->date);
+
+		$this->pdf->SetFont($this->setting->font,'B');
+		$this->pdf->SetFontSize(9);
+		$this->pdf->SetXY(174, 8);
+		$this->pdf->Write(11, 'Sidnr');
+		$this->pdf->SetFont('');
+		$this->pdf->SetFont($this->setting->font);
+		$this->pdf->SetFontSize(10);
+		$this->pdf->SetXY(174, 13);
+		$this->pdf->Write(10, $this->pageNo . '(' . $this->totalPages . ')');
+
+		$this->pdf->SetFont($this->setting->font,'B');
+		$this->pdf->SetFontSize(9);
+		$this->pdf->SetXY(116, 17);
+		$this->pdf->Write(11, utf8_decode('Förfallodatum'));
+		$this->pdf->SetFont('');
+		$this->pdf->SetFont($this->setting->font);
+		$this->pdf->SetFontSize(10);
+		$this->pdf->SetXY(116, 22);
+		$this->pdf->Write(10, $this->invoice->duedate);
+
+		if($this->invoice->people_company_on == 'y') {	
+			$this->pdf->SetFontSize(10);
+			$this->pdf->SetXY(116, 33);
+			$this->pdf->Write(10, utf8_decode($this->invoice->name));
+			$this->pdf->SetXY(116, 38);
+			$this->pdf->Write(10, utf8_decode($this->invoice->spec->people_company));
+			$this->pdf->SetXY(116, 43);
+			$this->pdf->Write(10, utf8_decode($this->invoice->spec->people_company_address));
+			$this->pdf->SetXY(116, 48);
+			$this->pdf->Write(10, utf8_decode($this->invoice->spec->people_company_postcode . ' ' . $this->invoice->spec->people_company_city));
+		}
+		else {
+			$this->pdf->SetFontSize(10);
+			$this->pdf->SetXY(116, 33);
+			$this->pdf->Write(10, utf8_decode($this->invoice->name));
+			$this->pdf->SetXY(116, 38);
+			$this->pdf->Write(10, utf8_decode($this->invoice->address));
+			$this->pdf->SetXY(116, 43);
+			$this->pdf->Write(10, utf8_decode($this->invoice->postaddress));
+			//$this->pdf->SetXY(116, 48);
+			//$this->pdf->Write(10, utf8_decode('Aktiebolaget Allehanda'));
+		}
+	}
+
+	private function _specHeader() {
+		$this->pdf->SetFont($this->setting->font,'B');
+		$this->pdf->SetFontSize(11);
+		$this->pdf->SetXY(18, 60); // 68
+		$this->pdf->SetFillColor(220,220,220);
+		$this->pdf->Cell(184,9,'   Specifikation','BTLR',0,'L',true);
+	
+		$this->pdf->SetFont('');
+		$this->pdf->SetFont($this->setting->font);
+		$this->pdf->SetFontSize(10);
+		$this->pdf->SetXY(20, 68);
+		$this->pdf->Write(10, utf8_decode('Transaktionsdatum'));  // Inköpsdatum
+		
+		$this->pdf->SetXY(20, 88);
+		$this->pdf->Write(10, utf8_decode('Kvittoreferens'));
+		$this->pdf->SetXY(50, 88);
+		$this->pdf->Write(10, utf8_decode($this->invoice->receipt_number));
+		
+		if ($this->invoice->spec->has_vat == 'y') {
+			$this->pdf->SetFontSize(8);
+			$this->pdf->SetXY(20, 92);
+			$this->pdf->Write(10, utf8_decode('(varav moms (' . $this->invoice->spec->vat . '%), ' . $this->invoice->spec->vat_amount . ' kr, momsreg.nr. SE' . $this->invoice->spec->company_id_number . '01)'));
+			$this->pdf->SetFont('');
+			$this->pdf->SetFont($this->setting->font);
+			$this->pdf->SetFontSize(10);
+		}
+
+		if ($this->invoice->spec_type == '1') {
+			$this->pdf->SetXY(20, 101);
+			$this->pdf->Write(10, utf8_decode($this->invoice->spec));
+		}
+
+		$this->pdf->SetXY(20, 73);
+		$this->pdf->Write(10, $this->invoice->purchase_date);
+		$this->pdf->SetXY(50, 73);
+		$this->pdf->Write(10, utf8_decode($this->invoice->company_name));
+		
+		$this->pdf->SetFontSize(8);
+		$this->pdf->SetXY(50, 77);
+		$this->pdf->Write(10, utf8_decode('(Org.nr. ' . $this->invoice->spec->company_id_number . ')'));
+		$this->pdf->SetFont('');
+		$this->pdf->SetFont($this->setting->font);
+		$this->pdf->SetFontSize(10);
+		
+		$this->refundAll = false;
+		if ($this->invoice->returnInvoice == "y") {
+			$this->invoice->credit_amount = $this->invoice->prev_amount;
+			$this->pdf->SetXY(114, 73);
+			$this->pdf->Write(10, utf8_decode('Returbelopp'));
+			$this->pdf->SetXY(154, 73);
+			$this->pdf->Write(10, utf8_decode('-' . $this->invoice->refund_amount)); //  + ' kr';
+			if ($this->invoice->refund_all == 'y') {
+				$this->refundAll = true;
+				$this->pdf->SetXY(114, 78); // 91
+				$this->pdf->Write(10, utf8_decode('Totalt (kr)'));
+				$this->pdf->SetXY(154, 78); // 91
+				$this->pdf->Write(10, utf8_decode($this->invoice->total)); //  + ' kr';
+
+				$this->pdf->SetXY(114, 83); // 101
+				$this->pdf->Write(10, utf8_decode('OCR-nummer'));
+				$this->pdf->SetXY(154, 83); // 101
+				$this->pdf->Write(10, utf8_decode($this->invoice->ocrno));
+			}
+		}
+
+		$this->pdf->SetXY(114, 68); // 81
+		$this->pdf->Write(10, utf8_decode('Köpesumma'));
+		$this->pdf->SetXY(154, 68); // 81
+		$this->pdf->Write(10, utf8_decode($this->invoice->credit_amount)); //  + ' kr';
+
+		$this->pdf->SetXY(50, 81); // 86
+		$this->pdf->Write(10, utf8_decode($this->invoice->shop_name));
+
+		if ($this->refundAll == false) {
+			if ($this->invoice->start_fee > 0) {
+				$this->pdf->SetXY(114, 74 + $this->extra); //86
+				$this->pdf->Write(10, utf8_decode('Uppläggningsavgift'));
+				$this->pdf->SetXY(154, 74 + $this->extra); // 86
+				$this->pdf->Write(10, utf8_decode($this->invoice->start_fee)); // + ' kr';
+				$this->extra = $this->extra + 5;
+			}
+			$this->pdf->SetXY(114, 73 + $this->extra); // 86
+			$this->pdf->Write(10, utf8_decode('Aviavgift'));
+			$this->pdf->SetXY(154, 73 + $this->extra); // 86
+			$this->pdf->Write(10, utf8_decode($this->invoice->fee)); // + ' kr';
+		}
+
+		if ($this->refundAll == false) {
+			$this->pdf->SetFont($this->setting->font,'B');
+			$this->pdf->SetXY(114, 78 + $this->extra); // 91
+			$this->pdf->Write(10, utf8_decode('Totalt (kr)'));
+			$this->pdf->SetXY(154, 78 + $this->extra); // 91
+			$this->pdf->Write(10, utf8_decode($this->invoice->total)); //  + ' kr';
+			$this->pdf->SetFont('');
+			$this->pdf->SetFont($this->setting->font);
+			$this->pdf->SetFontSize(10);
+
+			$this->pdf->SetXY(114, 83 + $this->extra); // 96
+			$this->pdf->Write(10, utf8_decode('Bankgiro'));
+			$this->pdf->SetXY(154, 83 + $this->extra); // 96
+			$this->pdf->Write(10, '5258-0016');
+
+			$this->pdf->SetXY(114, 88 + $this->extra); // 101
+			$this->pdf->Write(10, utf8_decode('OCR-nummer'));
+			$this->pdf->SetXY(154, 88 + $this->extra); // 101
+			$this->pdf->Write(10, utf8_decode($this->invoice->ocrno));
+
+			$this->pdf->SetXY(114, 93 + $this->extra); // 106
+			$this->pdf->Write(10, utf8_decode('Betalning oss tillhanda'));
+			$this->pdf->SetXY(154, 93 + $this->extra); // 106
+			$this->pdf->Write(10, utf8_decode($this->invoice->duedate));
+
+		}
+		$this->startRowPageOn =  93 + $this->extra;
+	}
+
+	private function _installmentWrite() {
+		if ($this->invoice->returnInvoice == "y" || $this->invoice->start_fee > 0) {
+			$this->extra += 30;
+		}
+		else {
+			$this->extra += 35;
+		}
+		// echo  126 + $this->extra; die('');
+		$totalValue = str_replace(',' , '', $this->invoice->total);
+		if ((float)$totalValue > $this->invoice->installmentLimit) {
+			$this->pdf->SetFont($this->setting->font,'B');
+			$this->pdf->SetFontSize(11);
+			$this->pdf->SetXY(20, 161); //126 + $this->extra); // 121
+			$this->pdf->Write(10, utf8_decode("Ta't lugnt!  Betala i din egen takt"));
+			$this->pdf->SetFont('');
+			$this->pdf->SetFont($this->setting->font);
+			$this->pdf->SetFontSize(10);
+
+			$this->pdf->SetXY(20, 166); //  131 + $this->extra); // 126
+			$this->pdf->Write(10, utf8_decode('Du kan istället betala valfritt belopp under ' .  $this->invoice->monthly_no . ' månader, dock lägst '));
+
+			$this->pdf->SetXY(124, 166); // 131 + $this->extra); // 126
+			$this->pdf->SetFont($this->setting->font,'B');
+			$this->pdf->Write(10, utf8_decode( $this->invoice->monthly_payment_total . ' kronor'));
+			$this->pdf->SetFont('');
+			$this->pdf->SetFont($this->setting->font);
+			$this->pdf->SetFontSize(10);
+
+			$len = strlen($this->invoice->monthly_payment_total);
+			if ($len <= 2) {
+				// under 100
+				$posPlus = 0;
+			}
+			else if ($len == 3) {
+				// over 99 and under 1000
+				$posPlus = 2;
+			}
+			else if ($len >= 4) {
+				// over 1000
+				$posPlus = 5;
+			}
+
+			$this->pdf->SetXY(140 + $posPlus, 166); // 131 + $this->extra); // 126
+			$this->pdf->Write(10, utf8_decode(' senast ' . $this->invoice->duedate . '.'));
+
+			$interestText = "Räntefritt " . $this->invoice->grace_days . " dagar, ränta " . $this->invoice->interest . "%, aviavg. 29 kr";
+			if ($this->invoice->admin_fee > 0) {
+				$interestText .= ', adm.avg. ' . $this->invoice->admin_fee . ' kr/mån';
+			}
+			$interestText .= ".";
+			$effectiveText = "(Effektivränta på 10,000kr " . $this->invoice->effective_rate . "%, totalkost. 12mån " . number_format($this->invoice->effective_total) . "kr)"; // effective_rate
+			$this->pdf->SetXY(20, 171); // 136 + $this->extra);
+			$this->pdf->Write(10, utf8_decode($interestText));
+			$this->pdf->SetFont($this->setting->font);
+			$this->pdf->SetFontSize(8);
+			$this->pdf->SetXY(96, 171); // 136 + $this->extra);
+			$this->pdf->Write(10, utf8_decode($effectiveText));
+			$this->pdf->SetFont($this->setting->font);
+			$this->pdf->SetFontSize(10);
+		}
+
+		$this->pdf->SetXY(20, 176); // 141 + $this->extra); // 136
+		$this->pdf->Write(10, utf8_decode('Ange fakturans OCR-nummer vid inbetalningen. Se villkor på följande länk: www.turtle-pay.com/villkor.'));
+
+		$this->pdf->SetXY(20, 181); // 146 + $this->extra);
+		$this->pdf->Write(10, utf8_decode('Förseningsavgift och dröjsmålsränta kan tillkomma vid sen betalning.'));
+	}
+
+	private function _footerWrite() {
+		$this->pdf->Line(18,190,201,190);
+		$this->pdf->SetFontSize(8);
+		$this->pdf->SetXY(18, 188);
+		$this->pdf->Write(10, utf8_decode('Turtle Pay AB'));
+		$this->pdf->SetXY(42, 188);
+		$this->pdf->Write(10, utf8_decode('Org nr: 559101-6786'));
+		$this->pdf->SetXY(74, 188);
+		$this->pdf->Write(10, utf8_decode('P.O. Box 24078'));
+		$this->pdf->SetXY(100, 188);
+		$this->pdf->Write(10, utf8_decode('SE-104 50 Stockholm'));
+		$this->pdf->SetXY(140, 188);
+		$this->pdf->Write(10, utf8_decode('Telefon 08-80 62 20'));
+		$this->pdf->SetXY(172, 188);
+		$this->pdf->Write(10, utf8_decode('info@turtle-pay.com'));
+	}
+
+	private function _bankgiroCard() {
+		if ($this->refundAll == false) {
+			$this->pdf->SetFontSize(8);
+			$this->pdf->SetXY(20, 230);
+			$this->pdf->Write(10, utf8_decode($this->invoice->name));
+			$this->pdf->SetXY(20, 234);
+			$this->pdf->Write(10, utf8_decode($this->invoice->address));
+			$this->pdf->SetXY(20, 238);
+			$this->pdf->Write(10, utf8_decode($this->invoice->postaddress));
+			$this->pdf->SetFontSize(12);
+			$this->pdf->SetXY(90, 238);
+			$this->pdf->Write(12, utf8_decode('Fyll i valfritt belopp'));
+			$this->pdf->SetFont('OCR-B','',12);
+			$this->pdf->SetXY(12, 272);
+			$this->pdf->Write(10, utf8_decode('#'));
+			$this->pdf->SetXY(49, 272);
+			$this->pdf->Write(10, utf8_decode($this->invoice->ocrno . ' #'));
+			$this->pdf->SetXY(167, 272);
+			$this->pdf->Write(10, utf8_decode('52580016#42#'));
+		}
+	}
+
+	private function _continuePageAdd() {
+		$this->pageNo = $this->pageNo + 1;
+		$this->pdf->setSourceFile($this->setting->mallContinuePage);
+		$templateId = $this->pdf->importPage(1);
+		$size = $this->pdf->getTemplateSize($templateId);
+		$this->pdf->AddPage('P', array($size['width'], 310));
+		$this->pdf->useTemplate($templateId);
+		$this->pdf->SetFont($this->setting->font);
+		$this->extra = 0;
+	}
+
+	private function _specHeaderContine() {
+		$this->pdf->SetFont($this->setting->font,'B');
+		$this->pdf->SetFontSize(11);
+		$this->pdf->SetXY(18, 60); // 68
+		$this->pdf->SetFillColor(220,220,220);
+		$this->pdf->Cell(184,9,'   Specifikation','BTLR',0,'L',true);
+		$this->pdf->SetFont('');
+		$this->pdf->SetXY(20, 68);
+		$this->pdf->Write(10, utf8_decode('Kvittoreferens'));
+		$this->pdf->SetXY(50, 68);
+		$this->pdf->Write(10, utf8_decode($this->invoice->receipt_number));
+	}
 
 }
 
-
-
-
- ?>
+?>

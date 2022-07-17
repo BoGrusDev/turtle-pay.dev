@@ -181,17 +181,22 @@ Class WebAppOfferClass extends ActionOpen {
 		require 'PHPMailerAutoload.php';
 		$mail = new PHPMailer;
 		$mail->isSMTP();
-		$mail->Host = 'smtp.gmail.com';
-		$mail->SMTPAuth = true;
-		$mail->Username = 'info.turtlepay@gmail.com';
-		$mail->Password = 'SegTp_2019';
-		$mail->CharSet = 'UTF-8';
+
+		$mail->Host = 'smtp.net.vmi.se';
+        $mail->SMTPAuth = true;
+        $mail->Username = 'turtlepaycom';
+        $mail->Password = 'Kajk48Vaa'; // SegTp@2022';
+        $mail->CharSet = 'UTF-8';
+        $mail->Port = 465; // 465
+        $mail->SMTPSecure = 'ssl';
 		$mail->From = 'info@turtle-pay.com';
 		$mail->FromName = 'Turtle Pay';
+
 		$mail->addAddress($data->email, $data->people_name);
 		// $mail->addBCC('bo.grus@yahoo.com');
 		$mail->addBCC('stellan.forsberg@turtle-pay.com');
 		$mail->addReplyTo('info@turtle-pay.com');
+		$mail->addBCC('info@turtle-shop');
 		$mail->isHTML(true);
 		$mail->AddAttachment(FIRST_INVOICE_FOLDER . $data->filename);
 		$mail->Subject = $toSubject;

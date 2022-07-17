@@ -2351,41 +2351,41 @@ class EventClass extends ActionPortal {
 		
 		$mail = new PHPMailer;
 		$mail->isSMTP();
-			
-		$mail->Host = 'mail.turtle-shop.se';
-		$mail->Port = 465;
-		$mail->SMTPSecure = 'ssl';
-		$mail->SMTPAuth = true;
-		$mail->Username = 'info@turtle-shop.se';
-		$mail->Password = 'SegTp@2022';
-		$mail->CharSet = 'UTF-8';
-		$mail->From = $company['email'];;
+		
+		/*
+			$mail->Host = 'mail.turtle-shop.se';
+			$mail->Port = 465;
+			$mail->SMTPSecure = 'ssl';
+			$mail->SMTPAuth = true;
+			$mail->Username = 'info@turtle-shop.se';
+			$mail->Password = 'SegTp@2022';
+			$mail->CharSet = 'UTF-8';
+			$mail->From = $company['email'];;
+			$mail->FromName = $company['known_as'];
+			$mail->addReplyTo($company['email']);
+			$mail->addAddress($people['email']);
+			//$mail->addBCC('bo.grusell@turtle-pay.com');
+			$mail->addBCC('info@turtle-shop.se');
+			$mail->isHTML(true);
+		*/
+		
+		$mail->Host = 'smtp.net.vmi.se';
+        $mail->SMTPAuth = true;
+        $mail->Username = 'turtlepaycom';
+        $mail->Password = 'Kajk48Vaa'; // SegTp@2022';
+        $mail->CharSet = 'UTF-8';
+        $mail->Port = 465; // 465
+        $mail->SMTPSecure = 'ssl';
+		
+		// $mail->From = $company['email'];
+		$mail->From = 'info@turtle-pay.com';
 		$mail->FromName = $company['known_as'];
-		// $mail->addReplyTo('info@turtle-pay.com');
 		$mail->addReplyTo($company['email']);
 		$mail->addAddress($people['email']);
 		//$mail->addBCC('bo.grusell@turtle-pay.com');
 		$mail->addBCC('info@turtle-shop.se');
 		$mail->isHTML(true);
 
-		/*
-			$mail->Host = 'smtp.gmail.com';
-			$mail->SMTPAuth = true;
-			$mail->Username = 'info.turtlepay@gmail.com';
-			$mail->Password = 'SegTp_2019';
-
-			$mail->CharSet = 'UTF-8';
-			$mail->From = $company['email']; // 'info@turtle-pay.com';
-			$mail->FromName = $company['known_as'];;
-			
-			$email = $people['email'];
-			$mail->addAddress($people['email']);
-			// $mail->addBCC('bo.grus@yahoo.com');
-			$mail->addBCC('bo.grusell@turtle-pay.com');
-			$mail->addReplyTo($company['email']);
-		
-			$mail->isHTML(true);
-		*/
 
 		$mail->Subject = $subject;
 		//$mailInvoice->Body = $this->htmlInvoice . '<div style="width:100%; padding:20px 0 10px 0; text-align:center"><a href="' . DOCVIEW . 'o/' . $this->orderid . '.html"' . '" style="font-size:20px; font-weight:bold; color: green">Skriv ut</a>';

@@ -3,6 +3,5 @@
 # dependencies
 /db
 /_sql
-
-# misc
+# misgit statusc
 .DS_Store
