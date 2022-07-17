@@ -3,6 +3,6 @@
 # dependencies
 /db
 /_sql
-
+/html/finvoice
 # misc
 .DS_Store

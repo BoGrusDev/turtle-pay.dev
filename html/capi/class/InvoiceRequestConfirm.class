@@ -72,12 +72,6 @@ class InvoiceRequestConfirmClass extends ActionOpen {
 		$data->_action = "CheckInvoice";
 		$json =  json_encode($data);
 		$result = json_decode($this->_RestApiCall($json));
-		/*
-		if ($result->code == '1') {
-			$data->_bankid_text = str_replace('_ReceiptNumber_', $data->receipt_number, $data->_bankid_text );
-			$result = $this->_BankIDSignInit($data);
-		}
-		*/
 		echo json_encode($result);
 
 	}
