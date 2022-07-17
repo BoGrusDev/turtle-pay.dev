@@ -71,6 +71,9 @@ class FirstInvoicePdfClass {
 	}
 
 	private function fakturaStandard() {
+
+		//echo json_encode($this->invoice); die('');
+
 		$this->totalPages = 1;
 		$this->_headerWrite();
 		$this->_specHeader();
@@ -78,15 +81,16 @@ class FirstInvoicePdfClass {
 			// do nothing (no specification)
 		}
 		else {
+			//echo sizeof($this->invoice->spec->participant[0]->option); die(''); 
 			if (sizeof($this->invoice->spec->participant[0]->option) <= 2) {
 				// Short version, max 3 selections
-				$this->pdf->SetFont($this->font,'B');
+				$this->pdf->SetFont($this->setting->font,'B');
 				$this->pdf->SetFontSize(8);
 				$this->pdf->SetXY(20, 112 + $this->extra);
 				$this->pdf->Write(10, utf8_decode('Namn'));
 			
 				$this->pdf->SetFont('');
-				$this->pdf->SetFont($this->font);
+				$this->pdf->SetFont($this->setting->font);
 				$this->pdf->SetFontSize(8);
 	
 				for ($i=0; $i < sizeof($this->invoice->spec->participant); $i++) {
@@ -95,7 +99,7 @@ class FirstInvoicePdfClass {
 					$this->pdf->Write(10, utf8_decode($this->invoice->spec->participant[$i]->first_name . ' ' . $this->invoice->spec->participant[$i]->last_name));
 					
 				} 
-				$this->pdf->SetFont($this->font,'B');
+				$this->pdf->SetFont($this->setting->font,'B');
 				$this->pdf->SetFontSize(8);
 	
 				for ($i=0; $i < sizeof($this->invoice->spec->participant[0]->option); $i++) {
@@ -116,7 +120,7 @@ class FirstInvoicePdfClass {
 					$this->pdf->Write(10, utf8_decode($this->invoice->spec->note_label));
 				}
 				$this->pdf->SetFont('');
-				$this->pdf->SetFont($this->font);
+				$this->pdf->SetFont($this->setting->font);
 				$this->pdf->SetFontSize(8);
 				for ($i=0; $i < sizeof($this->invoice->spec->participant); $i++) {
 					$plusRow = ($i + 1) * 4;
@@ -134,23 +138,26 @@ class FirstInvoicePdfClass {
 			}
 			else  {
 				// More the 3 selections
-				$this->pdf->SetFont($this->font,'B');
+				$this->pdf->SetFont($this->setting->font,'B');
 				$this->pdf->SetFontSize(8);
 				$specRow = -1 + $this->extra; // Fix
 				for ($i=0; $i < sizeof($this->invoice->spec->participant); $i++) {
 					$specRow = $specRow + 4;
-					$this->pdf->SetFont($this->font,'B');
+					$this->pdf->SetFont($this->setting->font,'B');
 					$this->pdf->SetFontSize(8);
 					$this->pdf->SetXY(20, 102 + $specRow);
 					$this->pdf->Write(10, utf8_decode($this->invoice->spec->participant[$i]->first_name . ' ' . $this->invoice->spec->participant[$i]->last_name));
 					$rowText = '';
 					
+					// echo json_encode($this->invoice->spec->participant); die('');
+
+
 					$columnCounter = 0;
 					for ($j=0; $j < sizeof($this->invoice->spec->participant[$i]->option); $j++) {
 						if ($columnCounter > 6) {
 							$rowText = rtrim($rowText, ', ');
 							$this->pdf->SetFont('');
-							$this->pdf->SetFont($this->font);
+							$this->pdf->SetFont($this->setting->font);
 							$this->pdf->SetFontSize(7);
 							$specRow = $specRow + 3;
 							$this->pdf->SetXY(20, 102 + $specRow);
@@ -170,7 +177,7 @@ class FirstInvoicePdfClass {
 					}
 					$rowText = rtrim($rowText, ', ');
 					$this->pdf->SetFont('');
-					$this->pdf->SetFont($this->font);
+					$this->pdf->SetFont($this->setting->font);
 					$this->pdf->SetFontSize(7);
 					$specRow = $specRow + 3;
 					$this->pdf->SetXY(20, 102 + $specRow);
@@ -182,7 +189,7 @@ class FirstInvoicePdfClass {
 						$rowText = $this->invoice->spec->participant[$i]->note; //  . ', ';
 						//$rowText = rtrim($rowText, ', ');
 						$this->pdf->SetFont('');
-						$this->pdf->SetFont($this->font);
+						$this->pdf->SetFont($this->setting->font);
 						$this->pdf->SetFontSize(7);
 						$this->pdf->SetXY(20, 102 + $specRow);
 						$this->pdf->Write(10, utf8_decode($rowText));
@@ -216,21 +223,20 @@ class FirstInvoicePdfClass {
 		$this->_footerWrite();
 		$this->_bankgiroCard();
 		// Se specifikation på nästa sida.
-		
+	
 		if ($this->totalPages > 1) {
 			$this->pdf->SetFont('');
 			$this->pdf->SetFont($this->setting->font);
 			$this->pdf->SetFontSize(10);
 			$this->pdf->SetXY(20, 100);
 			$this->pdf->Write(10, utf8_decode('Se specifikation på nästa sida.'));
+			$this->_continuePageAdd();
+			$this->_headerWrite();
+			$this->_specHeaderContine();
+			$currentRow = 68;
 			// Fortsättning från föregående sida
 		}
 	
-		$this->_continuePageAdd();
-		$this->_headerWrite();
-		$this->_specHeaderContine();
-		$currentRow = 68;
-
 		$this->pdf->SetFont($this->setting->font,'B');
 		$this->pdf->SetFontSize(8);
 		for ($i=0; $i < sizeof($this->invoice->spec->participant); $i++) {
@@ -245,7 +251,7 @@ class FirstInvoicePdfClass {
 					$this->pdf->SetFont($this->setting->font);
 					$this->pdf->SetFontSize(10);
 					$this->pdf->SetXY(20, 278);
-					$this->pdf->Write(10, utf8_decode('Fortsättning på nåsta sida sida.'));
+					$this->pdf->Write(10, utf8_decode('Fortsättning på nåsta sida.'));
 					// Fortsättning från föregående sida
 					$this->_continuePageAdd();
 					$this->_headerWrite();
@@ -308,12 +314,12 @@ class FirstInvoicePdfClass {
 
 		$this->pdf->SetFont($this->setting->font,'B');
 		$this->pdf->SetFontSize(9);
-		$this->pdf->SetXY(154, 8);
+		$this->pdf->SetXY(174, 8);
 		$this->pdf->Write(11, 'Sidnr');
 		$this->pdf->SetFont('');
 		$this->pdf->SetFont($this->setting->font);
 		$this->pdf->SetFontSize(10);
-		$this->pdf->SetXY(154, 13);
+		$this->pdf->SetXY(174, 13);
 		$this->pdf->Write(10, $this->pageNo . '(' . $this->totalPages . ')');
 
 		$this->pdf->SetFont($this->setting->font,'B');
@@ -348,6 +354,122 @@ class FirstInvoicePdfClass {
 			//$this->pdf->SetXY(116, 48);
 			//$this->pdf->Write(10, utf8_decode('Aktiebolaget Allehanda'));
 		}
+	}
+
+	private function _specHeader() {
+		$this->pdf->SetFont($this->setting->font,'B');
+		$this->pdf->SetFontSize(11);
+		$this->pdf->SetXY(18, 60); // 68
+		$this->pdf->SetFillColor(220,220,220);
+		$this->pdf->Cell(184,9,'   Specifikation','BTLR',0,'L',true);
+	
+		$this->pdf->SetFont('');
+		$this->pdf->SetFont($this->setting->font);
+		$this->pdf->SetFontSize(10);
+		$this->pdf->SetXY(20, 68);
+		$this->pdf->Write(10, utf8_decode('Transaktionsdatum'));  // Inköpsdatum
+		
+		$this->pdf->SetXY(20, 88);
+		$this->pdf->Write(10, utf8_decode('Kvittoreferens'));
+		$this->pdf->SetXY(50, 88);
+		$this->pdf->Write(10, utf8_decode($this->invoice->receipt_number));
+		
+		if ($this->invoice->spec->has_vat == 'y') {
+			$this->pdf->SetFontSize(8);
+			$this->pdf->SetXY(20, 92);
+			$this->pdf->Write(10, utf8_decode('(varav moms (' . $this->invoice->spec->vat . '%), ' . $this->invoice->spec->vat_amount . ' kr, momsreg.nr. SE' . $this->invoice->spec->company_id_number . '01)'));
+			$this->pdf->SetFont('');
+			$this->pdf->SetFont($this->setting->font);
+			$this->pdf->SetFontSize(10);
+		}
+
+		if ($this->invoice->spec_type == '1') {
+			$this->pdf->SetXY(20, 101);
+			$this->pdf->Write(10, utf8_decode($this->invoice->spec));
+		}
+
+		$this->pdf->SetXY(20, 73);
+		$this->pdf->Write(10, $this->invoice->purchase_date);
+		$this->pdf->SetXY(50, 73);
+		$this->pdf->Write(10, utf8_decode($this->invoice->company_name));
+		
+		$this->pdf->SetFontSize(8);
+		$this->pdf->SetXY(50, 77);
+		$this->pdf->Write(10, utf8_decode('(Org.nr. ' . $this->invoice->spec->company_id_number . ')'));
+		$this->pdf->SetFont('');
+		$this->pdf->SetFont($this->setting->font);
+		$this->pdf->SetFontSize(10);
+		
+		$this->refundAll = false;
+		if ($this->invoice->returnInvoice == "y") {
+			$this->invoice->credit_amount = $this->invoice->prev_amount;
+			$this->pdf->SetXY(114, 73);
+			$this->pdf->Write(10, utf8_decode('Returbelopp'));
+			$this->pdf->SetXY(154, 73);
+			$this->pdf->Write(10, utf8_decode('-' . $this->invoice->refund_amount)); //  + ' kr';
+			if ($this->invoice->refund_all == 'y') {
+				$this->refundAll = true;
+				$this->pdf->SetXY(114, 78); // 91
+				$this->pdf->Write(10, utf8_decode('Totalt (kr)'));
+				$this->pdf->SetXY(154, 78); // 91
+				$this->pdf->Write(10, utf8_decode($this->invoice->total)); //  + ' kr';
+
+				$this->pdf->SetXY(114, 83); // 101
+				$this->pdf->Write(10, utf8_decode('OCR-nummer'));
+				$this->pdf->SetXY(154, 83); // 101
+				$this->pdf->Write(10, utf8_decode($this->invoice->ocrno));
+			}
+		}
+
+		$this->pdf->SetXY(114, 68); // 81
+		$this->pdf->Write(10, utf8_decode('Köpesumma'));
+		$this->pdf->SetXY(154, 68); // 81
+		$this->pdf->Write(10, utf8_decode($this->invoice->credit_amount)); //  + ' kr';
+
+		$this->pdf->SetXY(50, 81); // 86
+		$this->pdf->Write(10, utf8_decode($this->invoice->shop_name));
+
+		if ($this->refundAll == false) {
+			if ($this->invoice->start_fee > 0) {
+				$this->pdf->SetXY(114, 74 + $this->extra); //86
+				$this->pdf->Write(10, utf8_decode('Uppläggningsavgift'));
+				$this->pdf->SetXY(154, 74 + $this->extra); // 86
+				$this->pdf->Write(10, utf8_decode($this->invoice->start_fee)); // + ' kr';
+				$this->extra = $this->extra + 5;
+			}
+			$this->pdf->SetXY(114, 73 + $this->extra); // 86
+			$this->pdf->Write(10, utf8_decode('Aviavgift'));
+			$this->pdf->SetXY(154, 73 + $this->extra); // 86
+			$this->pdf->Write(10, utf8_decode($this->invoice->fee)); // + ' kr';
+		}
+
+		if ($this->refundAll == false) {
+			$this->pdf->SetFont($this->setting->font,'B');
+			$this->pdf->SetXY(114, 78 + $this->extra); // 91
+			$this->pdf->Write(10, utf8_decode('Totalt (kr)'));
+			$this->pdf->SetXY(154, 78 + $this->extra); // 91
+			$this->pdf->Write(10, utf8_decode($this->invoice->total)); //  + ' kr';
+			$this->pdf->SetFont('');
+			$this->pdf->SetFont($this->setting->font);
+			$this->pdf->SetFontSize(10);
+
+			$this->pdf->SetXY(114, 83 + $this->extra); // 96
+			$this->pdf->Write(10, utf8_decode('Bankgiro'));
+			$this->pdf->SetXY(154, 83 + $this->extra); // 96
+			$this->pdf->Write(10, '5258-0016');
+
+			$this->pdf->SetXY(114, 88 + $this->extra); // 101
+			$this->pdf->Write(10, utf8_decode('OCR-nummer'));
+			$this->pdf->SetXY(154, 88 + $this->extra); // 101
+			$this->pdf->Write(10, utf8_decode($this->invoice->ocrno));
+
+			$this->pdf->SetXY(114, 93 + $this->extra); // 106
+			$this->pdf->Write(10, utf8_decode('Betalning oss tillhanda'));
+			$this->pdf->SetXY(154, 93 + $this->extra); // 106
+			$this->pdf->Write(10, utf8_decode($this->invoice->duedate));
+
+		}
+		$this->startRowPageOn =  93 + $this->extra;
 	}
 
 	private function _installmentWrite() {
@@ -455,122 +577,6 @@ class FirstInvoicePdfClass {
 			$this->pdf->SetXY(167, 272);
 			$this->pdf->Write(10, utf8_decode('52580016#42#'));
 		}
-	}
-
-	private function _specHeader() {
-		$this->pdf->SetFont($this->setting->font,'B');
-		$this->pdf->SetFontSize(11);
-		$this->pdf->SetXY(18, 60); // 68
-		$this->pdf->SetFillColor(220,220,220);
-		$this->pdf->Cell(184,9,'   Specifikation','BTLR',0,'L',true);
-	
-		$this->pdf->SetFont('');
-		$this->pdf->SetFont($this->setting->font);
-		$this->pdf->SetFontSize(10);
-		$this->pdf->SetXY(20, 68);
-		$this->pdf->Write(10, utf8_decode('Transaktionsdatum'));  // Inköpsdatum
-		
-		$this->pdf->SetXY(20, 88);
-		$this->pdf->Write(10, utf8_decode('Kvittoreferens'));
-		$this->pdf->SetXY(50, 88);
-		$this->pdf->Write(10, utf8_decode($this->invoice->receipt_number));
-		
-		if ($this->invoice->spec->has_vat == 'y') {
-			$this->pdf->SetFontSize(8);
-			$this->pdf->SetXY(20, 92);
-			$this->pdf->Write(10, utf8_decode('(varav moms (' . $this->invoice->spec->vat . '%), ' . $this->invoice->spec->vat_amount . ' kr, momsreg.nr. SE' . $this->invoice->spec->company_id_number . '01)'));
-			$this->pdf->SetFont('');
-			$this->pdf->SetFont($this->setting->font);
-			$this->pdf->SetFontSize(10);
-		}
-
-		if ($this->invoice->spec_type == '1') {
-			$this->pdf->SetXY(20, 101);
-			$this->pdf->Write(10, utf8_decode($this->invoice->spec));
-		}
-
-		$this->pdf->SetXY(20, 73);
-		$this->pdf->Write(10, $this->invoice->purchase_date);
-		$this->pdf->SetXY(50, 73);
-		$this->pdf->Write(10, utf8_decode($this->invoice->company_name));
-		
-		$this->pdf->SetFontSize(8);
-		$this->pdf->SetXY(50, 77);
-		$this->pdf->Write(10, utf8_decode('(Org.nr. ' . $this->invoice->spec->company_id_number . ')'));
-		$this->pdf->SetFont('');
-		$this->pdf->SetFont($this->setting->font);
-		$this->pdf->SetFontSize(10);
-		
-		$this->refundAll = false;
-		if ($this->invoice->returnInvoice == "y") {
-			$this->invoice->credit_amount = $this->invoice->prev_amount;
-			$this->pdf->SetXY(114, 81);
-			$this->pdf->Write(10, utf8_decode('Returbelopp'));
-			$this->pdf->SetXY(154, 81);
-			$this->pdf->Write(10, utf8_decode('-' . $this->invoice->refund_amount)); //  + ' kr';
-			if ($this->invoice->refund_all == 'y') {
-				$this->refundAll = true;
-				$this->pdf->SetXY(114, 86); // 91
-				$this->pdf->Write(10, utf8_decode('Totalt (kr)'));
-				$this->pdf->SetXY(154, 86); // 91
-				$this->pdf->Write(10, utf8_decode($this->invoice->total)); //  + ' kr';
-
-				$this->pdf->SetXY(114, 91); // 101
-				$this->pdf->Write(10, utf8_decode('OCR-nummer'));
-				$this->pdf->SetXY(154, 91); // 101
-				$this->pdf->Write(10, utf8_decode($this->invoice->ocrno));
-			}
-		}
-
-		$this->pdf->SetXY(114, 68); // 81
-		$this->pdf->Write(10, utf8_decode('Köpesumma'));
-		$this->pdf->SetXY(154, 68); // 81
-		$this->pdf->Write(10, utf8_decode($this->invoice->credit_amount)); //  + ' kr';
-
-		$this->pdf->SetXY(50, 81); // 86
-		$this->pdf->Write(10, utf8_decode($this->invoice->shop_name));
-
-		if ($this->refundAll == false) {
-			if ($this->invoice->start_fee > 0) {
-				$this->pdf->SetXY(114, 74 + $this->extra); //86
-				$this->pdf->Write(10, utf8_decode('Uppläggningsavgift'));
-				$this->pdf->SetXY(154, 74 + $this->extra); // 86
-				$this->pdf->Write(10, utf8_decode($this->invoice->start_fee)); // + ' kr';
-				$this->extra = $this->extra + 5;
-			}
-			$this->pdf->SetXY(114, 73 + $this->extra); // 86
-			$this->pdf->Write(10, utf8_decode('Aviavgift'));
-			$this->pdf->SetXY(154, 73 + $this->extra); // 86
-			$this->pdf->Write(10, utf8_decode($this->invoice->fee)); // + ' kr';
-		}
-
-		if ($this->refundAll == false) {
-			$this->pdf->SetFont($this->setting->font,'B');
-			$this->pdf->SetXY(114, 78 + $this->extra); // 91
-			$this->pdf->Write(10, utf8_decode('Totalt (kr)'));
-			$this->pdf->SetXY(154, 78 + $this->extra); // 91
-			$this->pdf->Write(10, utf8_decode($this->invoice->total)); //  + ' kr';
-			$this->pdf->SetFont('');
-			$this->pdf->SetFont($this->setting->font);
-			$this->pdf->SetFontSize(10);
-
-			$this->pdf->SetXY(114, 83 + $this->extra); // 96
-			$this->pdf->Write(10, utf8_decode('Bankgiro'));
-			$this->pdf->SetXY(154, 83 + $this->extra); // 96
-			$this->pdf->Write(10, '5258-0016');
-
-			$this->pdf->SetXY(114, 88 + $this->extra); // 101
-			$this->pdf->Write(10, utf8_decode('OCR-nummer'));
-			$this->pdf->SetXY(154, 88 + $this->extra); // 101
-			$this->pdf->Write(10, utf8_decode($this->invoice->ocrno));
-
-			$this->pdf->SetXY(114, 93 + $this->extra); // 106
-			$this->pdf->Write(10, utf8_decode('Betalning oss tillhanda'));
-			$this->pdf->SetXY(154, 93 + $this->extra); // 106
-			$this->pdf->Write(10, utf8_decode($this->invoice->duedate));
-
-		}
-		$this->startRowPageOn =  93 + $this->extra;
 	}
 
 	private function _continuePageAdd() {

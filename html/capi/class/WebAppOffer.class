@@ -196,7 +196,7 @@ Class WebAppOfferClass extends ActionOpen {
 		// $mail->addBCC('bo.grus@yahoo.com');
 		$mail->addBCC('stellan.forsberg@turtle-pay.com');
 		$mail->addReplyTo('info@turtle-pay.com');
-		$mail->addBCC('info@turtle-shop.se');
+		$mail->addBCC('info@turtle-shop');
 		$mail->isHTML(true);
 		$mail->AddAttachment(FIRST_INVOICE_FOLDER . $data->filename);
 		$mail->Subject = $toSubject;
