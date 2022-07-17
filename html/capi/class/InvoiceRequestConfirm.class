@@ -223,9 +223,6 @@ class InvoiceRequestConfirmClass extends ActionOpen {
 		$resInstallmentLimit = json_decode($this->_RestApiCall(json_encode($paramInstallmentLimit)));
 		$invoice->installmentLimit = $resInstallmentLimit->installment_limit;
 
-		//echo json_encode($invoice);
-		//die('');
-
 		require_once 'FirstInvoicePdf.class';
 		$firstInvoice = new FirstInvoicePdfClass(FIRST_INVOICE_FOLDER);
 		$firstInvoice->_($invoice);

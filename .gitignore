@@ -3,6 +3,5 @@
 # dependencies
 /db
 /_sql
-/html/finvoice
-# misc
+# misgit statusc
 .DS_Store

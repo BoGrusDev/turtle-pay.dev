@@ -148,10 +148,7 @@ class FirstInvoicePdfClass {
 					$this->pdf->SetXY(20, 102 + $specRow);
 					$this->pdf->Write(10, utf8_decode($this->invoice->spec->participant[$i]->first_name . ' ' . $this->invoice->spec->participant[$i]->last_name));
 					$rowText = '';
-					
-					// echo json_encode($this->invoice->spec->participant); die('');
-
-
+				
 					$columnCounter = 0;
 					for ($j=0; $j < sizeof($this->invoice->spec->participant[$i]->option); $j++) {
 						if ($columnCounter > 6) {
